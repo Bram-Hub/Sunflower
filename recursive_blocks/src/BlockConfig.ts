@@ -15,8 +15,8 @@ export const blockConfig = {
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
     children: [
-      { name: "Zero Case", block: null },
-      { name: "Succ Case", block: null }
+      { name: "Base Case", block: null },
+      { name: "Recursive Case", block: null }
     ],
     num_values: []
   },

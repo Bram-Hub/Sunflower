@@ -68,7 +68,7 @@ export function Block({ block, onUpdate }: Props) {
       }
     }, [drop]);
 
-    return (
+    return (//Actual Block Slot HTML
       <div
         ref={dropRef}
         className={`block-slot ${child ? "filled" : "empty"}`}
@@ -77,8 +77,7 @@ export function Block({ block, onUpdate }: Props) {
         {child ? (
           <Block
             block={child}
-            onUpdate={(newChild) => {
-              // Only update the current slot where the block is being modified
+            onUpdate={(newChild) => {//OnUpdate function for child block
               const updated = { ...block };
               updated.children = updated.children.map((slot) =>
                 slot.name === name
@@ -117,7 +116,7 @@ export function Block({ block, onUpdate }: Props) {
   const dragRef = React.useRef<HTMLDivElement>(null);
   drag(dragRef);
 
-  return (
+  return (//Actual Block HTML
     <div className="block-container" 
       ref={dragRef}
       style={{ opacity: isDragging ? 0.5 : 1 }}>
