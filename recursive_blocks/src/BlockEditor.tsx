@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { BlockData } from "./BlockData";
+import { BlockData, removeBlockById } from "./BlockUtil";
 import { Block, getDefaultChildren, getDefaultValues } from "./Block";
 import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
@@ -78,16 +78,3 @@ function RootDropArea({
   );
 }
 
-export function removeBlockById(block: BlockData, targetId: string): BlockData {
-  return {
-    ...block,
-    children: block.children.map((slot) => ({
-      name: slot.name,
-      block: slot.block?.id === targetId
-        ? null
-        : slot.block
-          ? { ...removeBlockById(slot.block, targetId) }
-          : null,
-    })),
-  };
-}

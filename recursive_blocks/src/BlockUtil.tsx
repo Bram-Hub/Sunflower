@@ -20,3 +20,12 @@ export function removeBlockById(block: BlockData, targetId: string): BlockData {
     })),
   };
 }
+
+export function isDescendant(parent: BlockData, childId: string): boolean {
+  for (const slot of parent.children) {
+    if (!slot.block) continue;
+    if (slot.block.id === childId) return true;
+    if (isDescendant(slot.block, childId)) return true;
+  }
+  return false;
+}

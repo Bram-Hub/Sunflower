@@ -1,7 +1,6 @@
 import React from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { BlockData } from "./BlockData";
-import { removeBlockById } from "./BlockEditor";
+import { BlockData, removeBlockById, isDescendant } from "./BlockUtil";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css'; // Import the CSS file
 import { blockConfig, BlockType } from "./BlockConfig";
@@ -22,13 +21,15 @@ export function Block({ block, onUpdate }: Props) {
       accept: "BLOCK",
       drop: (item: { type: BlockType; id?: string; block?: BlockData }) => {
         if (child) return;
-      
-        let newChild: BlockData;
+        if (item.block && (item.block.id === block.id || isDescendant(item.block, block.id))) {
+          // Prevent dropping a block into itself or its own descendant
+          return;
+        }
         
+        let newChild: BlockData;
+
         if (item.block) {
           newChild = item.block;
-
-          // Remove the block by ID from the parent's children list
           const updatedBlock = removeBlockById(block, item.block.id);
 
           // Update the parent block with the new child
@@ -55,7 +56,7 @@ export function Block({ block, onUpdate }: Props) {
               slot.name === name ? { ...slot, block: newChild } : slot
             ),
           };
-        
+
           onUpdate(newBlock);
         }
       },
@@ -77,13 +78,14 @@ export function Block({ block, onUpdate }: Props) {
           <Block
             block={child}
             onUpdate={(newChild) => {
+              // Only update the current slot where the block is being modified
               const updated = { ...block };
               updated.children = updated.children.map((slot) =>
                 slot.name === name
                   ? { ...slot, block: newChild === null ? null : newChild }
                   : slot
               );
-              onUpdate(updated);
+              onUpdate(updated); // Update the parent block state
             }}
           />
         ) : (
@@ -99,12 +101,17 @@ export function Block({ block, onUpdate }: Props) {
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-    end: (_item, monitor) => {
-      if (!monitor.didDrop()) {
-        // If the block was not dropped into a valid drop target, remove it
-        onUpdate(null);
-      }
-    },
+    // end: (_item, monitor) => {
+    //   if (!monitor.didDrop()) {
+    //     // If the block was not dropped into a valid drop target, remove it from the original slot
+    //     if (originalSlot.slotName && originalSlot.parentId) {
+    //       const updatedBlock = removeBlockFromSlot(block, originalSlot.parentId, originalSlot.slotName);
+    //       onUpdate(updatedBlock);
+    //       onUpdate(null); // Remove the block if it wasn't dropped
+    //     }
+        
+    //   }
+    // },
   }), [block]);
 
   const dragRef = React.useRef<HTMLDivElement>(null);

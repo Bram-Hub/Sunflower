@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BlockData } from "./BlockData";
+import { BlockData } from "./BlockUtil";
 
 interface ValueEditorProps {
   block: BlockData;
