@@ -22,8 +22,7 @@ function DraggableBlock({ type }: { type: BlockType }) {
   return (
     <div
       ref={ref}
-      className={`p-2 mb-2 border rounded cursor-move select-none transition 
-        ${isDragging ? "opacity-50" : "bg-white hover:bg-gray-50"}`}
+      className={`palette-block ${isDragging ? "opacity-50" : "palette-block-appear"}`}
     >
       {type.toUpperCase()}
     </div>

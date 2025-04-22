@@ -1,13 +1,19 @@
 /* Block.css */
 
 /* Block container styles */
-.block-container {
+  .block-container {
     padding: 0.75rem;
     border: 1px solid #e5e7eb; /* gray-300 */
     border-radius: 0.375rem; /* rounded-md */
     background-color: white;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* shadow-sm */
     margin-bottom: 0.75rem;
+    cursor: grab;
+  }
+
+  .block-container:hover {
+    background-color: #f9fafb; /* gray-50 */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
   }
   
   /* Block header (type and remove button) */
@@ -25,15 +31,18 @@
   
   .remove-button {
     font-size: 0.875rem;
-    color: #f87171; /* red-400 */
+    color: #ef4444; /* red-500 */
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
   
   .remove-button:hover {
-    text-decoration: underline;
+    background-color: #fee2e2; /* red-100 */
+    color: #b91c1c; /* red-700 */
   }
   
   /* Slots container */
@@ -43,10 +52,11 @@
   
   /* Block slot styles */
   .block-slot {
-    border-radius: 0.375rem; /* rounded-md */
+    border-radius: 0.5rem; /* rounded-md */
     background-color: #f3f4f6; /* gray-100 */
     margin-bottom: 0.5rem;
     transition: background-color 0.2s ease;
+    cursor: default;
   }
   
   .block-slot.filled {
@@ -100,3 +110,48 @@
     border-color: #6366f1; /* indigo-500 */
     box-shadow: 0 0 0 1px #6366f1; /* indigo-500 */
   }
+
+  /* Draggable block styling */
+.palette-block {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #d1d5db; /* Tailwind gray-300 */
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    cursor: grab;
+    user-select: none;
+    font-weight: 600;
+    color: #1f2937; /* Tailwind gray-800 */
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem; /* Tailwind text-sm */
+  }
+  
+  .palette-block:hover {
+    background-color: #f9fafb; /* Tailwind gray-50 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .palette-block:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Optional: animate appearance */
+  .palette-block-appear {
+    animation: fadeInUp 0.3s ease;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
