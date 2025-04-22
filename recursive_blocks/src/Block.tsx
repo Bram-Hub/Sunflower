@@ -30,6 +30,8 @@ export function Block({ block, onUpdate }: Props) {
 
         if (item.block) {
           newChild = item.block;
+          //temp
+          // const updatedBlock = { ...block };
           const updatedBlock = removeBlockById(block, item.block.id);
 
           // Update the parent block with the new child
@@ -77,7 +79,7 @@ export function Block({ block, onUpdate }: Props) {
         {child ? (
           <Block
             block={child}
-            onUpdate={(newChild) => {//OnUpdate function for child block
+            onUpdate={(newChild) => {//OnUpdate function for this slot
               const updated = { ...block };
               updated.children = updated.children.map((slot) =>
                 slot.name === name
@@ -100,18 +102,14 @@ export function Block({ block, onUpdate }: Props) {
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-    // end: (_item, monitor) => {
-    //   if (!monitor.didDrop()) {
-    //     // If the block was not dropped into a valid drop target, remove it from the original slot
-    //     if (originalSlot.slotName && originalSlot.parentId) {
-    //       const updatedBlock = removeBlockFromSlot(block, originalSlot.parentId, originalSlot.slotName);
-    //       onUpdate(updatedBlock);
-    //       onUpdate(null); // Remove the block if it wasn't dropped
-    //     }
-        
-    //   }
-    // },
   }), [block]);
+
+  // Remove the block immediately when drag starts
+  // React.useEffect(() => {
+  //   if (isDragging) {
+  //     onUpdate(null); // Remove the block from its parent
+  //   }
+  // }, [isDragging, onUpdate]);
 
   const dragRef = React.useRef<HTMLDivElement>(null);
   drag(dragRef);
