@@ -1,29 +1,42 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { BlockType } from "./BlockTypes";
 
-const BLOCK_TYPES: BlockType[] = ["call", "if", "value"];
+function DraggableBlock({ type }: { type: BlockType }) {
+  const ref = useRef<HTMLDivElement>(null);
 
-export function BlockPalette() {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: "BLOCK",
+    item: { type },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  }));
+
+  useEffect(() => {
+    if (ref.current) {
+      drag(ref);
+    }
+  }, [ref, drag]);
+
   return (
-    <div className="w-40 border p-2 bg-gray-100">
-      <h2 className="font-bold mb-2">Palette</h2>
-      {BLOCK_TYPES.map(type => (
-        <DraggableBlock key={type} type={type} />
-      ))}
+    <div
+      ref={ref}
+      className={`p-2 mb-2 border rounded cursor-move select-none transition 
+        ${isDragging ? "opacity-50" : "bg-white hover:bg-gray-50"}`}
+    >
+      {type.toUpperCase()}
     </div>
   );
 }
 
-function DraggableBlock({ type }: { type: BlockType }) {
-  const [, drag] = useDrag(() => ({
-    type: "BLOCK",
-    item: { type }
-  }));
-
+export function BlockPalette() {
   return (
-    <div ref={drag} className="p-2 mb-2 bg-white border rounded cursor-move">
-      {type.toUpperCase()}
+    <div className="w-64 p-4 border-r bg-gray-100">
+      <h2 className="font-bold mb-4">Block Palette</h2>
+      <DraggableBlock type="call" />
+      <DraggableBlock type="if" />
+      <DraggableBlock type="value" />
     </div>
   );
 }
