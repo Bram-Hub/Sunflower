@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { BlockData } from "./BlockData";
-import { Block, getDefaultChildren } from "./Block";
+import { Block, getDefaultChildren, getDefaultValues } from "./Block";
 import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
 import './Block.css';
@@ -14,6 +14,7 @@ export function BlockEditor() {
       id: uuidv4(),
       type: blockType,
       children: getDefaultChildren(blockType),
+      num_values: getDefaultValues(blockType),
     });
   };
 

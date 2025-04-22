@@ -4,6 +4,7 @@ import { BlockData } from "./BlockData";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css'; // Import the CSS file
 import { blockConfig, BlockType } from "./BlockConfig";
+import { ValueEditor } from "./ValueEditor";
 
 interface Props {
   block: BlockData;
@@ -23,9 +24,12 @@ export function Block({ block, onUpdate }: Props) {
 
         const newChild: BlockData = {
           id: uuidv4(),
-          type: item.type as any,
+          type: item.type as BlockType,
           children: getDefaultChildren(item.type),
+          num_values: getDefaultValues(item.type),
         };
+
+        console.log("Dropping block:", newChild);
 
         const newBlock = {
           ...block,
@@ -82,43 +86,13 @@ export function Block({ block, onUpdate }: Props) {
         </button>
       </div>
 
-      {/* {block.type === "value" && (
-        <ValueEditor block={block} onUpdate={onUpdate} />
-      )} */}
-
       <div className="slots-container">
         {block.children.map((slot) => (
           <div key={slot.name}>{renderSlot(slot)}</div>
         ))}
       </div>
-    </div>
-  );
-}
 
-
-function ValueEditor({
-  block,
-  onUpdate,
-}: {
-  block: BlockData;
-  onUpdate: (newBlock: BlockData | null) => void;
-}) {
-  const [input, setInput] = useState(block.value ?? "");
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-    onUpdate({ ...block, value: e.target.value });
-  };
-
-  return (
-    <div className="value-editor">
-      <label className="value-label">Value:</label>
-      <input
-        type="text"
-        value={input}
-        onChange={handleChange}
-        className="value-input"
-      />
+      <ValueEditor block={block} onUpdate={onUpdate} />
     </div>
   );
 }
@@ -126,4 +100,9 @@ function ValueEditor({
 export function getDefaultChildren(type: BlockType): Array<{ name: string; block: BlockData | null }> {
   const blockDef = blockConfig[type];
   return blockDef ? blockDef.children : [];
+}
+
+export function getDefaultValues(type: BlockType): Array<{ name: string; value: number }> {
+  const blockDef = blockConfig[type];
+  return blockDef ? blockDef.num_values : [];
 }
