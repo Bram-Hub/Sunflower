@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useDrop } from "react-dnd";
-import { BlockData } from "./BlockTypes";
+import { BlockData } from "./BlockData";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css'; // Import the CSS file
+import { blockConfig, BlockType } from "./BlockConfig";
 
 interface Props {
   block: BlockData;
@@ -10,14 +11,14 @@ interface Props {
 }
 
 export function Block({ block, onUpdate }: Props) {
-  const renderSlot = (slotName: string) => {
-    const child = block.children[slotName];
+  const renderSlot = (slot: { name: string; block: BlockData | null }) => {
+    const { name, block: child } = slot;
 
     const dropRef = React.useRef<HTMLDivElement>(null);
 
     const [, drop] = useDrop(() => ({
       accept: "BLOCK",
-      drop: (item: { type: string }) => {
+      drop: (item: { type: BlockType }) => {
         if (child) return;
 
         const newChild: BlockData = {
@@ -28,15 +29,14 @@ export function Block({ block, onUpdate }: Props) {
 
         const newBlock = {
           ...block,
-          children: {
-            ...block.children,
-            [slotName]: newChild,
-          },
+          children: block.children.map((slot) =>
+            slot.name === name ? { ...slot, block: newChild } : slot
+          ),
         };
 
         onUpdate(newBlock);
       },
-    }), [child, block, slotName]);
+    }), [child, block, name]);
 
     React.useEffect(() => {
       if (dropRef.current) {
@@ -49,18 +49,17 @@ export function Block({ block, onUpdate }: Props) {
         ref={dropRef}
         className={`block-slot ${child ? "filled" : "empty"}`}
       >
-        <strong>{slotName}:</strong>{" "}
+        <strong>{name}:</strong>{" "}
         {child ? (
           <Block
             block={child}
             onUpdate={(newChild) => {
               const updated = { ...block };
-              if (newChild === null) {
-                delete updated.children[slotName];
-                updated.children[slotName] = null; // Explicitly set to null
-              } else {
-                updated.children[slotName] = newChild;
-              }
+              updated.children = updated.children.map((slot) =>
+                slot.name === name
+                  ? { ...slot, block: newChild === null ? null : newChild }
+                  : slot
+              );
               onUpdate(updated);
             }}
           />
@@ -83,19 +82,19 @@ export function Block({ block, onUpdate }: Props) {
         </button>
       </div>
 
-      {/* Render editable field for 'value' blocks */}
-      {block.type === "value" && (
+      {/* {block.type === "value" && (
         <ValueEditor block={block} onUpdate={onUpdate} />
-      )}
+      )} */}
 
       <div className="slots-container">
-        {Object.keys(block.children).map((slotName) => (
-          <div key={slotName}>{renderSlot(slotName)}</div>
+        {block.children.map((slot) => (
+          <div key={slot.name}>{renderSlot(slot)}</div>
         ))}
       </div>
     </div>
   );
 }
+
 
 function ValueEditor({
   block,
@@ -124,13 +123,7 @@ function ValueEditor({
   );
 }
 
-function getDefaultChildren(type: string): Record<string, BlockData | null> {
-  switch (type) {
-    case "if":
-      return { condition: null, then: null, else: null };
-    case "call":
-      return { func: null, arg1: null, arg2: null };
-    default:
-      return {};
-  }
+export function getDefaultChildren(type: BlockType): Array<{ name: string; block: BlockData | null }> {
+  const blockDef = blockConfig[type];
+  return blockDef ? blockDef.children : [];
 }

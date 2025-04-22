@@ -1,17 +1,18 @@
 import React, { useState, useRef } from "react";
-import { BlockData } from "./BlockTypes";
-import { Block } from "./Block";
+import { BlockData } from "./BlockData";
+import { Block, getDefaultChildren } from "./Block";
 import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
 import './Block.css';
+import { BlockType } from "./BlockConfig";
 
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
 
-  const handleDropRoot = (blockType: string) => {
+  const handleDropRoot = (blockType: BlockType) => {
     setRootBlock({
       id: uuidv4(),
-      type: blockType as any,
+      type: blockType,
       children: getDefaultChildren(blockType),
     });
   };
@@ -32,14 +33,14 @@ function RootDropArea({
   onDrop,
   rootBlock,
 }: {
-  onDrop: (type: string) => void;
+  onDrop: (type: BlockType) => void;
   rootBlock: BlockData | null;
 }) {
   const dropRef = useRef<HTMLDivElement>(null);
 
   const [, drop] = useDrop(() => ({
     accept: "BLOCK",
-    drop: (item: { type: string }) => onDrop(item.type),
+    drop: (item: { type: BlockType }) => onDrop(item.type),
   }));
 
   // Attach the drop target functionality to the div ref
@@ -53,20 +54,9 @@ function RootDropArea({
     <div
       ref={dropRef}
       // className={`root-drop-area ${rootBlock ? "root-drop-filled" : "root-drop-placeholder"}`}
-      className={`block-slot ${rootBlock ? "block-slot-filled" : "block-slot-placeholder"}`}
+      className={`block-slot ${rootBlock ? "filled" : "empty"}`}
     >
       {rootBlock ? "Root Block Added" : "Drop a block to start"}
     </div>
   );
-}
-
-function getDefaultChildren(type: string): Record<string, BlockData | null> {
-  if (type === "if") {
-    return {
-      condition: null,
-      then: null,
-      else: null
-    };
-  }
-  return {} as Record<string, BlockData | null>;
 }

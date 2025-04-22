@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useDrag } from "react-dnd";
-import { BlockType } from "./BlockTypes";
+import { BlockType } from "./BlockConfig";
 
 function DraggableBlock({ type }: { type: BlockType }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -34,9 +34,10 @@ export function BlockPalette() {
   return (
     <div className="w-64 p-4 border-r bg-gray-100">
       <h2 className="font-bold mb-4">Block Palette</h2>
-      <DraggableBlock type="call" />
-      <DraggableBlock type="if" />
-      <DraggableBlock type="value" />
+      <DraggableBlock type="Zero" />
+      <DraggableBlock type="Successor" />
+      <DraggableBlock type="Primitive Recursion" />
+      <DraggableBlock type="Composition" />
     </div>
   );
 }
