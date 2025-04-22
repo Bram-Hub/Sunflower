@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDrop } from "react-dnd";
 import { BlockData } from "./BlockTypes";
 import { v4 as uuidv4 } from "uuid";
-import './Block.css';
+import './Block.css'; // Import the CSS file
 
 interface Props {
   block: BlockData;
@@ -17,7 +17,6 @@ export function Block({ block, onUpdate }: Props) {
 
     const [, drop] = useDrop(() => ({
       accept: "BLOCK",
-      // canDrop: () => !child,
       drop: (item: { type: string }) => {
         if (child) return;
 
@@ -48,41 +47,36 @@ export function Block({ block, onUpdate }: Props) {
     return (
       <div
         ref={dropRef}
-        className={`block-slot ${child ? "block-slot-filled" : "block-slot-placeholder"}`}
+        className={`block-slot ${child ? "filled" : "empty"}`}
       >
         <strong>{slotName}:</strong>{" "}
         {child ? (
           <Block
             block={child}
             onUpdate={(newChild) => {
-              // Deep copy the block to prevent mutation of the original block
               const updated = { ...block };
               if (newChild === null) {
-                // If newChild is null, remove the child from the block
                 delete updated.children[slotName];
-                updated.children[slotName] = null;//explicitly set to null
+                updated.children[slotName] = null; // Explicitly set to null
               } else {
-                // Otherwise, update the child block
                 updated.children[slotName] = newChild;
               }
-            
-              // Call onUpdate with the updated blocks
               onUpdate(updated);
             }}
           />
         ) : (
-          <span className="text-gray-400">Drop block here</span>
+          <span className="empty-text">Drop block here</span>
         )}
       </div>
     );
   };
 
   return (
-    <div className="p-2 border rounded bg-white shadow mb-2">
-      <div className="flex justify-between items-center">
-        <div className="font-bold">{block.type.toUpperCase()}</div>
+    <div className="block-container">
+      <div className="block-header">
+        <div className="block-type">{block.type.toUpperCase()}</div>
         <button
-          className="text-sm text-red-500 hover:underline"
+          className="remove-button"
           onClick={() => onUpdate(null)}
         >
           Remove
@@ -94,7 +88,7 @@ export function Block({ block, onUpdate }: Props) {
         <ValueEditor block={block} onUpdate={onUpdate} />
       )}
 
-      <div className="ml-2">
+      <div className="slots-container">
         {Object.keys(block.children).map((slotName) => (
           <div key={slotName}>{renderSlot(slotName)}</div>
         ))}
@@ -118,13 +112,13 @@ function ValueEditor({
   };
 
   return (
-    <div className="mt-2">
-      <label className="text-sm text-gray-600">Value:</label>
+    <div className="value-editor">
+      <label className="value-label">Value:</label>
       <input
         type="text"
         value={input}
         onChange={handleChange}
-        className="ml-2 p-1 border rounded text-sm"
+        className="value-input"
       />
     </div>
   );
