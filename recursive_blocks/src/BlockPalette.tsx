@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { blockConfig, BlockType } from "./BlockConfig";
 

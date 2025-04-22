@@ -9,14 +9,20 @@ import { BlockType } from "./BlockConfig";
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
 
-  const handleDropRoot = (blockType: BlockType) => {
-    setRootBlock({
-      id: uuidv4(),
-      type: blockType,
-      children: getDefaultChildren(blockType),
-      num_values: getDefaultValues(blockType),
-    });
+  const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
+    if (!newBlock) return;
+  
+    let cleaned = rootBlock;
+  
+    // Remove the moved block from the tree if needed
+    if (movedId && cleaned) {
+      cleaned = removeBlockById(cleaned, movedId);
+    }
+  
+    setRootBlock(newBlock);
   };
+  
+  
 
   return (
     <div className="flex-1 border p-4 bg-gray-50">
@@ -24,7 +30,7 @@ export function BlockEditor() {
       {rootBlock ? (
         <Block block={rootBlock} onUpdate={setRootBlock} />
       ) : (
-        <RootDropArea onDrop={handleDropRoot} rootBlock={rootBlock} />
+        <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
       )}
     </div>
   );
@@ -34,14 +40,25 @@ function RootDropArea({
   onDrop,
   rootBlock,
 }: {
-  onDrop: (type: BlockType) => void;
+  onDrop: (newBlock: BlockData | null, movedId?: string) => void;
   rootBlock: BlockData | null;
 }) {
   const dropRef = useRef<HTMLDivElement>(null);
 
   const [, drop] = useDrop(() => ({
     accept: "BLOCK",
-    drop: (item: { type: BlockType }) => onDrop(item.type),
+    drop: (item: { type: BlockType; block?: BlockData }) => {
+      if (item.block) {
+        onDrop(item.block, item.block.id); // If block is being moved
+      } else {
+        onDrop({
+          id: uuidv4(),
+          type: item.type,
+          children: getDefaultChildren(item.type),
+          num_values: getDefaultValues(item.type),
+        });
+      }
+    },
   }));
 
   // Attach the drop target functionality to the div ref
@@ -54,10 +71,23 @@ function RootDropArea({
   return (
     <div
       ref={dropRef}
-      // className={`root-drop-area ${rootBlock ? "root-drop-filled" : "root-drop-placeholder"}`}
       className={`block-slot ${rootBlock ? "filled" : "empty"}`}
     >
       {rootBlock ? "Root Block Added" : "Drop a block to start"}
     </div>
   );
+}
+
+export function removeBlockById(block: BlockData, targetId: string): BlockData {
+  return {
+    ...block,
+    children: block.children.map((slot) => ({
+      name: slot.name,
+      block: slot.block?.id === targetId
+        ? null
+        : slot.block
+          ? { ...removeBlockById(slot.block, targetId) }
+          : null,
+    })),
+  };
 }

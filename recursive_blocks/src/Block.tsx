@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { useDrop } from "react-dnd";
+import React from "react";
+import { useDrag, useDrop } from "react-dnd";
 import { BlockData } from "./BlockData";
+import { removeBlockById } from "./BlockEditor";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css'; // Import the CSS file
 import { blockConfig, BlockType } from "./BlockConfig";
@@ -19,26 +20,44 @@ export function Block({ block, onUpdate }: Props) {
 
     const [, drop] = useDrop(() => ({
       accept: "BLOCK",
-      drop: (item: { type: BlockType }) => {
+      drop: (item: { type: BlockType; id?: string; block?: BlockData }) => {
         if (child) return;
+      
+        let newChild: BlockData;
+        
+        if (item.block) {
+          newChild = item.block;
 
-        const newChild: BlockData = {
-          id: uuidv4(),
-          type: item.type as BlockType,
-          children: getDefaultChildren(item.type),
-          num_values: getDefaultValues(item.type),
-        };
+          // Remove the block by ID from the parent's children list
+          const updatedBlock = removeBlockById(block, item.block.id);
 
-        console.log("Dropping block:", newChild);
+          // Update the parent block with the new child
+          const newBlock = {
+            ...updatedBlock,
+            children: updatedBlock.children.map((slot) =>
+              slot.name === name ? { ...slot, block: newChild } : slot
+            ),
+          };
 
-        const newBlock = {
-          ...block,
-          children: block.children.map((slot) =>
-            slot.name === name ? { ...slot, block: newChild } : slot
-          ),
-        };
+          onUpdate(newBlock);
+        } else {
+          // New block from palette
+          newChild = {
+            id: uuidv4(),
+            type: item.type,
+            children: getDefaultChildren(item.type),
+            num_values: getDefaultValues(item.type),
+          };
 
-        onUpdate(newBlock);
+          const newBlock = {
+            ...block,
+            children: block.children.map((slot) =>
+              slot.name === name ? { ...slot, block: newChild } : slot
+            ),
+          };
+        
+          onUpdate(newBlock);
+        }
       },
     }), [child, block, name]);
 
@@ -74,8 +93,27 @@ export function Block({ block, onUpdate }: Props) {
     );
   };
 
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: "BLOCK",
+    item: { type: block.type, id: block.id, block },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    end: (_item, monitor) => {
+      if (!monitor.didDrop()) {
+        // If the block was not dropped into a valid drop target, remove it
+        onUpdate(null);
+      }
+    },
+  }), [block]);
+
+  const dragRef = React.useRef<HTMLDivElement>(null);
+  drag(dragRef);
+
   return (
-    <div className="block-container">
+    <div className="block-container" 
+      ref={dragRef}
+      style={{ opacity: isDragging ? 0.5 : 1 }}>
       <div className="block-header">
         <div className="block-type">{block.type.toUpperCase()}</div>
         <button
