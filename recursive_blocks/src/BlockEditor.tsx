@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { BlockData, removeBlockById } from "./BlockUtil";
+import { BlockData, evaluateBlock, removeBlockById } from "./BlockUtil";
 import { Block, getDefaultChildren, getDefaultValues } from "./Block";
 import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
@@ -69,6 +69,24 @@ export function BlockEditor() {
             />
           ))}
         </div>
+
+        {/* Evaluate button */}
+        <button
+          onClick={() => {
+            if (rootBlock) {
+              try {
+                const result = evaluateBlock(rootBlock, inputs);
+                alert(`Result: ${result}`);
+              } catch (error: any) {
+                alert(`Error: ${error.message}`);
+              }
+            } else {
+              alert("No root block to evaluate.");
+            }
+          }}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Evaluate
+        </button>
       </div>
     </div>
   );

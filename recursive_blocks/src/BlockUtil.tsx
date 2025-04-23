@@ -1,4 +1,4 @@
-import { BlockType } from "./BlockConfig";
+import { blockConfig, BlockType, BlockEvaluator } from "./BlockConfig";
 
 export interface BlockData {
   id: string;
@@ -28,4 +28,15 @@ export function isDescendant(parent: BlockData, childId: string): boolean {
     if (isDescendant(slot.block, childId)) return true;
   }
   return false;
+}
+
+export function evaluateBlock(
+  block: BlockData,
+  inputs: number[],
+  evaluate: BlockEvaluator = evaluateBlock
+): number {
+  const config = blockConfig[block.type];
+  const ev = config.evaluate(block, inputs, evaluate);
+  console.log(`Evaluating block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  return ev;
 }
