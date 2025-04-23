@@ -8,21 +8,31 @@ import { BlockType } from "./BlockConfig";
 
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
+  const [inputs, setInputs] = useState<number[]>([]);
+  const [inputCount, setInputCount] = useState<number>(0);
 
   const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
     if (!newBlock) return;
-  
     let cleaned = rootBlock;
-  
-    // Remove the moved block from the tree if needed
+
     if (movedId && cleaned) {
       cleaned = removeBlockById(cleaned, movedId);
     }
-  
+
     setRootBlock(newBlock);
   };
-  
-  
+
+  const handleInputCountChange = (count: number) => {
+    const clamped = Math.max(0, count);
+    setInputCount(clamped);
+    setInputs(Array.from({ length: clamped }, (_, i) => inputs[i] ?? 0));
+  };
+
+  const handleInputChange = (index: number, value: number) => {
+    const updated = [...inputs];
+    updated[index] = value;
+    setInputs(updated);
+  };
 
   return (
     <div className="flex-1 border p-4 bg-gray-50">
@@ -32,6 +42,34 @@ export function BlockEditor() {
       ) : (
         <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
       )}
+
+      <hr className="my-6" />
+
+      <div className="input-section">
+        <h3 className="font-semibold mb-2">Inputs</h3>
+        <label className="block mb-2">
+          Number of Inputs:
+          <input
+            type="number"
+            value={inputCount}
+            onChange={(e) => handleInputCountChange(parseInt(e.target.value))}
+            className="ml-2 px-2 py-1 border rounded w-20"
+          />
+        </label>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {inputs.map((val, i) => (
+            <input
+              key={i}
+              type="number"
+              value={val}
+              onChange={(e) => handleInputChange(i, parseFloat(e.target.value))}
+              className="px-2 py-1 border rounded"
+              placeholder={`Input ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -49,7 +87,7 @@ function RootDropArea({
     accept: "BLOCK",
     drop: (item: { type: BlockType; block?: BlockData }) => {
       if (item.block) {
-        onDrop(item.block, item.block.id); // If block is being moved
+        onDrop(item.block, item.block.id);
       } else {
         onDrop({
           id: uuidv4(),
@@ -61,12 +99,11 @@ function RootDropArea({
     },
   }));
 
-  // Attach the drop target functionality to the div ref
   React.useEffect(() => {
     if (dropRef.current) {
-      drop(dropRef.current); // Connect the ref with the drop functionality
+      drop(dropRef.current);
     }
-  }, [drop, dropRef]);
+  }, [drop]);
 
   return (
     <div
@@ -77,4 +114,3 @@ function RootDropArea({
     </div>
   );
 }
-

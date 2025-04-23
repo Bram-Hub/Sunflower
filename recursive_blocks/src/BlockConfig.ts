@@ -24,7 +24,7 @@ export const blockConfig = {
     type: "Composition" as BlockType,
     children: [
       { name: "f", block: null },
-      { name: "g", block: null }
+      { name: "g1", block: null }
     ],
     num_values: []
   },
