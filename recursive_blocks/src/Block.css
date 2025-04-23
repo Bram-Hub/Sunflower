@@ -1,19 +1,43 @@
 /* Block.css */
 
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+    --block-bg-color: whitesmoke;
+    --block-text-color: black;
+    --alt: darkgray;
+    --contrast-col: orange;
+  }
+  
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --block-bg-color: dimgrey;
+    --block-text-color: white;
+    --alt: darkgray;
+    --contrast-col: steelblue;
+  }
+  h2{
+    color: white;
+  }
+}
+
 /* Block container styles */
   .block-container {
     padding: 0.75rem;
     border: 1px solid #e5e7eb; /* gray-300 */
     border-radius: 0.375rem; /* rounded-md */
-    background-color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* shadow-sm */
+    background-color: var(--block-bg-color);
+    box-shadow: 3px 3px var(--contrast-col);
     margin-bottom: 0.75rem;
     cursor: grab;
   }
 
   .block-container:hover {
-    background-color: #f9fafb; /* gray-50 */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 3px 4px var(--contrast-col);
+    transform: translateY(-1px);
   }
   
   /* Block header (type and remove button) */
@@ -26,6 +50,7 @@
   
   .block-type {
     font-weight: bold;
+    color: var(--block-text-color);
     font-size: 0.875rem;
   }
   
@@ -53,28 +78,32 @@
   /* Block slot styles */
   .block-slot {
     border-radius: 0.5rem; /* rounded-md */
-    background-color: #f3f4f6; /* gray-100 */
+    background-color: var(--block-bg-color); /* gray-100 */
     margin-bottom: 0.5rem;
     transition: background-color 0.2s ease;
     cursor: default;
+    color: var(--block-text-color);
   }
   
   .block-slot.filled {
-    background-color: #e5e7eb; /* gray-200 */
+    background-color: var(--alt); /* gray-200 */
+    color:black;
+    box-shadow: 3px 3px var(--contrast-col);
   }
+
+  .block-slot.filled > strong {
+    padding: 5px;
+  }
+
   
   .block-slot.empty {
     padding: 0.5rem;
     border: 1px solid #d1d5db; /* gray-300 */
-    background-color: #f9fafb; /* gray-50 */
-  }
-  
-  .block-slot:hover {
-    background-color: #e4e4e7; /* gray-200 on hover */
+    background-color: var(--block-bg-color); /* gray-50 */
   }
   
   .empty-text {
-    color: #9ca3af; /* gray-400 */
+    color: var(--block-text-color); /* gray-400 */
     font-size: 0.875rem;
   }
   
@@ -92,7 +121,7 @@
   
   .value-label {
     font-size: 0.875rem;
-    color: #4b5563; /* gray-600 */
+    color: var(--block-text-color); /* gray-600 */
     min-width: 4rem;
     flex-shrink: 0;
   }
@@ -117,20 +146,20 @@
     margin-bottom: 0.5rem;
     border: 1px solid #d1d5db; /* Tailwind gray-300 */
     border-radius: 0.5rem;
-    background-color: #ffffff;
+    background-color: var(--block-bg-color);
     cursor: grab;
     user-select: none;
     font-weight: 600;
-    color: #1f2937; /* Tailwind gray-800 */
+    color: var(--block-text-color); /* Tailwind gray-800 */
     transition: all 0.2s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     font-size: 0.875rem; /* Tailwind text-sm */
   }
   
   .palette-block:hover {
-    background-color: #f9fafb; /* Tailwind gray-50 */
+    background-color: var(--block-bg-color); /* Tailwind gray-50 */
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 3px 3px var(--contrast-col);
   }
   
   .palette-block:active {
