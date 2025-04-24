@@ -71,7 +71,7 @@ export const blockConfig: Record<BlockType, {
     type: "Projection" as BlockType,
     children: [],
     num_values: [
-      { name: "i", value: 0 },
+      { name: "i", value: 1 },
     ],
     evaluate: (block, inputs, _evaluate) => {
       // Projection block returns the i-th input
@@ -79,7 +79,7 @@ export const blockConfig: Record<BlockType, {
         throw new Error("Projection block requires at least one input.");
       }
       const i = block!.num_values!.find(v => v.name === "i")?.value ?? 0;
-      return inputs[i];
+      return inputs[i-1];
     }
   },
   "Composition": {
