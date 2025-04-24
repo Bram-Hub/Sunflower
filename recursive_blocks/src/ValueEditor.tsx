@@ -22,7 +22,7 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
   // Handle change in an individual value input field
   const handleValueChange = (index: number, newValue: string) => {
     const updatedValues = [...values];
-    updatedValues[index] = { ...updatedValues[index], value: parseFloat(newValue) || 0 };
+    updatedValues[index] = { ...updatedValues[index], value: parseFloat(newValue) || 1 };
     setValues(updatedValues);
   };
 
@@ -37,6 +37,8 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
           <label className="value-label">{val.name}</label>
           <input
             type="number"
+            min="1"
+            step="1"
             value={val.value}
             onChange={(e) => handleValueChange(index, e.target.value)}
             className="value-input"

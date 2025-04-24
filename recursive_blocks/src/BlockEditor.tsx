@@ -166,6 +166,8 @@ export function BlockEditor() {
           <input
             type="number"
             value={inputCount}
+            min={0}
+            step={1}
             onChange={(e) => handleInputCountChange(parseInt(e.target.value))}
             className="ml-2 px-2 py-1 border rounded w-20"
           />
@@ -177,6 +179,8 @@ export function BlockEditor() {
               key={i}
               type="number"
               value={val}
+              min={0}
+              step={1}
               onChange={(e) => handleInputChange(i, parseFloat(e.target.value))}
               className="px-2 py-1 border rounded"
               placeholder={`Input ${i + 1}`}
