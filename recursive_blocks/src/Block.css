@@ -15,8 +15,8 @@
   :root {
     --block-bg-color: dimgrey;
     --block-text-color: white;
-    --alt: darkgray;
-    --contrast-col: steelblue;
+    --alt: #322413;
+    --contrast-col: #DF6D26;
   }
   h2{
     color: white;
@@ -97,7 +97,7 @@
   
   .block-slot.filled {
     background-color: var(--alt); /* gray-200 */
-    color:black;
+    color:var(--block-text-color);
     box-shadow: 1px 1px #DF6D26, 2px 2px #FBA914, 3px 3px #FBD405;
   }
 
@@ -193,4 +193,49 @@
       transform: translateY(0);
     }
   }
+  .sideP{
+    height: 100vh;
+    background-color: var(--alt);
+  }
   
+  .flexcont{
+    display: inline-flex;
+    width: inherit
+  }
+  
+  body {
+    width: 100%;
+  }
+  
+  #root {
+    width: 100%;
+  }
+  
+  .editor {
+    width: fit-content;
+    margin-left: 5px;
+  }
+  
+  button, input[type=file] {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: var(--alt);
+    color: var(--block-text-color);
+    cursor: pointer;
+    transition: border-color 0.25s;
+  }
+  button:hover {
+    border-color: var(--contrast-col);
+  }
+  button:focus,
+  button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+
+  label {
+    color: var(--block-text-color);
+  }

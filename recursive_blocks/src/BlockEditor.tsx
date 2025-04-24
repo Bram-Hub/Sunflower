@@ -50,7 +50,7 @@ export function BlockEditor() {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
-    const filename = `${timestamp}.bram`;
+    const filename = `${timestamp}.bramflower`;
 
     const stateToSave: EditorSaveState = {
       fileType: "BRAM_EDITOR_STATE_V1",
@@ -95,7 +95,7 @@ export function BlockEditor() {
               loadedState.fileType !== "BRAM_EDITOR_STATE_V1" || 
               !Array.isArray(loadedState.inputs) ||
               typeof loadedState.inputCount !== 'number') {
-             throw new Error("Invalid or incompatible .bram file.");
+             throw new Error("Invalid or incompatible .bramflower file.");
           }
           setRootBlock(loadedState.rootBlock);
           setInputs(loadedState.inputs);
@@ -121,21 +121,21 @@ export function BlockEditor() {
   };
 
   return (
-    <div className="flex-1 border p-4 bg-gray-50">
+    <div className="editor flex-1 border p-4 bg-gray-50">
       <div className="flex justify-between items-center mb-4"> {}
           <h2 className="font-bold">Editor</h2>
           <div> {/* Container for buttons */}
               <button onClick={handleSave} className="mr-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                  Save (.bram)
+                  Save (.bramflower)
               </button>
               <label htmlFor="load-input" className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 cursor-pointer">
-                  Load (.bram)
+                  Load (.bramflower)
               </label>
               <input
                   id="load-input"
                   type="file"
                   // Prioritize .bram, remove explicit json type
-                  accept=".bram,application/octet-stream"
+                  accept=".bramflower,application/octet-stream"
                   onChange={handleLoad}
                   className="hidden"
               />

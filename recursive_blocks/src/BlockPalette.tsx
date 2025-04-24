@@ -31,7 +31,7 @@ function DraggableBlock({ type }: { type: BlockType }) {
 
 export function BlockPalette() {
   return (
-    <div className="w-64 p-4 border-r bg-gray-100">
+    <div className="sideP">
       <h2 className="font-bold mb-4">Block Palette</h2>
       {Object.keys(blockConfig).map((blockType) => (
         <DraggableBlock key={blockType} type={blockType as BlockType} />
