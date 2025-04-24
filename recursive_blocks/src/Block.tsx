@@ -7,13 +7,51 @@ import { blockConfig, BlockType } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 
 interface Props {
-  block: BlockData;
+  block: BlockData | null; // Allow null to placeholder for empty slots
   onUpdate: (newBlock: BlockData | null) => void; // Allow null to delete
 }
 
 export function Block({ block, onUpdate }: Props) {
+  if (!block) {
+    return <span className="empty-text">Drop block here</span>;
+  }
+
+  // const dynamicKey = `${block.id}-${block!.num_values!.find(v => v.name === "m")?.value || 1}`;
+
   const renderSlot = (slot: { name: string; block: BlockData | null }) => {
     const { name, block: child } = slot;
+
+    React.useEffect(() => {
+      const childBlockData = child as BlockData;
+      if (childBlockData) {
+        const childConfig = blockConfig[childBlockData.type];
+        if (childConfig.dynamicChildren) {
+          const nextChildren = childConfig.dynamicChildren(childBlockData);
+          const prevChildren = childBlockData.children;
+
+          const changed =
+            prevChildren.length !== nextChildren.length ||
+            prevChildren.some((c, i) => c.name !== nextChildren[i]?.name);
+
+          if (changed) {
+            // Create a fully new block object — don’t mutate
+            const updatedChild = {
+              ...childBlockData,
+              id: uuidv4(), // Ensure a new ID to trigger re-render
+              children: nextChildren,
+            };
+
+            const newBlock = {
+              ...block,
+              children: block.children.map((slot) =>
+                slot.name === name ? { ...slot, block: updatedChild } : slot
+              ),
+            };
+            onUpdate(newBlock); // Update the parent block state
+          }
+        }
+      }
+    }, [JSON.stringify(child?.num_values)]);
 
     const dropRef = React.useRef<HTMLDivElement>(null);
 
@@ -76,8 +114,8 @@ export function Block({ block, onUpdate }: Props) {
         className={`block-slot ${child ? "filled" : "empty"}`}
       >
         <strong>{name}:</strong>{" "}
-        {child ? (
-          <Block
+        {/* {child ? ( */}
+          <Block key={child?.id ?? `empty-${block.id}-${name}`}
             block={child}
             onUpdate={(newChild) => {//OnUpdate function for this slot
               const updated = { ...block };
@@ -89,9 +127,9 @@ export function Block({ block, onUpdate }: Props) {
               onUpdate(updated); // Update the parent block state
             }}
           />
-        ) : (
+        {/* ) : (
           <span className="empty-text">Drop block here</span>
-        )}
+        )} */}
       </div>
     );
   };
@@ -130,7 +168,7 @@ export function Block({ block, onUpdate }: Props) {
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={slot.name}>{renderSlot(slot)}</div>
+          <div key={`${block.id}-${slot.name}`}>{renderSlot(slot)}</div>
         ))}
       </div>
 
@@ -146,5 +184,5 @@ export function getDefaultChildren(type: BlockType): Array<{ name: string; block
 
 export function getDefaultValues(type: BlockType): Array<{ name: string; value: number }> {
   const blockDef = blockConfig[type];
-  return blockDef ? blockDef.num_values : [];
+  return blockDef!.num_values ?? [];
 }
