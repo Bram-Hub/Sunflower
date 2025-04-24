@@ -13,10 +13,12 @@ interface EditorSaveState {
   inputCount: number;
 }
 
+const DEFAULT_INPUT_COUNT = 2;
+
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
-  const [inputs, setInputs] = useState<number[]>([]);
-  const [inputCount, setInputCount] = useState<number>(0);
+  const [inputs, setInputs] = useState<number[]>([DEFAULT_INPUT_COUNT]);
+  const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
 
   const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
     if (!newBlock) return;
