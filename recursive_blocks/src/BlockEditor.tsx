@@ -1,10 +1,17 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback  } from "react";
 import { BlockData, evaluateBlock, removeBlockById } from "./BlockUtil";
 import { Block, getDefaultChildren, getDefaultValues } from "./Block";
 import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
 import './Block.css';
 import { BlockType } from "./BlockConfig";
+
+interface EditorSaveState {
+  fileType: string;
+  rootBlock: BlockData | null;
+  inputs: number[];
+  inputCount: number;
+}
 
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
@@ -34,9 +41,106 @@ export function BlockEditor() {
     setInputs(updated);
   };
 
+  const handleSave = useCallback(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
+    const filename = `${timestamp}.bram`;
+
+    const stateToSave: EditorSaveState = {
+      fileType: "BRAM_EDITOR_STATE_V1",
+      rootBlock,
+      inputs,
+      inputCount,
+    };
+
+    try {
+      const stateString = JSON.stringify(stateToSave, null, 2);
+      const blob = new Blob([stateString], { type: 'application/octet-stream' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename; // Use the generated filename
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(link.href);
+      console.log("State saved successfully as:", filename);
+    } catch (error) {
+      console.error("Failed to save state:", error);
+      alert(`Error saving file: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [rootBlock, inputs, inputCount]);
+
+  const handleLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = '';
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const content = e.target?.result;
+      if (typeof content === 'string') {
+        try {
+          const loadedState: EditorSaveState = JSON.parse(content);
+          if (typeof loadedState !== 'object' || loadedState === null ||
+              loadedState.fileType !== "BRAM_EDITOR_STATE_V1" || 
+              !Array.isArray(loadedState.inputs) ||
+              typeof loadedState.inputCount !== 'number') {
+             throw new Error("Invalid or incompatible .bram file.");
+          }
+          setRootBlock(loadedState.rootBlock);
+          setInputs(loadedState.inputs);
+          setInputCount(loadedState.inputCount);
+
+          console.log("State loaded successfully.");
+        } catch (error) {
+          console.error("Failed to load or parse state file:", error);
+          alert(`Error loading file: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      } else {
+         console.error("Failed to read file content as string.");
+         alert("Error reading file content.");
+      }
+    };
+
+    reader.onerror = (error) => {
+      console.error("Error reading file:", error);
+      alert("Error reading file.");
+    };
+
+    reader.readAsText(file);
+  };
+
   return (
     <div className="flex-1 border p-4 bg-gray-50">
-      <h2 className="font-bold mb-4">Editor</h2>
+      <div className="flex justify-between items-center mb-4"> {}
+          <h2 className="font-bold">Editor</h2>
+          <div> {/* Container for buttons */}
+              <button onClick={handleSave} className="mr-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                  Save (.bram)
+              </button>
+              <label htmlFor="load-input" className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 cursor-pointer">
+                  Load (.bram)
+              </label>
+              <input
+                  id="load-input"
+                  type="file"
+                  // Prioritize .bram, remove explicit json type
+                  accept=".bram,application/octet-stream"
+                  onChange={handleLoad}
+                  className="hidden"
+              />
+          </div>
+      </div>
       {rootBlock ? (
         <Block block={rootBlock} onUpdate={setRootBlock} />
       ) : (
