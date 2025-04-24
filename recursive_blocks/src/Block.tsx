@@ -15,29 +15,43 @@ export function Block({ block, onUpdate }: Props) {
   if (!block) {
     return <span className="empty-text">Drop block here</span>;
   }
-  React.useEffect(() => {
-    const config = blockConfig[block.type];
-    if (!config.dynamicChildren) return;
-  
-    const nextChildren = config.dynamicChildren(block);
-    const prevChildren = block.children;
-  
-    const changed =
-      prevChildren.length !== nextChildren.length ||
-      prevChildren.some((c, i) => c.name !== nextChildren[i]?.name);
-  
-    if (changed) {
-      // Create a fully new block object — don’t mutate
-      const updatedBlock = {
-        ...block,
-        children: nextChildren,
-      };
-      onUpdate(updatedBlock);
-    }
-  }, [block.type, JSON.stringify(block.num_values)]); // stable deps
+
+  // const dynamicKey = `${block.id}-${block!.num_values!.find(v => v.name === "m")?.value || 1}`;
 
   const renderSlot = (slot: { name: string; block: BlockData | null }) => {
     const { name, block: child } = slot;
+
+    React.useEffect(() => {
+      const childBlockData = child as BlockData;
+      if (childBlockData) {
+        const childConfig = blockConfig[childBlockData.type];
+        if (childConfig.dynamicChildren) {
+          const nextChildren = childConfig.dynamicChildren(childBlockData);
+          const prevChildren = childBlockData.children;
+
+          const changed =
+            prevChildren.length !== nextChildren.length ||
+            prevChildren.some((c, i) => c.name !== nextChildren[i]?.name);
+
+          if (changed) {
+            // Create a fully new block object — don’t mutate
+            const updatedChild = {
+              ...childBlockData,
+              id: uuidv4(), // Ensure a new ID to trigger re-render
+              children: nextChildren,
+            };
+
+            const newBlock = {
+              ...block,
+              children: block.children.map((slot) =>
+                slot.name === name ? { ...slot, block: updatedChild } : slot
+              ),
+            };
+            onUpdate(newBlock); // Update the parent block state
+          }
+        }
+      }
+    }, [JSON.stringify(child?.num_values)]);
 
     const dropRef = React.useRef<HTMLDivElement>(null);
 
