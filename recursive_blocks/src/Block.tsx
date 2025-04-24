@@ -7,11 +7,35 @@ import { blockConfig, BlockType } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 
 interface Props {
-  block: BlockData;
+  block: BlockData | null; // Allow null to placeholder for empty slots
   onUpdate: (newBlock: BlockData | null) => void; // Allow null to delete
 }
 
 export function Block({ block, onUpdate }: Props) {
+  if (!block) {
+    return <span className="empty-text">Drop block here</span>;
+  }
+  React.useEffect(() => {
+    const config = blockConfig[block.type];
+    if (!config.dynamicChildren) return;
+  
+    const nextChildren = config.dynamicChildren(block);
+    const prevChildren = block.children;
+  
+    const changed =
+      prevChildren.length !== nextChildren.length ||
+      prevChildren.some((c, i) => c.name !== nextChildren[i]?.name);
+  
+    if (changed) {
+      // Create a fully new block object — don’t mutate
+      const updatedBlock = {
+        ...block,
+        children: nextChildren,
+      };
+      onUpdate(updatedBlock);
+    }
+  }, [block.type, JSON.stringify(block.num_values)]); // stable deps
+
   const renderSlot = (slot: { name: string; block: BlockData | null }) => {
     const { name, block: child } = slot;
 
@@ -76,8 +100,8 @@ export function Block({ block, onUpdate }: Props) {
         className={`block-slot ${child ? "filled" : "empty"}`}
       >
         <strong>{name}:</strong>{" "}
-        {child ? (
-          <Block
+        {/* {child ? ( */}
+          <Block key={child?.id ?? `empty-${block.id}-${name}`}
             block={child}
             onUpdate={(newChild) => {//OnUpdate function for this slot
               const updated = { ...block };
@@ -89,9 +113,9 @@ export function Block({ block, onUpdate }: Props) {
               onUpdate(updated); // Update the parent block state
             }}
           />
-        ) : (
+        {/* ) : (
           <span className="empty-text">Drop block here</span>
-        )}
+        )} */}
       </div>
     );
   };
@@ -130,7 +154,7 @@ export function Block({ block, onUpdate }: Props) {
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={slot.name}>{renderSlot(slot)}</div>
+          <div key={`${block.id}-${slot.name}`}>{renderSlot(slot)}</div>
         ))}
       </div>
 
@@ -146,5 +170,5 @@ export function getDefaultChildren(type: BlockType): Array<{ name: string; block
 
 export function getDefaultValues(type: BlockType): Array<{ name: string; value: number }> {
   const blockDef = blockConfig[type];
-  return blockDef ? blockDef.num_values : [];
+  return blockDef!.num_values ?? [];
 }

@@ -8,13 +8,13 @@ export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: Bloc
 export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: { name: string; block: BlockData | null }[];
-  num_values: { name: string; value: number }[];
+  dynamicChildren?: (block: BlockData) => { name: string; block: BlockData | null }[];
+  num_values?: { name: string; value: number }[];
   evaluate: BlockEvaluator;
 }> = {
   "Zero": {
     type: "Zero" as BlockType,
     children: [],
-    num_values: [],
     evaluate: (_block, _inputs, _evaluate) => {
       // Zero block always returns 0
       return 0;
@@ -23,7 +23,6 @@ export const blockConfig: Record<BlockType, {
   "Successor": {
     type: "Successor" as BlockType,
     children: [],
-    num_values: [],
     evaluate: (_block, inputs, _evaluate) => {
       // Successor block returns the input incremented by 1
       if (inputs.length !== 1) {
@@ -38,7 +37,6 @@ export const blockConfig: Record<BlockType, {
       { name: "Base Case", block: null },
       { name: "Recursive Case", block: null },
     ],
-    num_values: [],
     evaluate: (block, inputs, evaluate) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
       if (inputs.length < 2) {
@@ -62,14 +60,25 @@ export const blockConfig: Record<BlockType, {
       { name: "f", block: null },
       { name: "g1", block: null }
     ],
-    num_values: [],
+    num_values: [
+      { name: "m", value: 1 }, 
+    ],
     evaluate: (block, inputs, evaluate) => {
-      // Composition block evaluates by applying function f to the result of g1
-      if (inputs.length < 1) {
-        throw new Error("Composition block requires at least one input.");
-      }
       const g1_result = evaluate(block.children[1].block!, inputs, evaluate);
       return evaluate(block.children[0].block!, [g1_result], evaluate);
+    },
+    dynamicChildren: (block: BlockData) => {
+      const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
+      return [
+        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null },
+        ...Array.from({ length: m }, (_, i) => {
+          const name = `g${i + 1}`;
+          return {
+            name,
+            block: block.children.find(c => c.name === name)?.block ?? null
+          };
+        })
+      ];
     }
   },
   "Projection": {
