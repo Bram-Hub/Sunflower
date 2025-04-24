@@ -33,7 +33,7 @@ const INPUT_DESCRIPTOR_Y: InputDescriptorGenerator = (inputCount) => {
   return output + `y`;
 }
 
-const INPUT_DESCRIPTOR_YZ: InputDescriptorGenerator = (inputCount) => {
+const INPUT_DESCRIPTOR_RECUR_YZ: InputDescriptorGenerator = (inputCount) => {
   let output = "";
   for (let i = 1; i < inputCount-1; i++) {
     output += `x${i}, `;
@@ -121,7 +121,7 @@ export const blockConfig: Record<BlockType, {
     type: "Primitive Recursion" as BlockType,
     children: [
       { name: "Base Case", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR, input_mod: -1 },
-      { name: "Recursive Case", block: null, input_descriptor: INPUT_DESCRIPTOR_YZ, input_mod: 1 },
+      { name: "Recursive Case", block: null, input_descriptor: INPUT_DESCRIPTOR_RECUR_YZ, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
@@ -135,7 +135,7 @@ export const blockConfig: Record<BlockType, {
         // Recursive case: evaluate the recursive case block with the inputs
         const inputs_decremented = inputs.slice(0, -1).concat(inputs[inputs.length - 1] - 1);
         console.log("Inputs for recursive case:", inputs_decremented);
-        const inputs_combined_with_previous = inputs.concat(evaluate(block, inputs_decremented, evaluate));
+        const inputs_combined_with_previous = inputs_decremented.concat(evaluate(block, inputs_decremented, evaluate));
         return evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate);
       }
     }
