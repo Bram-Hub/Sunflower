@@ -12,7 +12,7 @@ export function removeBlockById(block: BlockData, targetId: string): BlockData {
   return {
     ...block,
     children: block.children.map((slot) => ({
-      name: slot.name,
+      ...slot,
       block: slot.block?.id === targetId
         ? null
         : slot.block
@@ -58,13 +58,11 @@ export function getInputCountOfSlot(
 export function setInputCountOfBlock(
   block: BlockData,
   count: number
-): BlockData {
-  return {
-    ...block,
-    inputCount: count,
-    children: block.children.map((slot) => ({
-      name: slot.name,
-      block: slot.block ? setInputCountOfBlock(slot.block, getInputCountOfSlot(slot, count)) : null,
-    })),
-  };
+) {
+  block.inputCount = count;
+  for (const slot of block.children) {
+    if (slot.block) {
+      slot.block.inputCount = getInputCountOfSlot(slot, count);
+    }
+  }
 }

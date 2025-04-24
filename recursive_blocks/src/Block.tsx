@@ -3,7 +3,7 @@ import { useDrag, useDrop } from "react-dnd";
 import { BlockData, removeBlockById, isDescendant, getInputCountOfSlot } from "./BlockUtil";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css'; // Import the CSS file
-import { blockConfig, BlockType } from "./BlockConfig";
+import { blockConfig, BlockSlot, BlockType } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 
 interface Props {
@@ -18,7 +18,7 @@ export function Block({ block, onUpdate }: Props) {
 
   // const dynamicKey = `${block.id}-${block!.num_values!.find(v => v.name === "m")?.value || 1}`;
 
-  const renderSlot = (slot: { name: string; block: BlockData | null, input_set?: number; input_mod?: number }) => {
+  const renderSlot = (slot: BlockSlot) => {
     const { name, block: child } = slot;
 
     React.useEffect(() => {
@@ -114,7 +114,7 @@ export function Block({ block, onUpdate }: Props) {
         ref={dropRef}
         className={`block-slot ${child ? "filled" : "empty"}`}
       >
-        <strong>{name} ({getInputCountOfSlot(slot, block.inputCount)}):</strong>{" "}
+        <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong>{" "}
         {/* {child ? ( */}
           <Block key={child?.id ?? `empty-${block.id}-${name}`}
             block={child}
@@ -178,7 +178,7 @@ export function Block({ block, onUpdate }: Props) {
   );
 }
 
-export function getDefaultChildren(type: BlockType): Array<{ name: string; block: BlockData | null }> {
+export function getDefaultChildren(type: BlockType): Array<BlockSlot> {
   const blockDef = blockConfig[type];
   return blockDef ? blockDef.children : [];
 }

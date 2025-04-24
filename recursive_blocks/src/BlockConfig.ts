@@ -5,12 +5,46 @@ export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "P
 
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator) => number;
 
-export type BlockSlot = { name: string; block: BlockData | null; input_set?: number; input_mod?: number};
+export type InputDescriptorGenerator = (inputCount: number) => string;
+
+export type BlockSlot = { name: string; block: BlockData | null; input_descriptor: InputDescriptorGenerator; input_set?: number; input_mod?: number};
+
+const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
+  let output = "";
+  for (let i = 1; i <= inputCount; i++) {
+    output += `x${i}, `;
+  }
+  return output.slice(0, -2); // Remove trailing comma and space
+};
+
+const INPUT_DESCRIPTOR_G: InputDescriptorGenerator = (inputCount) => {
+  let output = "";
+  for (let i = 1; i <= inputCount; i++) {
+    output += `g${i}, `;
+  }
+  return output.slice(0, -2);
+};
+
+const INPUT_DESCRIPTOR_Y: InputDescriptorGenerator = (inputCount) => {
+  let output = "";
+  for (let i = 1; i < inputCount; i++) {
+    output += `x${i}, `;
+  }
+  return output + `y`;
+}
+
+const INPUT_DESCRIPTOR_YZ: InputDescriptorGenerator = (inputCount) => {
+  let output = "";
+  for (let i = 1; i < inputCount-1; i++) {
+    output += `x${i}, `;
+  }
+  return output + `y, z`;
+}
 
 export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: BlockSlot[];
-  dynamicChildren?: (block: BlockData) => { name: string; block: BlockData | null }[];
+  dynamicChildren?: (block: BlockData) => BlockSlot[];
   num_values?: { name: string; value: number }[];
   evaluate: BlockEvaluator;
 }> = {
@@ -51,8 +85,8 @@ export const blockConfig: Record<BlockType, {
   "Composition": {
     type: "Composition" as BlockType,
     children: [
-      { name: "f", block: null, input_set: 1 },
-      { name: "g1", block: null },
+      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_G, input_set: 1 },
+      { name: "g1", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
     ],
     num_values: [
       { name: "m", value: 1 }, 
@@ -71,12 +105,13 @@ export const blockConfig: Record<BlockType, {
     dynamicChildren: (block: BlockData) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
       return [
-        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_set: m },
+        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor: INPUT_DESCRIPTOR_G, input_set: m },
         ...Array.from({ length: m }, (_, i) => {
           const name = `g${i + 1}`;
           return {
             name,
-            block: block.children.find(c => c.name === name)?.block ?? null
+            block: block.children.find(c => c.name === name)?.block ?? null,
+            input_descriptor: DEFAULT_INPUT_DESCRIPTOR,
           };
         })
       ];
@@ -85,8 +120,8 @@ export const blockConfig: Record<BlockType, {
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
     children: [
-      { name: "Base Case", block: null, input_mod: -1 },
-      { name: "Recursive Case", block: null, input_mod: 1 },
+      { name: "Base Case", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR, input_mod: -1 },
+      { name: "Recursive Case", block: null, input_descriptor: INPUT_DESCRIPTOR_YZ, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
@@ -108,7 +143,7 @@ export const blockConfig: Record<BlockType, {
   "Minimization": {
     type: "Minimization" as BlockType,
     children: [
-      { name: "f", block: null, input_mod: 1 },
+      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_Y, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Minimization block finds the smallest n such that f(n) = 0
