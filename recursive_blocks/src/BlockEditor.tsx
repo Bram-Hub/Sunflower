@@ -17,7 +17,7 @@ const DEFAULT_INPUT_COUNT = 2;
 
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
-  const [inputs, setInputs] = useState<number[]>([DEFAULT_INPUT_COUNT]);
+  const [inputs, setInputs] = useState<number[]>(new Array(DEFAULT_INPUT_COUNT).fill(0));
   const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
 
   const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
