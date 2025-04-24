@@ -64,8 +64,15 @@ export const blockConfig: Record<BlockType, {
       { name: "m", value: 1 }, 
     ],
     evaluate: (block, inputs, evaluate) => {
-      const g1_result = evaluate(block.children[1].block!, inputs, evaluate);
-      return evaluate(block.children[0].block!, [g1_result], evaluate);
+      const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
+      const g_results = Array.from({ length: m }, (_, i) => {
+        const g_block = block.children.find(c => c.name === `g${i + 1}`)?.block;
+        if (!g_block) {
+          throw new Error(`g${i + 1} block is missing in Composition.`);
+        }
+        return evaluate(g_block, inputs, evaluate);
+      });
+      return evaluate(block.children[0].block!, g_results, evaluate);
     },
     dynamicChildren: (block: BlockData) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
