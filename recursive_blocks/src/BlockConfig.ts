@@ -1,7 +1,7 @@
 import { BlockData } from "./BlockUtil";
 
 // blockConfig.ts
-export type BlockType = "Zero" | "Successor" | "Primitive Recursion" | "Composition" | "Projection";
+export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization";
 
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator) => number;
 
@@ -31,27 +31,19 @@ export const blockConfig: Record<BlockType, {
       return inputs[0] + 1;
     }
   },
-  "Primitive Recursion": {
-    type: "Primitive Recursion" as BlockType,
-    children: [
-      { name: "Base Case", block: null },
-      { name: "Recursive Case", block: null },
+  "Projection": {
+    type: "Projection" as BlockType,
+    children: [],
+    num_values: [
+      { name: "i", value: 0 },
     ],
-    evaluate: (block, inputs, evaluate) => {
-      // Primitive Recursion block evaluates based on the base case and recursive case
-      if (inputs.length < 2) {
-        throw new Error("Primitive Recursion block requires at least two inputs.");
+    evaluate: (block, inputs, _evaluate) => {
+      // Projection block returns the i-th input
+      if (inputs.length <= 0) {
+        throw new Error("Projection block requires at least one input.");
       }
-      if (inputs[inputs.length - 1] <= 0) {
-        // Base case: if the last input is 0, evaluate the base case block
-        return evaluate(block.children[0].block!, inputs.slice(0, -1), evaluate);
-      } else {
-        // Recursive case: evaluate the recursive case block with the inputs
-        const inputs_decremented = inputs.slice(0, -1).concat(inputs[inputs.length - 1] - 1);
-        console.log("Inputs for recursive case:", inputs_decremented);
-        const inputs_combined_with_previous = inputs.concat(evaluate(block, inputs_decremented, evaluate));
-        return evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate);
-      }
+      const i = block!.num_values!.find(v => v.name === "i")?.value ?? 0;
+      return inputs[i];
     }
   },
   "Composition": {
@@ -88,19 +80,52 @@ export const blockConfig: Record<BlockType, {
       ];
     }
   },
-  "Projection": {
-    type: "Projection" as BlockType,
-    children: [],
-    num_values: [
-      { name: "i", value: 0 },
+  "Primitive Recursion": {
+    type: "Primitive Recursion" as BlockType,
+    children: [
+      { name: "Base Case", block: null },
+      { name: "Recursive Case", block: null },
     ],
-    evaluate: (block, inputs, _evaluate) => {
-      // Projection block returns the i-th input
-      if (inputs.length <= 0) {
-        throw new Error("Projection block requires at least one input.");
+    evaluate: (block, inputs, evaluate) => {
+      // Primitive Recursion block evaluates based on the base case and recursive case
+      if (inputs.length < 2) {
+        throw new Error("Primitive Recursion block requires at least two inputs.");
       }
-      const i = block!.num_values!.find(v => v.name === "i")?.value ?? 0;
-      return inputs[i];
+      if (inputs[inputs.length - 1] <= 0) {
+        // Base case: if the last input is 0, evaluate the base case block
+        return evaluate(block.children[0].block!, inputs.slice(0, -1), evaluate);
+      } else {
+        // Recursive case: evaluate the recursive case block with the inputs
+        const inputs_decremented = inputs.slice(0, -1).concat(inputs[inputs.length - 1] - 1);
+        console.log("Inputs for recursive case:", inputs_decremented);
+        const inputs_combined_with_previous = inputs.concat(evaluate(block, inputs_decremented, evaluate));
+        return evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate);
+      }
+    }
+  },
+  "Minimization": {
+    type: "Minimization" as BlockType,
+    children: [
+      { name: "f", block: null },
+    ],
+    evaluate: (block, inputs, evaluate) => {
+      // Minimization block finds the smallest n such that f(n) = 0
+      const f_block = block.children[0].block;
+      if (!f_block) {
+        throw new Error("Minimization block requires a function f.");
+      }
+      let n = 0;
+      let depth = 0;
+      const MAX_DEPTH = 9999; // Prevent infinite loops
+      while (depth < MAX_DEPTH) {
+        const result = evaluate(f_block, inputs.concat(n), evaluate);
+        if (result === 0) {
+          return n;
+        }
+        n++;
+        depth++;
+      }
+      throw new Error("Minimization did not converge within "+MAX_DEPTH+" iterations.");
     }
   }
 };
