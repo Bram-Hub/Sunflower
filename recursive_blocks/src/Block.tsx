@@ -3,7 +3,7 @@ import { useDrag, useDrop } from "react-dnd";
 import { BlockData, removeBlockById, isDescendant, getInputCountOfSlot } from "./BlockUtil";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css'; // Import the CSS file
-import { blockConfig, BlockSlot, BlockType } from "./BlockConfig";
+import { blockConfig, BlockSlot, BlockType, DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 
 interface Props {
@@ -109,7 +109,7 @@ export function Block({ block, onUpdate }: Props) {
       }
     }, [drop]);
     if (slot.input_descriptor === undefined) {
-      slot.input_descriptor = blockConfig[block.type].children.find((s) => s.name === name)?.input_descriptor ?? (() => "1");
+      slot.input_descriptor = blockConfig[block.type].children.find((s) => s.name === name)?.input_descriptor ?? DEFAULT_INPUT_DESCRIPTOR;
     }
 
     return (//Actual Block Slot HTML

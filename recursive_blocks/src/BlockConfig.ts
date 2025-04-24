@@ -9,7 +9,7 @@ export type InputDescriptorGenerator = (inputCount: number) => string;
 
 export type BlockSlot = { name: string; block: BlockData | null; input_descriptor: InputDescriptorGenerator; input_set?: number; input_mod?: number};
 
-const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
+export const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
   let output = "";
   for (let i = 1; i <= inputCount; i++) {
     output += `x${i}, `;
