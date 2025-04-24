@@ -108,6 +108,9 @@ export function Block({ block, onUpdate }: Props) {
         drop(dropRef.current); // Attach the drop functionality to the div element
       }
     }, [drop]);
+    if (slot.input_descriptor === undefined) {
+      slot.input_descriptor = blockConfig[block.type].children.find((s) => s.name === name)?.input_descriptor ?? (() => "1");
+    }
 
     return (//Actual Block Slot HTML
       <div

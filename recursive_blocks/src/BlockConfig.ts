@@ -125,8 +125,8 @@ export const blockConfig: Record<BlockType, {
     ],
     evaluate: (block, inputs, evaluate) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
-      if (inputs.length < 2) {
-        throw new Error("Primitive Recursion block requires at least two inputs.");
+      if (inputs.length < 1) {
+        throw new Error("Primitive Recursion block requires at least one inputs.");
       }
       if (inputs[inputs.length - 1] <= 0) {
         // Base case: if the last input is 0, evaluate the base case block
