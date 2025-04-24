@@ -5,9 +5,11 @@ export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "P
 
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator) => number;
 
+export type BlockSlot = { name: string; block: BlockData | null; input_set?: number; input_mod?: number};
+
 export const blockConfig: Record<BlockType, {
   type: BlockType;
-  children: { name: string; block: BlockData | null }[];
+  children: BlockSlot[];
   dynamicChildren?: (block: BlockData) => { name: string; block: BlockData | null }[];
   num_values?: { name: string; value: number }[];
   evaluate: BlockEvaluator;
@@ -49,8 +51,8 @@ export const blockConfig: Record<BlockType, {
   "Composition": {
     type: "Composition" as BlockType,
     children: [
-      { name: "f", block: null },
-      { name: "g1", block: null }
+      { name: "f", block: null, input_set: 1 },
+      { name: "g1", block: null },
     ],
     num_values: [
       { name: "m", value: 1 }, 
@@ -69,7 +71,7 @@ export const blockConfig: Record<BlockType, {
     dynamicChildren: (block: BlockData) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
       return [
-        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null },
+        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_set: m },
         ...Array.from({ length: m }, (_, i) => {
           const name = `g${i + 1}`;
           return {
@@ -83,8 +85,8 @@ export const blockConfig: Record<BlockType, {
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
     children: [
-      { name: "Base Case", block: null },
-      { name: "Recursive Case", block: null },
+      { name: "Base Case", block: null, input_mod: -1 },
+      { name: "Recursive Case", block: null, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
@@ -106,7 +108,7 @@ export const blockConfig: Record<BlockType, {
   "Minimization": {
     type: "Minimization" as BlockType,
     children: [
-      { name: "f", block: null },
+      { name: "f", block: null, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Minimization block finds the smallest n such that f(n) = 0

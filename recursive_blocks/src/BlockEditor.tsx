@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback  } from "react";
-import { BlockData, evaluateBlock, removeBlockById } from "./BlockUtil";
+import { BlockData, evaluateBlock, removeBlockById, setInputCountOfBlock } from "./BlockUtil";
 import { Block, getDefaultChildren, getDefaultValues } from "./Block";
 import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
@@ -30,6 +30,14 @@ export function BlockEditor() {
 
     setRootBlock(newBlock);
   };
+
+  React.useEffect(() => {
+    if (!rootBlock) {
+      return;
+    }
+    setInputCountOfBlock(rootBlock, inputCount);
+
+  }, [JSON.stringify(rootBlock), inputCount]);
 
   const handleInputCountChange = (count: number) => {
     const clamped = Math.max(0, count);
@@ -218,6 +226,7 @@ function RootDropArea({
           type: item.type,
           children: getDefaultChildren(item.type),
           num_values: getDefaultValues(item.type),
+          inputCount: DEFAULT_INPUT_COUNT,//placeholder
         });
       }
     },

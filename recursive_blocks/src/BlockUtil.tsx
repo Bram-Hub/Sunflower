@@ -1,10 +1,11 @@
-import { blockConfig, BlockType, BlockEvaluator } from "./BlockConfig";
+import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig";
 
 export interface BlockData {
   id: string;
   type: BlockType;
-  children: Array<{ name: string; block: BlockData | null }>; // e.g., { condition: Block, then: Block }
+  children: Array<BlockSlot>; // e.g., { condition: Block, then: Block }
   num_values?: Array<{ name: string; value: number }>; // e.g., { name: "n", value: 5 }
+  inputCount: number;
 }
 
 export function removeBlockById(block: BlockData, targetId: string): BlockData {
@@ -39,4 +40,31 @@ export function evaluateBlock(
   const ev = config.evaluate(block, inputs, evaluate);
   console.log(`Evaluating block ${block.type} with inputs ${inputs} => Result: ${ev}`);
   return ev;
+}
+
+export function getInputCountOfSlot(
+  slot: BlockSlot,
+  defaultCount: number = 0
+): number {
+  if (slot.input_set !== undefined) {
+    return slot.input_set;
+  }
+  if (slot.input_mod !== undefined) {
+    return defaultCount + slot.input_mod;
+  }
+  return defaultCount;
+}
+
+export function setInputCountOfBlock(
+  block: BlockData,
+  count: number
+): BlockData {
+  return {
+    ...block,
+    inputCount: count,
+    children: block.children.map((slot) => ({
+      name: slot.name,
+      block: slot.block ? setInputCountOfBlock(slot.block, getInputCountOfSlot(slot, count)) : null,
+    })),
+  };
 }
