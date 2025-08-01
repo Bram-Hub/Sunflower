@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useDrop } from "react-dnd";
 import './Block.css';
 import { BlockType } from "./BlockConfig";
+import { Toolbar } from "./Toolbar";
 
 interface EditorSaveState {
   fileType: string;
@@ -75,7 +76,7 @@ export function BlockEditor() {
 
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = filename; // Use the generated filename
+      link.download = filename;
 
       document.body.appendChild(link);
       link.click();
@@ -130,32 +131,33 @@ export function BlockEditor() {
     reader.readAsText(file);
   };
 
+  const handleEvaluate = () => {
+    if (rootBlock) {
+      try {
+        const result = evaluateBlock(rootBlock, inputs);
+        alert(`Result: ${result}`);
+      } catch (error: any) {
+        alert(`Error: ${error.message}`);
+      }
+    } else {
+      alert("No root block to evaluate.");
+    }
+  };
+
   return (
     <div className="editor flex-1 border p-4 bg-gray-50">
-      <div className="flex justify-between items-center mb-4"> {}
-          <h2 className="font-bold">Editor</h2>
-          <div> {/* Container for buttons */}
-              <button onClick={handleSave} className="mr-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                  Save (.bramflower)
-              </button>
-              <label htmlFor="load-input" className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 cursor-pointer">
-                  Load (.bramflower)
-              </label>
-              <input
-                  id="load-input"
-                  type="file"
-                  // Prioritize .bram, remove explicit json type
-                  accept=".bramflower,application/octet-stream"
-                  onChange={handleLoad}
-                  className="hidden"
-              />
-          </div>
+      <Toolbar 
+        onSave={handleSave}
+        onLoad={handleLoad}
+        onEvaluate={handleEvaluate}
+      />
+      <div className="editor-content">
+        {rootBlock ? (
+          <Block block={rootBlock} onUpdate={setRootBlock} />
+        ) : (
+          <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
+        )}
       </div>
-      {rootBlock ? (
-        <Block block={rootBlock} onUpdate={setRootBlock} />
-      ) : (
-        <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
-      )}
 
       <hr className="my-6" />
 
@@ -187,24 +189,6 @@ export function BlockEditor() {
             />
           ))}
         </div>
-
-        {/* Evaluate button */}
-        <button
-          onClick={() => {
-            if (rootBlock) {
-              try {
-                const result = evaluateBlock(rootBlock, inputs);
-                alert(`Result: ${result}`);
-              } catch (error: any) {
-                alert(`Error: ${error.message}`);
-              }
-            } else {
-              alert("No root block to evaluate.");
-            }
-          }}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-          Evaluate
-        </button>
       </div>
     </div>
   );
