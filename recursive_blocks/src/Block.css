@@ -40,14 +40,10 @@
     border: 1px solid #e5e7eb; /* gray-300 */
     border-radius: 0.375rem; /* rounded-md */
     background-color: var(--block-bg-color);
-    box-shadow: 1px 1px #DF6D26, 2px 2px #FBA914, 3px 3px #FBD405;
     margin-bottom: 0.75rem;
+    margin-top: 0.75rem;
     cursor: grab;
-  }
 
-  .block-container:hover {
-    box-shadow: 1px 1px #DF6D26, 2px 2px #FBA914, 3px 3px #FBD405;
-    transform: translateY(-1px);
   }
   
   /* Block header (type and remove button) */
@@ -98,7 +94,6 @@
   .block-slot.filled {
     background-color: var(--alt); /* gray-200 */
     color:var(--block-text-color);
-    box-shadow: 1px 1px #DF6D26, 2px 2px #FBA914, 3px 3px #FBD405;
   }
 
   .block-slot.filled > strong {
@@ -120,6 +115,10 @@
   /* Value editor styles */
   .value-editor {
     margin-top: 0.5rem;
+  }
+
+  .editor-content{
+    margin-top: .75rem;
   }
   
   .value-field {
@@ -153,6 +152,7 @@
   /* Draggable block styling */
 .palette-block {
     padding: 0.75rem;
+    margin: 5px;
     margin-bottom: 0.5rem;
     margin-top: 2px;
     border: 1px solid #d1d5db; /* Tailwind gray-300 */
@@ -215,7 +215,7 @@
   }
   
   .editor {
-    width: fit-content;
+    width: 80%;
     margin-left: 5px;
     padding-top: 8vh;
   }
