@@ -15,7 +15,7 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
   // Update num_values only if they change
   useEffect(() => {
     if (JSON.stringify(values) !== JSON.stringify(block.num_values)) {
-      onUpdate({ ...block, num_values: values });
+      onUpdate({ ...block, num_values: values, depth: block.depth || 0 });
     }
   }, [values, block, onUpdate]);
 

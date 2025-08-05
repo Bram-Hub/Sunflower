@@ -108,18 +108,34 @@ export function BlockEditor() {
               typeof loadedState.inputCount !== 'number') {
              throw new Error("Invalid or incompatible .bramflower file.");
           }
-          setRootBlock(loadedState.rootBlock);
+
+          // Add this function to properly initialize depths when loading
+          const initializeDepths = (block: BlockData | null, currentDepth: number = 0): BlockData | null => {
+            if (!block) return null;
+            
+            return {
+              ...block,
+              depth: currentDepth,
+              children: block.children.map(slot => ({
+                ...slot,
+                block: slot.block ? initializeDepths(slot.block, currentDepth + 1) : null
+              }))
+            };
+          };
+
+          const rootWithDepths = loadedState.rootBlock 
+            ? initializeDepths(loadedState.rootBlock, 0)
+            : null;
+
+          setRootBlock(rootWithDepths);
           setInputs(loadedState.inputs);
           setInputCount(loadedState.inputCount);
 
-          console.log("State loaded successfully.");
+          console.log("State loaded successfully with depth initialization.");
         } catch (error) {
           console.error("Failed to load or parse state file:", error);
           alert(`Error loading file: ${error instanceof Error ? error.message : String(error)}`);
         }
-      } else {
-         console.error("Failed to read file content as string.");
-         alert("Error reading file content.");
       }
     };
 
@@ -151,16 +167,6 @@ export function BlockEditor() {
         onLoad={handleLoad}
         onEvaluate={handleEvaluate}
       />
-      <div className="editor-content">
-        {rootBlock ? (
-          <Block block={rootBlock} onUpdate={setRootBlock} />
-        ) : (
-          <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
-        )}
-      </div>
-
-      <hr className="my-6" />
-
       <div className="input-section">
         <h3 className="font-semibold mb-2">Inputs</h3>
         <label className="block mb-2">
@@ -190,6 +196,18 @@ export function BlockEditor() {
           ))}
         </div>
       </div>
+
+      <div className="editor-content">
+        {rootBlock ? (
+          <Block block={rootBlock} onUpdate={setRootBlock} />
+        ) : (
+          <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
+        )}
+      </div>
+
+      <hr className="my-6" />
+
+      
     </div>
   );
 }
@@ -207,14 +225,20 @@ function RootDropArea({
     accept: "BLOCK",
     drop: (item: { type: BlockType; block?: BlockData }) => {
       if (item.block) {
-        onDrop(item.block, item.block.id);
+        const newRootBlock = {
+          ...item.block,
+          depth: 0,
+          inputCount: DEFAULT_INPUT_COUNT
+        };
+        onDrop(newRootBlock, item.block.id);
       } else {
         onDrop({
           id: uuidv4(),
           type: item.type,
-          children: getDefaultChildren(item.type),
+          children: getDefaultChildren(item.type, 0),
           num_values: getDefaultValues(item.type),
-          inputCount: DEFAULT_INPUT_COUNT,//placeholder
+          inputCount: DEFAULT_INPUT_COUNT,
+          depth: 0
         });
       }
     },

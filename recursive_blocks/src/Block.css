@@ -1,5 +1,7 @@
 /* Block.css */
-
+:root{
+  overflow: hidden;
+}
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -24,7 +26,7 @@
 }
 
 .input-section{
-  background-color: var(--block-bg-color);
+  background-color: var(--alt);
   color: var(--block-text-color);
   border-radius: 0.375rem;
   padding: 5px;
@@ -37,9 +39,9 @@
 /* Block container styles */
   .block-container {
     padding: 0.75rem;
+    padding-right: 0;
     border: 1px solid #e5e7eb; /* gray-300 */
-    border-radius: 0.375rem; /* rounded-md */
-    background-color: var(--block-bg-color);
+    border-radius: 2rem 0 0 2rem;
     margin-bottom: 0.75rem;
     margin-top: 0.75rem;
     cursor: grab;
@@ -83,8 +85,7 @@
   
   /* Block slot styles */
   .block-slot {
-    border-radius: 0.5rem; /* rounded-md */
-    background-color: var(--block-bg-color); /* gray-100 */
+    border-radius: 2rem 0 0 2rem;
     margin-bottom: 0.5rem;
     transition: background-color 0.2s ease;
     cursor: default;
@@ -96,8 +97,13 @@
     color:var(--block-text-color);
   }
 
+  .block-slot.filled > .block-container {
+    border-radius: 0 0 0 2rem;
+  }
+
   .block-slot.filled > strong {
     padding: 5px;
+    padding-left: 1.5rem;
   }
 
   
@@ -119,6 +125,7 @@
 
   .editor-content{
     margin-top: .75rem;
+    width: fit-content;
   }
   
   .value-field {
@@ -156,11 +163,11 @@
     margin-bottom: 0.5rem;
     margin-top: 2px;
     border: 1px solid #d1d5db; /* Tailwind gray-300 */
-    border-radius: 0.5rem;
-    background-color: var(--block-bg-color);
+    border-radius: 2rem 0 0 2rem;
     cursor: grab;
     user-select: none;
     font-weight: 600;
+    background-color: var(--block-bg-color);
     color: var(--block-text-color); /* Tailwind gray-800 */
     transition: all 0.2s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -215,7 +222,9 @@
   }
   
   .editor {
-    width: 80%;
+    width: 100%;
+    height: 100vh;
+    overflow-y: scroll;
     margin-left: 5px;
     padding-top: 8vh;
   }

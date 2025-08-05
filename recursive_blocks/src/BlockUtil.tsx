@@ -6,6 +6,7 @@ export interface BlockData {
   children: Array<BlockSlot>; // e.g., { condition: Block, then: Block }
   num_values?: Array<{ name: string; value: number }>; // e.g., { name: "n", value: 5 }
   inputCount: number;
+  depth: number;
 }
 
 export function removeBlockById(block: BlockData, targetId: string): BlockData {
