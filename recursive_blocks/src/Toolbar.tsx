@@ -5,9 +5,10 @@ interface ToolbarProps {
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onEvaluate: () => void;
+  onStep: () => void;
 }
 
-export function Toolbar({ onSave, onLoad, onEvaluate }: ToolbarProps) {
+export function Toolbar({ onSave, onLoad, onEvaluate, onStep }: ToolbarProps) {
   return (
     <div className="toolbar-container">
       <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
@@ -27,6 +28,10 @@ export function Toolbar({ onSave, onLoad, onEvaluate }: ToolbarProps) {
         />
         <button onClick={onEvaluate} className="toolbar-button evaluate-button">
           Evaluate
+        </button>
+
+        <button onClick={onStep} className="toolbar-button evaluate-button">
+          Take Step
         </button>
       </div>
     </div>
