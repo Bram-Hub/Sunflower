@@ -22,6 +22,7 @@ export function Block({ block, onUpdate }: Props) {
   }
 
   const renderSlot = (slot: BlockSlot) => {
+    if (block.type === "Custom") return; // Custom block slot is for internal use, not rendered
     const { name, block: child } = slot;
 
     React.useEffect(() => {

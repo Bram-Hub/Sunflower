@@ -1,12 +1,17 @@
 import { BlockData } from "./BlockUtil";
 
 // blockConfig.ts
-export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization";
+export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization" | "Custom";
 
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator) => number;
 
 export type InputDescriptorGenerator = (inputCount: number) => string;
 
+//The BlockSlot represents a slot in a block that can hold a child block
+//The name is a unique identifier for the slot
+//The blockData is the child block that occupies the slot, or null if empty
+//Input Descriptor is a function that takes in the input count and returns a string describing the inputs
+//Input Set and Input Mod are an optional modifiers that adjust the displayed input count for the child block
 export type BlockSlot = { name: string; block: BlockData | null; input_descriptor: InputDescriptorGenerator; input_set?: number; input_mod?: number};
 
 export const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
@@ -163,6 +168,19 @@ export const blockConfig: Record<BlockType, {
         depth++;
       }
       throw new Error("Minimization did not converge within "+MAX_DEPTH+" iterations.");
+    }
+  },
+  "Custom": {
+    type: "Custom" as BlockType,
+    children: [//This custom block slot is for internal use and should not be rendered
+      { name: "Custom Slot", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+    ],
+    evaluate: (block, inputs, evaluate) => {
+      // Custom block evaluation logic
+      if (block.children[0].block) {
+        return evaluate(block.children[0].block, inputs, evaluate);
+      }
+      throw new Error("Custom block is empty.");
     }
   }
 };
