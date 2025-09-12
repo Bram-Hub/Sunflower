@@ -46,6 +46,12 @@ const INPUT_DESCRIPTOR_RECUR_YZ: InputDescriptorGenerator = (inputCount) => {
   return output + `y, z`;
 }
 
+// Configuration for each block type
+// type is the block type identifier (string)
+// children is an array of BlockSlot defining the slots for child blocks (BlockSlot is defined above)
+// dynamicChildren is an optional function that takes in the current block and returns an updated array of BlockSlot
+// num_values is an optional array of named numeric parameters for the block
+// evaluate is a function that takes in the block, input values, and an evaluator function, and returns the computed output value
 export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: BlockSlot[];
