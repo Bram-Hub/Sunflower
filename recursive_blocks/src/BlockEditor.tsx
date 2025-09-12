@@ -236,7 +236,7 @@ function RootDropArea({
           id: uuidv4(),
           type: item.type,
           children: getDefaultChildren(item.type, 0),
-          collapsed: false,
+          collapsed: item.type === "Custom",
           num_values: getDefaultValues(item.type),
           inputCount: DEFAULT_INPUT_COUNT,
           depth: 0

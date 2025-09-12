@@ -95,7 +95,7 @@ export function Block({ block, onUpdate }: Props) {
             id: uuidv4(),
             type: item.type,
             children: getDefaultChildren(item.type, newDepth),
-            collapsed: false,
+            collapsed: item.type === "Custom",
             num_values: getDefaultValues(item.type),
             inputCount: getInputCountOfSlot(slot, block.inputCount),
             depth: newDepth
@@ -122,6 +122,9 @@ export function Block({ block, onUpdate }: Props) {
       slot.input_descriptor = blockConfig[block.type].children.find((s) => s.name === name)?.input_descriptor ?? DEFAULT_INPUT_DESCRIPTOR;
     }
     if (collapsed) {
+      if (block.type === "Custom") {
+        return (<></>);
+      }
       if (child) {
         return (
           <div ref={dropRef} className={`block-slot filled`}>
