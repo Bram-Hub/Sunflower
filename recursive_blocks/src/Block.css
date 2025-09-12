@@ -61,6 +61,22 @@
     color: var(--block-text-color);
     font-size: 0.875rem;
   }
+
+  .collapse-button {
+    font-size: 0.875rem;
+    color: #000000;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .collapse-button:hover {
+    background-color: #f2f4f8;
+    color: #374151; /* gray-700 */
+  }
   
   .remove-button {
     font-size: 0.875rem;
@@ -76,6 +92,13 @@
   .remove-button:hover {
     background-color: #fee2e2; /* red-100 */
     color: #b91c1c; /* red-700 */
+  }
+
+  .block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.25rem;
   }
   
   /* Slots container */
