@@ -122,24 +122,11 @@ export function Block({ block, onUpdate }: Props) {
       slot.input_descriptor = blockConfig[block.type].children.find((s) => s.name === name)?.input_descriptor ?? DEFAULT_INPUT_DESCRIPTOR;
     }
     if (collapsed) {
-      if (block.type === "Custom") {
-        return (<></>);
-      }
-      if (child) {
-        return (
-          <div ref={dropRef} className={`block-slot filled`}>
-            <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong>
-          </div>
-        );
-      } else {
-        return (
-          <div ref={dropRef} className={`block-slot empty`}>
-            <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong>
-            <span className="empty-text"> Drop block here</span>
-          </div>
-        );
-      }
-      
+      return (
+        <div ref={dropRef}>
+          {/* <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong> */}
+        </div>
+      );
     }
     return (
       <div ref={dropRef} className={`block-slot ${child ? "filled" : "empty"}`}>
@@ -190,7 +177,7 @@ export function Block({ block, onUpdate }: Props) {
               className="collapse-button"
               onClick={toggleCollapse}
             >
-              {collapsed ? "▼" : "▶"}
+              {collapsed ? "V" : ">"}
             </button>
           )}
           <button
