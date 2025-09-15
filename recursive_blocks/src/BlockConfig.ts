@@ -30,12 +30,12 @@ const INPUT_DESCRIPTOR_G: InputDescriptorGenerator = (inputCount) => {
   return output.slice(0, -2);
 };
 
-const INPUT_DESCRIPTOR_Y: InputDescriptorGenerator = (inputCount) => {
+const INPUT_DESCRIPTOR_N: InputDescriptorGenerator = (inputCount) => {
   let output = "";
   for (let i = 1; i < inputCount; i++) {
     output += `x${i}, `;
   }
-  return output + `y`;
+  return output + `n`;
 }
 
 const INPUT_DESCRIPTOR_RECUR_YZ: InputDescriptorGenerator = (inputCount) => {
@@ -154,10 +154,10 @@ export const blockConfig: Record<BlockType, {
   "Minimization": {
     type: "Minimization" as BlockType,
     children: [
-      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_Y, input_mod: 1 },
+      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_N, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
-      // Minimization block finds the smallest n such that f(n) = 0
+      // Minimization block finds the smallest n such that f(..., n) = 0
       const f_block = block.children[0].block;
       if (!f_block) {
         throw new Error("Minimization block requires a function f.");
@@ -179,7 +179,7 @@ export const blockConfig: Record<BlockType, {
   "Custom": {
     type: "Custom" as BlockType,
     children: [//This custom block slot is for internal use and should not be rendered
-      { name: "User Defined Slot", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+      { name: "custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Custom block evaluation logic
