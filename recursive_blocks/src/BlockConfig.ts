@@ -1,12 +1,17 @@
 import { BlockData } from "./BlockUtil";
 
 // blockConfig.ts
-export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization";
+export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization" | "Custom";
 
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator) => number;
 
 export type InputDescriptorGenerator = (inputCount: number) => string;
 
+//The BlockSlot represents a slot in a block that can hold a child block
+//The name is a unique identifier for the slot
+//The blockData is the child block that occupies the slot, or null if empty
+//Input Descriptor is a function that takes in the input count and returns a string describing the inputs
+//Input Set and Input Mod are an optional modifiers that adjust the displayed input count for the child block
 export type BlockSlot = { name: string; block: BlockData | null; input_descriptor: InputDescriptorGenerator; input_set?: number; input_mod?: number};
 
 export const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
@@ -25,12 +30,12 @@ const INPUT_DESCRIPTOR_G: InputDescriptorGenerator = (inputCount) => {
   return output.slice(0, -2);
 };
 
-const INPUT_DESCRIPTOR_Y: InputDescriptorGenerator = (inputCount) => {
+const INPUT_DESCRIPTOR_N: InputDescriptorGenerator = (inputCount) => {
   let output = "";
   for (let i = 1; i < inputCount; i++) {
     output += `x${i}, `;
   }
-  return output + `y`;
+  return output + `n`;
 }
 
 const INPUT_DESCRIPTOR_RECUR_YZ: InputDescriptorGenerator = (inputCount) => {
@@ -41,6 +46,12 @@ const INPUT_DESCRIPTOR_RECUR_YZ: InputDescriptorGenerator = (inputCount) => {
   return output + `y, z`;
 }
 
+// Configuration for each block type
+// type is the block type identifier (string)
+// children is an array of BlockSlot defining the slots for child blocks (BlockSlot is defined above)
+// dynamicChildren is an optional function that takes in the current block and returns an updated array of BlockSlot
+// num_values is an optional array of named numeric parameters for the block
+// evaluate is a function that takes in the block, input values, and an evaluator function, and returns the computed output value
 export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: BlockSlot[];
@@ -143,10 +154,10 @@ export const blockConfig: Record<BlockType, {
   "Minimization": {
     type: "Minimization" as BlockType,
     children: [
-      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_Y, input_mod: 1 },
+      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_N, input_mod: 1 },
     ],
     evaluate: (block, inputs, evaluate) => {
-      // Minimization block finds the smallest n such that f(n) = 0
+      // Minimization block finds the smallest n such that f(..., n) = 0
       const f_block = block.children[0].block;
       if (!f_block) {
         throw new Error("Minimization block requires a function f.");
@@ -163,6 +174,19 @@ export const blockConfig: Record<BlockType, {
         depth++;
       }
       throw new Error("Minimization did not converge within "+MAX_DEPTH+" iterations.");
+    }
+  },
+  "Custom": {
+    type: "Custom" as BlockType,
+    children: [//This custom block slot is for internal use and should not be rendered
+      { name: "custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+    ],
+    evaluate: (block, inputs, evaluate) => {
+      // Custom block evaluation logic
+      if (block.children[0].block) {
+        return evaluate(block.children[0].block, inputs, evaluate);
+      }
+      throw new Error("Custom block is empty.");
     }
   }
 };

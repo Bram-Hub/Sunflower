@@ -4,6 +4,7 @@ export interface BlockData {
   id: string;
   type: BlockType;
   children: Array<BlockSlot>; // e.g., { condition: Block, then: Block }
+  collapsed: boolean;
   num_values?: Array<{ name: string; value: number }>; // e.g., { name: "n", value: 5 }
   inputCount: number;
   depth: number;

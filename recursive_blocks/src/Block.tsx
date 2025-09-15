@@ -17,11 +17,18 @@ const getDepthColor = (depth: number) => {
 };
 
 export function Block({ block, onUpdate }: Props) {
+  const [collapsed, setCollapsed] = React.useState(block?.collapsed);
+
   if (!block) {
-    return <span className="empty-text">Drop block here</span>;
+    return <span className="empty-text"> Drop block here</span>;
   }
 
+  const toggleCollapse = () => setCollapsed(prev => !prev);
+
   const renderSlot = (slot: BlockSlot) => {
+    if (collapsed !== undefined) {
+      block.collapsed = collapsed;
+    }
     const { name, block: child } = slot;
 
     React.useEffect(() => {
@@ -88,6 +95,7 @@ export function Block({ block, onUpdate }: Props) {
             id: uuidv4(),
             type: item.type,
             children: getDefaultChildren(item.type, newDepth),
+            collapsed: item.type === "Custom",
             num_values: getDefaultValues(item.type),
             inputCount: getInputCountOfSlot(slot, block.inputCount),
             depth: newDepth
@@ -113,7 +121,13 @@ export function Block({ block, onUpdate }: Props) {
     if (slot.input_descriptor === undefined) {
       slot.input_descriptor = blockConfig[block.type].children.find((s) => s.name === name)?.input_descriptor ?? DEFAULT_INPUT_DESCRIPTOR;
     }
-
+    if (collapsed) {
+      return (
+        <div ref={dropRef}>
+          {/* <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong> */}
+        </div>
+      );
+    }
     return (
       <div ref={dropRef} className={`block-slot ${child ? "filled" : "empty"}`}>
         <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong>
@@ -155,14 +169,24 @@ export function Block({ block, onUpdate }: Props) {
         borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`
       }}
     >
-      <div className="block-header">
+      <div className="block-header" style={{ gap: "0.25rem" }}>
         <div className="block-type">{block.type.toUpperCase()}</div>
-        <button
-          className="remove-button"
-          onClick={() => onUpdate(null)}
-        >
-          X
-        </button>
+        <div>
+          {block.children.length > 0 && (
+            <button
+              className="collapse-button"
+              onClick={toggleCollapse}
+            >
+              {collapsed ? "V" : ">"}
+            </button>
+          )}
+          <button
+            className="remove-button"
+            onClick={() => onUpdate(null)}
+          >
+            X
+          </button>
+        </div>
       </div>
 
       <div className="slots-container">
