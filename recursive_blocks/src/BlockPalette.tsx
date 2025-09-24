@@ -25,7 +25,7 @@ function DraggableBlock({ type, custom_block_index }: { type: BlockType, custom_
       ref={ref}
       className={`palette-block ${isDragging ? "opacity-50" : "palette-block-appear"}`}
     >
-      {type.toUpperCase()}
+      {custom_block_index !== undefined ? customBlocks[custom_block_index]?.name : type.toUpperCase()}
     </div>
   );
 }
