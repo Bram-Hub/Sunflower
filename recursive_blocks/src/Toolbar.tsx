@@ -4,11 +4,10 @@ import './Block.css';
 interface ToolbarProps {
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onEvaluate: () => void;
-  onStep: () => void;
+  onRun: () => void;
 }
 
-export function Toolbar({ onSave, onLoad, onEvaluate, onStep }: ToolbarProps) {
+export function Toolbar({ onSave, onLoad, onRun }: ToolbarProps) {
   return (
     <div className="toolbar-container">
       <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
@@ -26,12 +25,8 @@ export function Toolbar({ onSave, onLoad, onEvaluate, onStep }: ToolbarProps) {
           onChange={onLoad}
           className="hidden"
         />
-        <button onClick={onEvaluate} className="toolbar-button evaluate-button">
-          Evaluate
-        </button>
-
-        <button onClick={onStep} className="toolbar-button evaluate-button">
-          Take Step
+        <button onClick={onRun} className="toolbar-button evaluate-button">
+          Run
         </button>
       </div>
     </div>

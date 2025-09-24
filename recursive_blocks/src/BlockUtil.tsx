@@ -1,4 +1,5 @@
 import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig";
+import { BlockData } from "./Block.tsx"; // Fix to import from correct location
 
 export interface BlockData {
   id: string;
@@ -44,14 +45,15 @@ export function evaluateBlock(
   return ev;
 }
 
-export function stepBlock(
+export async function stepBlock(
   block: BlockData,
   inputs: number[],
-  evaluate: BlockEvaluator = stepBlock
-): number {
+  evaluate: BlockEvaluator = stepBlock,
+  onStepCallback: (block: BlockData, result: number) => Promise<void>
+): Promise<number> {
   const config = blockConfig[block.type];
-  const ev = config.evaluate(block, inputs, evaluate);
-  console.log(`Current Step: block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  const ev = await config.evaluate(block, inputs, evaluate, onStepCallback);
+  await onStepCallback(block, ev);
   return ev;
 }
 

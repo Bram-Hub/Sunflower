@@ -20,6 +20,10 @@ export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
   const [inputs, setInputs] = useState<number[]>(new Array(DEFAULT_INPUT_COUNT).fill(0));
   const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
+  const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
+  const [currentResult, setCurrentResult] = useState<number | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
 
   const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
     if (!newBlock) return;
@@ -146,46 +150,59 @@ export function BlockEditor() {
 
     reader.readAsText(file);
   };
+  
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const handleRun = async () => {
+    if (isEvaluating) return;
+    setIsEvaluating(true);
+    setCurrentResult(null);
+    if (!rootBlock) {
+      alert("No root block to evaluate.");
+      setIsEvaluating(false);
+      return;
+    }
 
-  const handleEvaluate = () => {
-    if (rootBlock) {
-      try {
+    try {
+      const speedMap: Record<number, number> = {
+        0: 0,
+        1: 100,
+        2: 500,
+      };
+      const delay = speedMap[evaluationSpeed];
+
+      if (delay === 0) {
+        // Instant evaluation
         const result = evaluateBlock(rootBlock, inputs);
-        const resultElement = document.querySelector('.result');
-        if (resultElement) {
-          resultElement.textContent = `Result: ${result}`;
-        }
-      } catch (error: any) {
-        alert(`Error: ${error.message}`);
+        setCurrentResult(result);
+      } else {
+        // Step-by-step evaluation
+        const onStepCallback = async (block: BlockData, result: number) => {
+          setHighlightedBlockId(block.id);
+          setCurrentResult(result);
+          await sleep(delay);
+        };
+        await stepBlock(rootBlock, inputs, stepBlock, onStepCallback);
       }
-    } else {
-      alert("No root block to evaluate.");
+    } catch (error: any) {
+      alert(`Error: ${error.message}`);
+    } finally {
+      setHighlightedBlockId(null);
+      setIsEvaluating(false);
     }
   };
 
-  const handleStep = () => {
-    if (rootBlock) {
-      try {
-        const result = stepBlock(rootBlock, inputs);
-        const resultElement = document.querySelector('.result');
-        if (resultElement) {
-          resultElement.textContent = `Result: ${result}`;
-        }
-      } catch (error: any) {
-        alert(`Error: ${error.message}`);
-      }
-    } else {
-      alert("No root block to evaluate.");
-    }
+  const speedToText = (speed: number) => {
+    if (speed === 0) return "Instant";
+    if (speed === 1) return "Fast";
+    return "Slow";
   };
-
+  
   return (
     <div className="editor flex-1 border p-4 bg-gray-50">
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
-        onEvaluate={handleEvaluate}
-        onStep={handleStep}
+        onRun={handleRun}
       />
       <div className="input-section">
         <h3 className="font-semibold mb-2">Inputs</h3>
@@ -215,12 +232,28 @@ export function BlockEditor() {
             />
           ))}
         </div>
-        <p className="result">Result: </p>
+        
+        <div className="speed-control">
+          <input
+            id="speed-slider"
+            type="range"
+            min="0"
+            max="2"
+            step="1"
+            value={evaluationSpeed}
+            onChange={(e) => setEvaluationSpeed(parseInt(e.target.value))}
+          />
+          <label htmlFor="speed-slider">Speed: {speedToText(evaluationSpeed)}</label>
+        </div>
+
+        <div className="result">
+          <p>Result: {currentResult}</p>
+        </div>
       </div>
 
       <div className="editor-content">
         {rootBlock ? (
-          <Block block={rootBlock} onUpdate={setRootBlock} />
+          <Block block={rootBlock} onUpdate={setRootBlock} highlightedBlockId={highlightedBlockId} />
         ) : (
           <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
         )}

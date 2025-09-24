@@ -9,6 +9,7 @@ import { ValueEditor } from "./ValueEditor";
 interface Props {
   block: BlockData | null;
   onUpdate: (newBlock: BlockData | null) => void;
+  highlightedBlockId?: string | null;
 }
 
 const getDepthColor = (depth: number) => {
@@ -16,7 +17,7 @@ const getDepthColor = (depth: number) => {
   return colors[depth % colors.length];
 };
 
-export function Block({ block, onUpdate }: Props) {
+export function Block({ block, onUpdate, highlightedBlockId }: Props) {
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
 
   if (!block) {
@@ -143,6 +144,7 @@ export function Block({ block, onUpdate }: Props) {
             );
             onUpdate(updated);
           }}
+          highlightedBlockId={highlightedBlockId}
         />
       </div>
     );
@@ -161,7 +163,7 @@ export function Block({ block, onUpdate }: Props) {
 
   return (
     <div 
-      className="block-container" 
+      className={`block-container ${highlightedBlockId === block.id ? "block-highlighted" : ""}`}
       ref={dragRef}
       style={{ 
         opacity: isDragging ? 0.5 : 1, 
