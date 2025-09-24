@@ -1,13 +1,14 @@
 import { useRef, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { blockConfig, BlockType } from "./BlockConfig";
+import { customBlocks } from "./BlockEditor";
 
-function DraggableBlock({ type }: { type: BlockType }) {
+function DraggableBlock({ type, custom_block_index }: { type: BlockType, custom_block_index?: number }) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "BLOCK",
-    item: { type },
+    item: { type, custom_block_index },
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     })
@@ -34,6 +35,9 @@ export function BlockPalette() {
     <div className="sideP">
       {Object.keys(blockConfig).map((blockType) => (
         <DraggableBlock key={blockType} type={blockType as BlockType} />
+      ))}
+      {customBlocks.map((block, index) => (
+        <DraggableBlock key={block.id} type={block.type} custom_block_index={index} />
       ))}
     </div>
   );

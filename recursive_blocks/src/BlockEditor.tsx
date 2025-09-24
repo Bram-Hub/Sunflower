@@ -16,6 +16,19 @@ interface EditorSaveState {
 
 const DEFAULT_INPUT_COUNT = 2;
 
+export const customBlocks: BlockData[] = [
+  {
+    id: uuidv4(),
+    type: "Custom",
+    name: "MY CUSTOM BLOCK",
+    children: getDefaultChildren("Custom", 0),
+    collapsed: false,
+    num_values: getDefaultValues("Custom"),
+    inputCount: DEFAULT_INPUT_COUNT,
+    depth: 0
+  }
+];
+
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
   const [inputs, setInputs] = useState<number[]>(new Array(DEFAULT_INPUT_COUNT).fill(0));

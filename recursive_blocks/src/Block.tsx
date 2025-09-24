@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import './Block.css';
 import { blockConfig, BlockSlot, BlockType, DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
+import { customBlocks } from "./BlockEditor";
 
 interface Props {
   block: BlockData | null;
@@ -67,7 +68,7 @@ export function Block({ block, onUpdate }: Props) {
 
     const [, drop] = useDrop(() => ({
       accept: "BLOCK",
-      drop: (item: { type: BlockType; id?: string; block?: BlockData }) => {
+      drop: (item: { type: BlockType; id?: string; block?: BlockData, custom_block_index?: number }) => {
         if (child) return;
         if (item.block && (item.block.id === block.id || isDescendant(item.block, block.id))) {
           return;
@@ -91,15 +92,35 @@ export function Block({ block, onUpdate }: Props) {
           };
           onUpdate(newBlock);
         } else {
-          newChild = {
-            id: uuidv4(),
-            type: item.type,
-            children: getDefaultChildren(item.type, newDepth),
-            collapsed: item.type === "Custom",
-            num_values: getDefaultValues(item.type),
-            inputCount: getInputCountOfSlot(slot, block.inputCount),
-            depth: newDepth
-          };
+          if (item.custom_block_index !== undefined) {
+            const customBlock = customBlocks[item.custom_block_index];
+            if (customBlock) {
+              newChild = {
+                ...customBlock,
+                id: uuidv4(),
+                depth: newDepth,
+                children: getDefaultChildren(customBlock.type, newDepth),
+                num_values: getDefaultValues(customBlock.type),
+                inputCount: block.inputCount
+              };
+            } else {
+              //error: log
+              console.error("Invalid custom block index:", item.custom_block_index);
+              return;
+            }
+
+          } else {
+
+            newChild = {
+              id: uuidv4(),
+              type: item.type,
+              children: getDefaultChildren(item.type, newDepth),
+              collapsed: item.type === "Custom",
+              num_values: getDefaultValues(item.type),
+              inputCount: getInputCountOfSlot(slot, block.inputCount),
+              depth: newDepth
+            };
+          }
 
           const newBlock = {
             ...block,
@@ -170,7 +191,7 @@ export function Block({ block, onUpdate }: Props) {
       }}
     >
       <div className="block-header" style={{ gap: "0.25rem" }}>
-        <div className="block-type">{block.type.toUpperCase()}</div>
+        <div className="block-type">{block.name || block.type.toUpperCase()}</div>
         <div>
           {block.children.length > 0 && (
             <button

@@ -179,7 +179,7 @@ export const blockConfig: Record<BlockType, {
   "Custom": {
     type: "Custom" as BlockType,
     children: [//This custom block slot is for internal use and should not be rendered
-      { name: "custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+      { name: "Custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
     ],
     evaluate: (block, inputs, evaluate) => {
       // Custom block evaluation logic
