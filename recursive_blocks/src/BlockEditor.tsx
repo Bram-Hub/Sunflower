@@ -26,6 +26,16 @@ export const customBlocks: BlockData[] = [
     num_values: getDefaultValues("Custom"),
     inputCount: DEFAULT_INPUT_COUNT,
     depth: 0
+  },
+  {
+    id: uuidv4(),
+    type: "Custom",
+    name: "MY CUSTOM BLOCK 2",
+    children: getDefaultChildren("Custom", 0),
+    collapsed: false,
+    num_values: getDefaultValues("Custom"),
+    inputCount: DEFAULT_INPUT_COUNT,
+    depth: 0
   }
 ];
 

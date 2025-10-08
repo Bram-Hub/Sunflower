@@ -33,9 +33,13 @@ function DraggableBlock({ type, custom_block_index }: { type: BlockType, custom_
 export function BlockPalette() {
   return (
     <div className="sideP">
-      {Object.keys(blockConfig).map((blockType) => (
-        <DraggableBlock key={blockType} type={blockType as BlockType} />
-      ))}
+      <h2 >Basic</h2>
+      {Object.keys(blockConfig).map((blockType) => {
+        if (blockType !== "Custom") {
+          return <DraggableBlock key={blockType} type={blockType as BlockType} />;
+        }
+      })}
+      <h2 >Custom</h2>
       {customBlocks.map((block, index) => (
         <DraggableBlock key={block.id} type={block.type} custom_block_index={index} />
       ))}
