@@ -19,7 +19,7 @@ export const CURRENT_FILETYPE_VERSION = "BRAM_EDITOR_STATE_V2";
 
 export const DEFAULT_INPUT_COUNT = 2;
 
-export const customBlocks: BlockData[] = [];
+export const customBlocks: BlockSave[] = [];
 
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);

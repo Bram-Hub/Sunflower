@@ -1,11 +1,12 @@
 import React from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { BlockData, removeBlockById, isDescendant, getInputCountOfSlot } from "./BlockUtil";
+import { BlockData, removeBlockById, isDescendant, getInputCountOfSlot, setInputCountOfBlock } from "./BlockUtil";
 import { v4 as uuidv4 } from "uuid";
 import './Block.css';
 import { blockConfig, BlockSlot, BlockType, DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 import { customBlocks } from "./BlockEditor";
+import { deserializeBlock } from "./BlockSave";
 
 interface Props {
   block: BlockData | null;
@@ -95,14 +96,8 @@ export function Block({ block, onUpdate }: Props) {
           if (item.custom_block_index !== undefined) {
             const customBlock = customBlocks[item.custom_block_index];
             if (customBlock) {
-              newChild = {
-                ...customBlock,
-                id: uuidv4(),
-                depth: newDepth,
-                children: getDefaultChildren(customBlock.type, newDepth),
-                num_values: getDefaultValues(customBlock.type),
-                inputCount: block.inputCount
-              };
+              newChild = deserializeBlock(customBlock, newDepth);
+              setInputCountOfBlock(newChild, getInputCountOfSlot(slot, block.inputCount));
             } else {
               //error: log
               console.error("Invalid custom block index:", item.custom_block_index);
@@ -234,5 +229,8 @@ export function getDefaultChildren(type: BlockType, depth: number = 0): Array<Bl
 
 export function getDefaultValues(type: BlockType): Array<{ name: string; value: number }> {
   const blockDef = blockConfig[type];
-  return blockDef?.num_values ?? [];
+  if (blockDef?.num_values) {
+    return blockDef.num_values.map(v => ({ ...v })); // return a copy
+  }
+  return [];
 }
