@@ -7,12 +7,14 @@ import './Block.css';
 import { BlockType } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
+import { useBlockEditor } from "./BlockEditorContext";
 
 export interface EditorSaveState {
   fileType: string;
   rootBlock?: BlockSave;
   inputs: number[];
   inputCount: number;
+  customBlocks: BlockSave[];
 }
 
 export const CURRENT_FILETYPE_VERSION = "BRAM_EDITOR_STATE_V2";
@@ -22,9 +24,10 @@ export const DEFAULT_INPUT_COUNT = 2;
 export const customBlocks: BlockSave[] = [];
 
 export function BlockEditor() {
-  const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
   const [inputs, setInputs] = useState<number[]>(new Array(DEFAULT_INPUT_COUNT).fill(0));
   const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
+
+  const { rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
 
   const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
     if (!newBlock) return;
@@ -77,6 +80,7 @@ export function BlockEditor() {
       rootBlock,
       inputs,
       inputCount,
+      customBlocks
     };
 
     try {
@@ -122,7 +126,14 @@ export function BlockEditor() {
           setInputs(loadedState.inputs);
           setInputCount(loadedState.inputCount);
 
-          console.log("State loaded successfully with depth initialization.");
+          loadedState.customBlocks.forEach(element => {
+            if (!customBlocks.find(b => b.name === element.name)) {
+              customBlocks.push(element);
+            }
+          });
+          setCustomBlockCount(customBlocks.length);
+
+          console.log("State loaded successfully.");
         } catch (error) {
           console.error("Failed to load or parse state file:", error);
           alert(`Error loading file: ${error instanceof Error ? error.message : String(error)}`);
