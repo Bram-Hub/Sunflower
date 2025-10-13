@@ -6,38 +6,20 @@ import { useDrop } from "react-dnd";
 import './Block.css';
 import { BlockType } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
+import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
 
-interface EditorSaveState {
+export interface EditorSaveState {
   fileType: string;
-  rootBlock: BlockData | null;
+  rootBlock?: BlockSave;
   inputs: number[];
   inputCount: number;
 }
 
-const DEFAULT_INPUT_COUNT = 2;
+export const CURRENT_FILETYPE_VERSION = "BRAM_EDITOR_STATE_V2";
 
-export const customBlocks: BlockData[] = [
-  {
-    id: uuidv4(),
-    type: "Custom",
-    name: "MY CUSTOM BLOCK",
-    children: getDefaultChildren("Custom", 0),
-    collapsed: false,
-    num_values: getDefaultValues("Custom"),
-    inputCount: DEFAULT_INPUT_COUNT,
-    depth: 0
-  },
-  {
-    id: uuidv4(),
-    type: "Custom",
-    name: "MY CUSTOM BLOCK 2",
-    children: getDefaultChildren("Custom", 0),
-    collapsed: false,
-    num_values: getDefaultValues("Custom"),
-    inputCount: DEFAULT_INPUT_COUNT,
-    depth: 0
-  }
-];
+export const DEFAULT_INPUT_COUNT = 2;
+
+export const customBlocks: BlockData[] = [];
 
 export function BlockEditor() {
   const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
@@ -76,6 +58,10 @@ export function BlockEditor() {
   };
 
   const handleSave = useCallback(() => {
+    createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount);
+  }, [rootBlock, inputs, inputCount]);
+
+  function createSaveFile(rootBlock: BlockSave | undefined, inputs: number[], inputCount: number) {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -87,7 +73,7 @@ export function BlockEditor() {
     const filename = `${timestamp}.bramflower`;
 
     const stateToSave: EditorSaveState = {
-      fileType: "BRAM_EDITOR_STATE_V1",
+      fileType: CURRENT_FILETYPE_VERSION,
       rootBlock,
       inputs,
       inputCount,
@@ -111,7 +97,7 @@ export function BlockEditor() {
       console.error("Failed to save state:", error);
       alert(`Error saving file: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [rootBlock, inputs, inputCount]);
+  }
 
   const handleLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -126,31 +112,13 @@ export function BlockEditor() {
         try {
           const loadedState: EditorSaveState = JSON.parse(content);
           if (typeof loadedState !== 'object' || loadedState === null ||
-              loadedState.fileType !== "BRAM_EDITOR_STATE_V1" || 
+              loadedState.fileType !== CURRENT_FILETYPE_VERSION || 
               !Array.isArray(loadedState.inputs) ||
               typeof loadedState.inputCount !== 'number') {
              throw new Error("Invalid or incompatible .bramflower file.");
           }
 
-          // Add this function to properly initialize depths when loading
-          const initializeDepths = (block: BlockData | null, currentDepth: number = 0): BlockData | null => {
-            if (!block) return null;
-            
-            return {
-              ...block,
-              depth: currentDepth,
-              children: block.children.map(slot => ({
-                ...slot,
-                block: slot.block ? initializeDepths(slot.block, currentDepth + 1) : null
-              }))
-            };
-          };
-
-          const rootWithDepths = loadedState.rootBlock 
-            ? initializeDepths(loadedState.rootBlock, 0)
-            : null;
-
-          setRootBlock(rootWithDepths);
+          setRootBlock(loadedState.rootBlock ? deserializeBlock(loadedState.rootBlock) : null);
           setInputs(loadedState.inputs);
           setInputCount(loadedState.inputCount);
 
