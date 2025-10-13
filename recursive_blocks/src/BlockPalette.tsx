@@ -3,7 +3,7 @@ import { useDrag } from "react-dnd";
 import { blockConfig, BlockType } from "./BlockConfig";
 import { CURRENT_FILETYPE_VERSION, customBlocks, EditorSaveState } from "./BlockEditor";
 import { getDefaultChildren } from "./Block";
-import { BlockSave } from "./BlockSave";
+import { BlockSave, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 
 function DraggableBlock({ type, custom_block_index, onRemove }: { type: BlockType, custom_block_index?: number, onRemove?: (i: number) => void }) {
@@ -39,25 +39,31 @@ function DraggableBlock({ type, custom_block_index, onRemove }: { type: BlockTyp
 
 export function BlockPalette() {
   const { customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
+  const {rootBlock, setRootBlock: _setRootBlock} = useBlockEditor();
 
-  // function turnRootToCustom() {
-  //   const name = prompt("Enter a name for the new custom block:");
-  //   if (!name) {
-  //     alert("Block creation cancelled.");
-  //     return;
-  //   }
-  //   const newBlock: BlockSave = {
-  //     name: name,
-  //     type: "Custom",
-  //     children: getDefaultChildren("Custom", 0).map(slot => ({ slotName: slot.name, child: null })),
-  //     num_values: []
-  //   };
+  function turnRootToCustom() {
+    if (!rootBlock) {
+      alert("No root block to convert to custom block.");
+      return;
+    }
 
-    
+    const name = prompt("Enter a name for the new custom block:");
+    if (!name) {
+      alert("Block creation cancelled.");
+      return;
+    }
+    const newBlock: BlockSave = {
+      name: name,
+      type: "Custom",
+      children: getDefaultChildren("Custom", 0).map(slot => ({ slotName: slot.name, child: null })),
+      num_values: []
+    };
 
-  //   customBlocks.push(newBlock);
-  //   setCustomBlockCount((prev) => prev + 1);
-  // }
+    newBlock.children[0].child = serializeBlock(rootBlock);
+
+    customBlocks.push(newBlock);
+    setCustomBlockCount((prev) => prev + 1);
+  }
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,7 +131,10 @@ export function BlockPalette() {
       {customBlocks.map((block, index) => (
         <DraggableBlock key={block.name} type={block.type} custom_block_index={index} onRemove={removeCustomBlock} />
       ))}
-      <label htmlFor="load-custom-block" className="toolbar-button load-button">
+      <button onClick={turnRootToCustom} className="toolbar-button">Create Custom Block from Root</button>
+      <br />
+      <br />
+      <label htmlFor="load-custom-block" className="toolbar-button">
           Load Custom Block (.bramflower)
       </label>
       <input
@@ -133,7 +142,6 @@ export function BlockPalette() {
         type="file"
         accept=".bramflower,application/octet-stream"
         onChange={handleFileSelected}
-        className="hidden"
       />
     </div>
   );
