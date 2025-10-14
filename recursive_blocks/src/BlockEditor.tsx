@@ -21,6 +21,7 @@ export const DEFAULT_INPUT_COUNT = 2;
 
 export const customBlocks: BlockSave[] = [];
 
+// JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
   const { inputCount, setInputCount } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount).fill(0));
@@ -220,7 +221,7 @@ export function BlockEditor() {
 
       <div className="editor-content">
         <BlockSlotDisplay parentBlock={null} slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} onUpdate={(block) => {
-          console.log("Root block updated:", block);
+          // console.log("Root block updated:", block);
           setRootBlock(block);
         }} />
       </div>

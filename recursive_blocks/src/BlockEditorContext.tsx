@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState } from "react";
 import { BlockData } from "./BlockUtil";
 import { DEFAULT_INPUT_COUNT } from "./BlockEditor";
 
+/*
+Defines a React Context, which makes the variables inside accessable by any React element within the context.
+*/
+
 const BlockEditorContext = createContext<{
   rootBlock: BlockData | null;
   customBlockCount: number;

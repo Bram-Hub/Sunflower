@@ -4,6 +4,10 @@ import { DEFAULT_INPUT_COUNT } from "./BlockEditor";
 import { BlockData } from "./BlockUtil";
 import { v4 as uuidv4 } from "uuid";
 
+/*
+A custom data type that stores the data necessary to save a block as a file or custom block.
+Not to be confused with BlockData, which stores extra information used by React and the evaluator.
+*/
 export type BlockSave = {
   name?: string;
   type: BlockType;
@@ -11,6 +15,7 @@ export type BlockSave = {
   num_values?: Array<{ valName: string; value: number }>;
 };
 
+//Convert BlockData to a BlockSave (remove unnecessary data)
 export function serializeBlock(block: BlockData): BlockSave {
   const serializedChildren = block.children.map((slot) => ({
 	slotName: slot.name,
@@ -24,6 +29,7 @@ export function serializeBlock(block: BlockData): BlockSave {
   };
 }
 
+//Convert BlockSave to BlockData for use
 export function deserializeBlock(data: BlockSave, depth: number = 0): BlockData {
   	const deserializedBlock: BlockData = {
 		id: uuidv4(),

@@ -7,6 +7,9 @@ interface ValueEditorProps {
   onUpdate: (newBlock: BlockData | null) => void;
 }
 
+// JSX element that exists on a JSX Block element that represents the number values of the block, making them accessible to be updated.
+// If the block type doesn't have values, this element is an empty div.
+// Block is the block this value editor is on, and onUpdate is called when a value is updated.
 export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
   // Initialize state with num_values from block, or an empty array if not defined
   const [values, setValues] = useState(block.num_values ?? []);

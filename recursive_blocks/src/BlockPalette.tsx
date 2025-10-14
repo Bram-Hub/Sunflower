@@ -6,6 +6,10 @@ import { getDefaultChildren } from "./Block";
 import { BlockSave, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 
+// JSX element to represent a draggable block type in the block pallete
+// Type is the block type. custom_block_index and onRemove are undefined if type is not Custom. 
+// If type is Custom, custom_block_index is an index in the custom blocks array corresponding to this block,
+// and onRemove is a method to remove this custom block from the custom blocks array.
 function DraggableBlock({ type, custom_block_index, onRemove }: { type: BlockType, custom_block_index?: number, onRemove?: (i: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -37,6 +41,8 @@ function DraggableBlock({ type, custom_block_index, onRemove }: { type: BlockTyp
   );
 }
 
+// JSX element that represents the block palette.
+// Contains function to load custom blocks.
 export function BlockPalette() {
   const { customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
   const {rootBlock, setRootBlock: _setRootBlock} = useBlockEditor();

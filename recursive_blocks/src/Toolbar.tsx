@@ -8,6 +8,7 @@ interface ToolbarProps {
   onStep: () => void;
 }
 
+// JSX element to represent the toolbar, with functions to save, load, and evaluate.
 export function Toolbar({ onSave, onLoad, onEvaluate, onStep }: ToolbarProps) {
   return (
     <div className="toolbar-container">

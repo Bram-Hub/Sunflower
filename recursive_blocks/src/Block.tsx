@@ -16,6 +16,14 @@ const getDepthColor = (depth: number) => {
   return colors[depth % colors.length];
 };
 
+/* 
+A JSX element that represents a visual block element.
+It is meant to be dragged into block slots.
+Block is the BlockData of this block element.
+onUpdate is a function that gets called when this block is modified
+(meaning it is deleted, a value is modified, or an ancestor is modified)
+and replaces the old block with the new block.
+*/
 export function Block({ block, onUpdate }: Props) {
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
 
