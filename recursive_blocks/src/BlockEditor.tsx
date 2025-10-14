@@ -1,8 +1,5 @@
-import React, { useState, useRef, useCallback  } from "react";
-import { BlockData, evaluateBlock, removeBlockById, setInputCountOfBlock, stepBlock } from "./BlockUtil";
-import { Block, getDefaultChildren, getDefaultValues } from "./Block";
-import { v4 as uuidv4 } from "uuid";
-import { useDrop } from "react-dnd";
+import React, { useState, useCallback, useEffect  } from "react";
+import { evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
 import './Block.css';
 import { DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
