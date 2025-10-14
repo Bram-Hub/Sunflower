@@ -1,5 +1,8 @@
-import React, { useState, useCallback, useEffect  } from "react";
-import { evaluateBlock, setInputCountOfBlock } from "./BlockUtil";
+import React, { useState, useRef, useCallback  } from "react";
+import { BlockData, evaluateBlock, removeBlockById, setInputCountOfBlock, stepBlock } from "./BlockUtil";
+import { Block, getDefaultChildren, getDefaultValues } from "./Block";
+import { v4 as uuidv4 } from "uuid";
+import { useDrop } from "react-dnd";
 import './Block.css';
 import { DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
@@ -151,7 +154,26 @@ export function BlockEditor() {
     if (rootBlock) {
       try {
         const result = evaluateBlock(rootBlock, inputs);
-        alert(`Result: ${result}`);
+        const resultElement = document.querySelector('.result');
+        if (resultElement) {
+          resultElement.textContent = `Result: ${result}`;
+        }
+      } catch (error: any) {
+        alert(`Error: ${error.message}`);
+      }
+    } else {
+      alert("No root block to evaluate.");
+    }
+  };
+
+  const handleStep = () => {
+    if (rootBlock) {
+      try {
+        const result = stepBlock(rootBlock, inputs);
+        const resultElement = document.querySelector('.result');
+        if (resultElement) {
+          resultElement.textContent = `Result: ${result}`;
+        }
       } catch (error: any) {
         alert(`Error: ${error.message}`);
       }
@@ -166,6 +188,7 @@ export function BlockEditor() {
         onSave={handleSave}
         onLoad={handleLoad}
         onEvaluate={handleEvaluate}
+        onStep={handleStep}
       />
       <div className="input-section">
         <h3 className="font-semibold mb-2">Inputs</h3>
@@ -195,6 +218,7 @@ export function BlockEditor() {
             />
           ))}
         </div>
+        <p className="result">Result: </p>
       </div>
 
       <div className="editor-content">

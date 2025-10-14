@@ -45,6 +45,17 @@ export function evaluateBlock(
   return ev;
 }
 
+export function stepBlock(
+  block: BlockData,
+  inputs: number[],
+  evaluate: BlockEvaluator = stepBlock
+): number {
+  const config = blockConfig[block.type];
+  const ev = config.evaluate(block, inputs, evaluate);
+  console.log(`Current Step: block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  return ev;
+}
+
 export function getInputCountOfSlot(
   slot: BlockSlot,
   defaultCount: number = 0
