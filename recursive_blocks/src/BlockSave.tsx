@@ -1,0 +1,59 @@
+import { getDefaultChildren, getDefaultValues } from "./Block";
+import { blockConfig, BlockType } from "./BlockConfig";
+import { DEFAULT_INPUT_COUNT } from "./BlockEditor";
+import { BlockData } from "./BlockUtil";
+import { v4 as uuidv4 } from "uuid";
+
+export type BlockSave = {
+  name?: string;
+  type: BlockType;
+  children: Array<{ slotName: string; child: BlockSave | null}>;
+  num_values?: Array<{ valName: string; value: number }>;
+};
+
+export function serializeBlock(block: BlockData): BlockSave {
+  const serializedChildren = block.children.map((slot) => ({
+	slotName: slot.name,
+	child: slot.block ? serializeBlock(slot.block) : null
+  }));
+  return {
+	name: block.name,
+	type: block.type,
+	children: serializedChildren,
+	num_values: block.num_values ? block.num_values.map(v => ({ valName: v.name, value: v.value })) : undefined,
+  };
+}
+
+export function deserializeBlock(data: BlockSave, depth: number = 0): BlockData {
+  	const deserializedBlock: BlockData = {
+		id: uuidv4(),
+		name: data.name,
+		type: data.type,
+		children: getDefaultChildren(data.type, 0),
+		collapsed: data.type === "Custom",
+		num_values: getDefaultValues(data.type),
+		inputCount: DEFAULT_INPUT_COUNT,
+		depth: depth
+	};
+
+	for (const val of data.num_values || []) {
+		const numVal = deserializedBlock.num_values?.find(v => v.name === val.valName);
+		if (numVal) {
+			numVal.value = val.value;
+		}
+	}
+
+	if (blockConfig[data.type].dynamicChildren) {
+		const dynamicSlots = blockConfig[data.type].dynamicChildren!(deserializedBlock);
+		deserializedBlock.children = dynamicSlots;
+	}
+
+	for (const slotData of data.children) {
+		const slot = deserializedBlock.children.find(s => s.name === slotData.slotName);
+		if (slot) {
+			slot.block = slotData.child ? deserializeBlock(slotData.child, depth + 1) : null;
+		}
+	}
+
+	return deserializedBlock;
+}

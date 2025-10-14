@@ -2,6 +2,7 @@ import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig
 
 export interface BlockData {
   id: string;
+  name?: string; // For custom blocks
   type: BlockType;
   children: Array<BlockSlot>; // e.g., { condition: Block, then: Block }
   collapsed: boolean;
