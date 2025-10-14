@@ -1,13 +1,11 @@
-import React, { useState, useRef, useCallback  } from "react";
-import { BlockData, evaluateBlock, removeBlockById, setInputCountOfBlock } from "./BlockUtil";
-import { Block, getDefaultChildren, getDefaultValues } from "./Block";
-import { v4 as uuidv4 } from "uuid";
-import { useDrop } from "react-dnd";
+import React, { useState, useCallback, useEffect  } from "react";
+import { evaluateBlock, setInputCountOfBlock } from "./BlockUtil";
 import './Block.css';
-import { BlockType } from "./BlockConfig";
+import { DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
+import { BlockSlotDisplay } from "./BlockSlot";
 
 export interface EditorSaveState {
   fileType: string;
@@ -24,21 +22,10 @@ export const DEFAULT_INPUT_COUNT = 2;
 export const customBlocks: BlockSave[] = [];
 
 export function BlockEditor() {
-  const [inputs, setInputs] = useState<number[]>(new Array(DEFAULT_INPUT_COUNT).fill(0));
-  const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
+  const { inputCount, setInputCount } = useBlockEditor();
+  const [inputs, setInputs] = useState<number[]>(new Array(inputCount).fill(0));
 
   const { rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
-
-  const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
-    if (!newBlock) return;
-    let cleaned = rootBlock;
-
-    if (movedId && cleaned) {
-      cleaned = removeBlockById(cleaned, movedId);
-    }
-
-    setRootBlock(newBlock);
-  };
 
   React.useEffect(() => {
     if (!rootBlock) {
@@ -48,10 +35,21 @@ export function BlockEditor() {
 
   }, [JSON.stringify(rootBlock), inputCount]);
 
+  useEffect(() => {
+    setInputs((prevInputs) => {
+      const newInputs = Array.from({ length: inputCount }, (_, i) => prevInputs[i] ?? 0);
+      return newInputs;
+    });
+
+    // If rootBlock exists, keep it updated too
+    if (rootBlock) {
+      setInputCountOfBlock(rootBlock, inputCount);
+    }
+  }, [inputCount, rootBlock]);
+
   const handleInputCountChange = (count: number) => {
     const clamped = Math.max(0, count);
     setInputCount(clamped);
-    setInputs(Array.from({ length: clamped }, (_, i) => inputs[i] ?? 0));
   };
 
   const handleInputChange = (index: number, value: number) => {
@@ -191,7 +189,7 @@ export function BlockEditor() {
               value={val}
               min={0}
               step={1}
-              onChange={(e) => handleInputChange(i, parseFloat(e.target.value))}
+              onChange={(e) => handleInputChange(i, parseInt(e.target.value))}
               className="px-2 py-1 border rounded"
               placeholder={`Input ${i + 1}`}
             />
@@ -200,65 +198,13 @@ export function BlockEditor() {
       </div>
 
       <div className="editor-content">
-        {rootBlock ? (
-          <Block block={rootBlock} onUpdate={setRootBlock} />
-        ) : (
-          <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
-        )}
+        <BlockSlotDisplay parentBlock={null} slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} onUpdate={(block) => {
+          console.log("Root block updated:", block);
+          setRootBlock(block);
+        }} />
       </div>
 
       <hr className="my-6" />
-
-      
-    </div>
-  );
-}
-
-function RootDropArea({
-  onDrop,
-  rootBlock,
-}: {
-  onDrop: (newBlock: BlockData | null, movedId?: string) => void;
-  rootBlock: BlockData | null;
-}) {
-  const dropRef = useRef<HTMLDivElement>(null);
-
-  const [, drop] = useDrop(() => ({
-    accept: "BLOCK",
-    drop: (item: { type: BlockType; block?: BlockData }) => {
-      if (item.block) {
-        const newRootBlock = {
-          ...item.block,
-          depth: 0,
-          inputCount: DEFAULT_INPUT_COUNT
-        };
-        onDrop(newRootBlock, item.block.id);
-      } else {
-        onDrop({
-          id: uuidv4(),
-          type: item.type,
-          children: getDefaultChildren(item.type, 0),
-          collapsed: item.type === "Custom",
-          num_values: getDefaultValues(item.type),
-          inputCount: DEFAULT_INPUT_COUNT,
-          depth: 0
-        });
-      }
-    },
-  }));
-
-  React.useEffect(() => {
-    if (dropRef.current) {
-      drop(dropRef.current);
-    }
-  }, [drop]);
-
-  return (
-    <div
-      ref={dropRef}
-      className={`block-slot ${rootBlock ? "filled" : "empty"}`}
-    >
-      {rootBlock ? "Root Block Added" : "Drop a block to start"}
     </div>
   );
 }

@@ -56,7 +56,7 @@ export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: BlockSlot[];
   dynamicChildren?: (block: BlockData) => BlockSlot[];
-  num_values?: { name: string; value: number }[];
+  num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
 }> = {
   "Zero": {
@@ -82,7 +82,7 @@ export const blockConfig: Record<BlockType, {
     type: "Projection" as BlockType,
     children: [],
     num_values: [
-      { name: "i", value: 1 },
+      { name: "i", value: 1, min: 1 }
     ],
     evaluate: (block, inputs, _evaluate) => {
       // Projection block returns the i-th input
@@ -100,7 +100,7 @@ export const blockConfig: Record<BlockType, {
       { name: "g1", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
     ],
     num_values: [
-      { name: "m", value: 1 }, 
+      { name: "m", value: 1, min: 0 }
     ],
     evaluate: (block, inputs, evaluate) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
