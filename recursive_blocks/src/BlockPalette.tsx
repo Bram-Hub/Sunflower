@@ -65,7 +65,9 @@ export function BlockPalette() {
       num_values: []
     };
 
-    newBlock.children[0].child = serializeBlock(rootBlock);
+    // If the root block is a custom block, we want to save its first child as the definition of the new custom block.
+    // Otherwise, we save the root block itself as the definition of the new custom block.
+    newBlock.children[0].child = serializeBlock(rootBlock.type !== "Custom" ? rootBlock : rootBlock.children[0].block!);
 
     customBlocks.push(newBlock);
     setCustomBlockCount((prev) => prev + 1);
@@ -91,20 +93,23 @@ export function BlockPalette() {
         return;
       }
 
-      const name = prompt("Enter a name for the new custom block:");
-      if (!name) {
-        alert("Block creation cancelled.");
-        return;
-      }
+      let newBlock: BlockSave;
+      if (parsed.rootBlock.type == "Custom") {
+        newBlock = parsed.rootBlock;
+      } else {
+        const name = prompt("Enter a name for the new custom block:");
+        if (!name) {
+          alert("Block creation cancelled.");
+          return;
+        }
+        
+        newBlock = {
+          name: name,
+          type: "Custom",
+          children: getDefaultChildren("Custom", 0).map(slot => ({ slotName: slot.name, child: null })),
+          num_values: []
+        };
 
-      const newBlock: BlockSave = {
-        name: name,
-        type: "Custom",
-        children: getDefaultChildren("Custom", 0).map(slot => ({ slotName: slot.name, child: null })),
-        num_values: []
-      };
-
-      if (parsed.rootBlock) {
         newBlock.children[0].child = parsed.rootBlock;
       }
 
