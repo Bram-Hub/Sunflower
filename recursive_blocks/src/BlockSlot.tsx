@@ -66,7 +66,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate}: {parentBlock: Bl
 			}
 			
 			let newChild: BlockData;
-			const newDepth = (parentBlock?.depth || -1) + 1;
+			const newDepth = (parentBlock == null ? -1 : parentBlock.depth) + 1;
 
 			if (item.block) {
 				// newChild = {

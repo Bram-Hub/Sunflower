@@ -98,10 +98,7 @@ export const blockConfig: Record<BlockType, {
   },
   "Composition": {
     type: "Composition" as BlockType,
-    children: [
-      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_G, input_set: 1 },
-      { name: "g1", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
-    ],
+    children: [], // Children are dynamically generated based on the "m" value
     num_values: [
       { name: "m", value: 1, min: 0 }
     ],
@@ -167,7 +164,7 @@ export const blockConfig: Record<BlockType, {
       }
       let n = 0;
       let depth = 0;
-      const MAX_DEPTH = 9999; // Prevent infinite loops
+      const MAX_DEPTH = 99; // Prevent infinite loops
       while (depth < MAX_DEPTH) {
         const result = evaluate(f_block, inputs.concat(n), evaluate);
         if (result === 0) {

@@ -89,7 +89,7 @@ export function setInputCountOfBlock(
   block.inputCount = count;
   for (const slot of block.children) {
     if (slot.block) {
-      slot.block.inputCount = getInputCountOfSlot(slot, count);
+      setInputCountOfBlock(slot.block, getInputCountOfSlot(slot, count));
     }
   }
 }

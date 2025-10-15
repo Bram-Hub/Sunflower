@@ -50,8 +50,10 @@ export function deserializeBlock(data: BlockSave, depth: number = 0): BlockData 
 	}
 
 	if (blockConfig[data.type].dynamicChildren) {
-		const dynamicSlots = blockConfig[data.type].dynamicChildren!(deserializedBlock);
-		deserializedBlock.children = dynamicSlots;
+		const dynamicSlots = blockConfig[data.type].dynamicChildren?.(deserializedBlock);
+		if (dynamicSlots) {
+			deserializedBlock.children = dynamicSlots;
+		}
 	}
 
 	for (const slotData of data.children) {
