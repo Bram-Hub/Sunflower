@@ -45,7 +45,6 @@
     margin-bottom: 0.75rem;
     margin-top: 0.75rem;
     cursor: grab;
-
   }
   
   /* Block header (type and remove button) */
@@ -58,7 +57,7 @@
   
   .block-type {
     font-weight: bold;
-    color: var(--block-text-color);
+    color: black;
     font-size: 0.875rem;
   }
 

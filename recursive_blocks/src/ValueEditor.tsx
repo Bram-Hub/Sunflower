@@ -46,6 +46,7 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
             value={val.value}
             onChange={(e) => handleValueChange(index, e.target.value)}
             className="value-input"
+            readOnly={block.immutable}
           />
         </div>
       ))}

@@ -68,12 +68,14 @@ export function Block({ block, onUpdate }: Props) {
               {collapsed ? "V" : ">"}
             </button>
           )}
-          <button
-            className="remove-button"
-            onClick={() => onUpdate(null)}
-          >
-            X
-          </button>
+          {!block.immutable && (
+            <button
+              className="remove-button"
+              onClick={() => onUpdate(null)}
+            >
+              X
+            </button>
+          )}
         </div>
       </div>
 

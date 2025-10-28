@@ -60,7 +60,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate}: {parentBlock: Bl
 		const [, drop] = useDrop(() => ({
 		accept: "BLOCK",
 		drop: (item: { type: BlockType; id?: string; block?: BlockData, custom_block_index?: number }) => {
-			if (child) return;
+			if (child || parentBlock?.immutable || parentBlock?.type === "Custom") return;//Can't add descendants to custom blocks
 			if (item.block && parentBlock && (item.block.id === parentBlock.id || isDescendant(item.block, parentBlock.id))) {
 				return;
 			}
@@ -99,13 +99,14 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate}: {parentBlock: Bl
 				} else {
 
 					newChild = {
-					id: uuidv4(),
-					type: item.type,
-					children: getDefaultChildren(item.type, newDepth),
-					collapsed: item.type === "Custom",
-					num_values: getDefaultValues(item.type),
-					inputCount: getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : 0),
-					depth: newDepth
+						id: uuidv4(),
+						type: item.type,
+						children: getDefaultChildren(item.type, newDepth),
+						collapsed: item.type === "Custom",
+						immutable: false,
+						num_values: getDefaultValues(item.type),
+						inputCount: getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : 0),
+						depth: newDepth
 					};
 				}
 

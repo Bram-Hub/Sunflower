@@ -30,17 +30,22 @@ export function serializeBlock(block: BlockData): BlockSave {
 }
 
 //Convert BlockSave to BlockData for use
-export function deserializeBlock(data: BlockSave, depth: number = 0): BlockData {
+export function deserializeBlock(data: BlockSave, depth: number = 0, immutable: boolean = false): BlockData {
   	const deserializedBlock: BlockData = {
 		id: uuidv4(),
 		name: data.name,
 		type: data.type,
 		children: getDefaultChildren(data.type, 0),
 		collapsed: data.type === "Custom",
+		immutable: immutable,
 		num_values: getDefaultValues(data.type),
 		inputCount: DEFAULT_INPUT_COUNT,
 		depth: depth
 	};
+
+	if (!immutable) {
+		immutable = data.type === "Custom"
+	}
 
 	for (const val of data.num_values || []) {
 		const numVal = deserializedBlock.num_values?.find(v => v.name === val.valName);
@@ -59,7 +64,7 @@ export function deserializeBlock(data: BlockSave, depth: number = 0): BlockData 
 	for (const slotData of data.children) {
 		const slot = deserializedBlock.children.find(s => s.name === slotData.slotName);
 		if (slot) {
-			slot.block = slotData.child ? deserializeBlock(slotData.child, depth + 1) : null;
+			slot.block = slotData.child ? deserializeBlock(slotData.child, depth + 1, immutable) : null;
 		}
 	}
 

@@ -9,6 +9,7 @@ export interface BlockData {
   type: BlockType;
   children: Array<BlockSlot>; // e.g., { condition: Block, then: Block }
   collapsed: boolean;
+  immutable: boolean;
   num_values?: Array<{ name: string; value: number }>; // e.g., { name: "n", value: 5 }
   inputCount: number;
   depth: number;
@@ -30,7 +31,7 @@ export function removeBlockById(block: BlockData, targetId: string): BlockData {
   };
 }
 
-//Recursively checks if the parent has an ancestor with id of childId
+//Recursively checks if the parent has a descendant with id of childId
 export function isDescendant(parent: BlockData, childId: string): boolean {
   for (const slot of parent.children) {
     if (!slot.block) continue;
@@ -80,8 +81,6 @@ export function getInputCountOfSlot(
 }
 
 //Recursively sets the input counts of blocks starting with setting the input block to have count inputs.
-//TODO: The input count variable might be redundant. Currently it is only used so blockslots know the default count, for displaying input count.
-//Consider optimizing it away.
 export function setInputCountOfBlock(
   block: BlockData,
   count: number
