@@ -92,7 +92,10 @@ export const blockConfig: Record<BlockType, {
       if (inputs.length <= 0) {
         throw new Error("Projection block requires at least one input.");
       }
-      const i = block!.num_values!.find(v => v.name === "i")?.value ?? 0;
+      if (!block.num_values || block.num_values.length === 0) {
+        throw new Error("Projection block requires num_values to specify 'i'.");
+      }
+      const i = block.num_values[0].value ?? 0;
       return inputs[i-1];
     }
   },
@@ -103,9 +106,12 @@ export const blockConfig: Record<BlockType, {
       { name: "m", value: 1, min: 0 }
     ],
     evaluate: (block, inputs, evaluate) => {
-      const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
+      if (!block.num_values || block.num_values.length === 0) {
+        throw new Error("Composition block requires num_values to specify 'm'.");
+      }
+      const m = block.num_values[0].value ?? 1;
       const g_results = Array.from({ length: m }, (_, i) => {
-        const g_block = block.children.find(c => c.name === `g${i + 1}`)?.block;
+        const g_block = block.children[i+1].block;
         if (!g_block) {
           throw new Error(`g${i + 1} block is missing in Composition.`);
         }
@@ -144,8 +150,9 @@ export const blockConfig: Record<BlockType, {
         return evaluate(block.children[0].block!, inputs.slice(0, -1), evaluate);
       } else {
         // Recursive case: evaluate the recursive case block with the inputs
-        const inputs_decremented = inputs.slice(0, -1).concat(inputs[inputs.length - 1] - 1);
-        console.log("Inputs for recursive case:", inputs_decremented);
+        const inputs_decremented = inputs.concat()
+        inputs_decremented[inputs_decremented.length-1] = inputs_decremented[inputs_decremented.length-1] - 1
+        // console.log("Inputs for recursive case:", inputs_decremented);
         const inputs_combined_with_previous = inputs_decremented.concat(evaluate(block, inputs_decremented, evaluate));
         return evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate);
       }
@@ -164,7 +171,7 @@ export const blockConfig: Record<BlockType, {
       }
       let n = 0;
       let depth = 0;
-      const MAX_DEPTH = 99; // Prevent infinite loops
+      const MAX_DEPTH = 100; // Prevent infinite loops
       while (depth < MAX_DEPTH) {
         const result = evaluate(f_block, inputs.concat(n), evaluate);
         if (result === 0) {

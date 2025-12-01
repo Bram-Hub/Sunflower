@@ -51,7 +51,7 @@ export function evaluateBlock(
 ): number {
   const config = blockConfig[block.type];
   const ev = config.evaluate(block, inputs, evaluateBlock);
-  console.log(`Evaluating block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  // console.log(`Evaluating block ${block.type} with inputs ${inputs} => Result: ${ev}`);
   return ev;
 }
 
@@ -62,7 +62,7 @@ export function stepBlock(
 ): number {
   const config = blockConfig[block.type];
   const ev = config.evaluate(block, inputs, stepBlock);
-  console.log(`Current Step: block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  // console.log(`Current Step: block ${block.type} with inputs ${inputs} => Result: ${ev}`);
   return ev;
 }
 
