@@ -24,6 +24,9 @@ export function BlockEditor() {
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
+  const isHaltedRef = useRef(false);
+  const stepQueue = useRef<(() => Promise<void>)[]>([]);
+  const isStepping = useRef(false);
 
   const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
     if (!newBlock) return;
@@ -150,11 +153,72 @@ export function BlockEditor() {
 
     reader.readAsText(file);
   };
+
+  const handleHalt = () => {
+    isHaltedRef.current = true;
+    stepQueue.current = [];
+    isStepping.current = false;
+  };
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  const handleStep = async () => {
+    if (isEvaluating) return;
+  
+    if (!isStepping.current) {
+      // Start a new stepping session
+      isStepping.current = true;
+      isHaltedRef.current = false;
+      setCurrentResult(null);
+  
+      if (!rootBlock) {
+        alert("No root block to evaluate.");
+        isStepping.current = false;
+        return;
+      }
+  
+      const onStepCallback = async (block: BlockData, result: number) => {
+        return new Promise<void>((resolve) => {
+          stepQueue.current.push(async () => {
+            if (isHaltedRef.current) {
+              stepQueue.current = [];
+              isStepping.current = false;
+              setHighlightedBlockId(null);
+              resolve();
+              return;
+            }
+            setHighlightedBlockId(block.id);
+            setCurrentResult(result);
+            resolve();
+          });
+        });
+      };
+  
+      // Don't await this, it will populate the queue
+      stepBlock(rootBlock, inputs, stepBlock, onStepCallback).then(() => {
+        stepQueue.current.push(async () => {
+          setHighlightedBlockId(null);
+          isStepping.current = false;
+        });
+      });
+    }
+  
+    // Execute the next step in the queue
+    const nextStep = stepQueue.current.shift();
+    if (nextStep) {
+      await nextStep();
+    } else {
+      isStepping.current = false;
+      setHighlightedBlockId(null);
+    }
+  };
+
   const handleRun = async () => {
     if (isEvaluating) return;
     setIsEvaluating(true);
+    isStepping.current = false;
+    stepQueue.current = [];
+    isHaltedRef.current = false;
     setCurrentResult(null);
     if (!rootBlock) {
       alert("No root block to evaluate.");
@@ -177,6 +241,9 @@ export function BlockEditor() {
       } else {
         // Step-by-step evaluation
         const onStepCallback = async (block: BlockData, result: number) => {
+          if (isHaltedRef.current) {
+            throw new Error("Halted");
+          }
           setHighlightedBlockId(block.id);
           setCurrentResult(result);
           await sleep(delay);
@@ -184,7 +251,9 @@ export function BlockEditor() {
         await stepBlock(rootBlock, inputs, stepBlock, onStepCallback);
       }
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      if (error.message !== "Halted") {
+        alert(`Error: ${error.message}`);
+      }
     } finally {
       setHighlightedBlockId(null);
       setIsEvaluating(false);
@@ -203,6 +272,8 @@ export function BlockEditor() {
         onSave={handleSave}
         onLoad={handleLoad}
         onRun={handleRun}
+        onHalt={handleHalt}
+        onStep={handleStep}
       />
       <div className="input-section">
         <h3 className="font-semibold mb-2">Inputs</h3>
