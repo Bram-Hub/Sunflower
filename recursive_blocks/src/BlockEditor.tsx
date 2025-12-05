@@ -6,6 +6,7 @@ import { useDrop } from "react-dnd";
 import './Block.css';
 import { BlockType } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
+import { BlockPalette } from "./BlockPalette";
 
 interface EditorSaveState {
   fileType: string;
@@ -267,7 +268,7 @@ export function BlockEditor() {
   };
   
   return (
-    <div className="editor flex-1 border p-4 bg-gray-50">
+    <>
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
@@ -283,18 +284,21 @@ export function BlockEditor() {
         speedToText={speedToText}
         currentResult={currentResult}
       />
-      <div className="editor-content">
-        {rootBlock ? (
-          <Block block={rootBlock} onUpdate={setRootBlock} highlightedBlockId={highlightedBlockId} />
-        ) : (
-          <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
-        )}
+      <div className="flexcont">
+        <BlockPalette />
+        <div className="editor flex-1 border p-4 bg-gray-50">
+          <div className="editor-content">
+            {rootBlock ? (
+              <Block block={rootBlock} onUpdate={setRootBlock} highlightedBlockId={highlightedBlockId} />
+            ) : (
+              <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
+            )}
+          </div>
+
+          <hr className="my-6" />
+        </div>
       </div>
-
-      <hr className="my-6" />
-
-      
-    </div>
+    </>
   );
 }
 

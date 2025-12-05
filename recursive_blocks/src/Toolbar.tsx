@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import './Toolbar.css';
 
 interface ToolbarProps {
@@ -32,75 +32,135 @@ export function Toolbar({
   speedToText,
   currentResult
 }: ToolbarProps) {
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const toggleMenu = (menu: string) => {
+    setOpenMenu(openMenu === menu ? null : menu);
+  };
+
+  const closeMenus = () => {
+    setOpenMenu(null);
+  };
+
   return (
-    <div className="toolbar-container">
+    <div className="toolbar-container" onClick={closeMenus}>
       <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
       
-      <div className="toolbar-group">
-        <button onClick={onSave} className="toolbar-button">
-          Save
+      {/* File Menu */}
+      <div className="menu-wrapper">
+        <button 
+          className="menu-button"
+          onClick={(e) => { e.stopPropagation(); toggleMenu('file'); }}
+        >
+          File ▼
         </button>
-        <label htmlFor="load-input" className="toolbar-button load-button">
-          Load
-        </label>
-        <input
-          id="load-input"
-          type="file"
-          accept=".bramflower,application/octet-stream"
-          onChange={onLoad}
-          className="hidden"
-        />
+        {openMenu === 'file' && (
+          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => { onSave(); closeMenus(); }} className="menu-item">
+              Save
+            </button>
+            <label htmlFor="load-input" className="menu-item menu-item-label">
+              Load
+            </label>
+            <input
+              id="load-input"
+              type="file"
+              accept=".bramflower,application/octet-stream"
+              onChange={(e) => { onLoad(e); closeMenus(); }}
+              className="hidden"
+            />
+          </div>
+        )}
       </div>
 
-      <div className="toolbar-group">
-        <button onClick={onRun} className="toolbar-button evaluate-button">
-          Run
+      {/* Program Settings Menu */}
+      <div className="menu-wrapper">
+        <button 
+          className="menu-button"
+          onClick={(e) => { e.stopPropagation(); toggleMenu('settings'); }}
+        >
+          Program Settings ▼
         </button>
-        <button onClick={onHalt} className="toolbar-button halt-button">
-          Halt
-        </button>
-        <button onClick={onStep} className="toolbar-button step-button">
-          Step
-        </button>
+        {openMenu === 'settings' && (
+          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+            <div className="menu-item">
+              <label>Number of Inputs:</label>
+              <input
+                type="number"
+                min="0"
+                max="20"
+                step="1"
+                value={inputCount}
+                onChange={(e) => onInputCountChange(parseInt(e.target.value))}
+                className="menu-input"
+              />
+            </div>
+
+            <div className="menu-divider"></div>
+
+            <div className="menu-item">
+              <label>Inputs:</label>
+              <div className="inputs-grid">
+                {inputs.map((val, i) => (
+                  <div key={i} className="input-item">
+                    <label>x{i + 1}:</label>
+                    <input
+                      type="number"
+                      value={val}
+                      min="0"
+                      step="1"
+                      onChange={(e) => onInputChange(i, parseFloat(e.target.value))}
+                      placeholder={`x${i + 1}`}
+                      className="menu-input"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="menu-divider"></div>
+
+            <div className="menu-item">
+              <label>Run Speed:</label>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="1"
+                value={evaluationSpeed}
+                onChange={(e) => onEvaluationSpeedChange(parseInt(e.target.value))}
+                className="menu-slider"
+              />
+              <span className="slider-value">{speedToText(evaluationSpeed)}</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="toolbar-group input-section-toolbar">
-        <label>Inputs:</label>
-        <input
-          type="number"
-          value={inputCount}
-          min={0}
-          step={1}
-          onChange={(e) => onInputCountChange(parseInt(e.target.value))}
-        />
-        {inputs.map((val, i) => (
-          <input
-            key={i}
-            type="number"
-            value={val}
-            min={0}
-            step={1}
-            onChange={(e) => onInputChange(i, parseFloat(e.target.value))}
-            placeholder={`x${i + 1}`}
-          />
-        ))}
-      </div>
-
-      <div className="toolbar-group">
-        <div className="speed-control">
-          <label htmlFor="speed-slider">Speed: {speedToText(evaluationSpeed)}</label>
-          <input
-            id="speed-slider"
-            type="range"
-            min="0"
-            max="2"
-            step="1"
-            value={evaluationSpeed}
-            onChange={(e) => onEvaluationSpeedChange(parseInt(e.target.value))}
-          />
-        </div>
+      {/* Program Operations Menu */}
+      <div className="menu-wrapper">
+        <button 
+          className="menu-button"
+          onClick={(e) => { e.stopPropagation(); toggleMenu('operations'); }}
+        >
+          Program Operations ▼
+        </button>
+        {openMenu === 'operations' && (
+          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => { onRun(); closeMenus(); }} className="menu-item evaluate-button-menu">
+              Run
+            </button>
+            <button onClick={() => { onHalt(); closeMenus(); }} className="menu-item halt-button-menu">
+              Halt
+            </button>
+            <button onClick={() => { onStep(); closeMenus(); }} className="menu-item step-button-menu">
+              Step
+            </button>
+          </div>
+        )}
       </div>
       
+      {/* Result Display */}
       <div className="toolbar-group">
         <div className="result">
           <p>Result: {currentResult}</p>

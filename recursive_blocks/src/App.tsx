@@ -6,8 +6,7 @@ import { BlockEditor } from "./BlockEditor";
 export default function App() {
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flexcont">
-        <BlockPalette />
+      <div className="app-container">
         <BlockEditor />
       </div>
     </DndProvider>
