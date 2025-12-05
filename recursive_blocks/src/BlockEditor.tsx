@@ -274,54 +274,15 @@ export function BlockEditor() {
         onRun={handleRun}
         onHalt={handleHalt}
         onStep={handleStep}
+        inputCount={inputCount}
+        onInputCountChange={handleInputCountChange}
+        inputs={inputs}
+        onInputChange={handleInputChange}
+        evaluationSpeed={evaluationSpeed}
+        onEvaluationSpeedChange={setEvaluationSpeed}
+        speedToText={speedToText}
+        currentResult={currentResult}
       />
-      <div className="input-section">
-        <h3 className="font-semibold mb-2">Inputs</h3>
-        <label className="block mb-2">
-          Number of Inputs:
-          <input
-            type="number"
-            value={inputCount}
-            min={0}
-            step={1}
-            onChange={(e) => handleInputCountChange(parseInt(e.target.value))}
-            className="ml-2 px-2 py-1 border rounded w-20"
-          />
-        </label>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {inputs.map((val, i) => (
-            <input
-              key={i}
-              type="number"
-              value={val}
-              min={0}
-              step={1}
-              onChange={(e) => handleInputChange(i, parseFloat(e.target.value))}
-              className="px-2 py-1 border rounded"
-              placeholder={`Input ${i + 1}`}
-            />
-          ))}
-        </div>
-        
-        <div className="speed-control">
-          <input
-            id="speed-slider"
-            type="range"
-            min="0"
-            max="2"
-            step="1"
-            value={evaluationSpeed}
-            onChange={(e) => setEvaluationSpeed(parseInt(e.target.value))}
-          />
-          <label htmlFor="speed-slider">Speed: {speedToText(evaluationSpeed)}</label>
-        </div>
-
-        <div className="result">
-          <p>Result: {currentResult}</p>
-        </div>
-      </div>
-
       <div className="editor-content">
         {rootBlock ? (
           <Block block={rootBlock} onUpdate={setRootBlock} highlightedBlockId={highlightedBlockId} />
