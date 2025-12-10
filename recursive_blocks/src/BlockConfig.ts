@@ -1,10 +1,11 @@
 import { BlockData } from "./BlockUtil";
 
-// blockConfig.ts
+// Custom enum type to represent all the block types (each type has their own config)
 export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization" | "Custom";
 
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator, onStepCallback?: (block: BlockData, result: number) => Promise<void>) => number | Promise<number>;
 
+// Function signature for a function that takes in a number, and returns a string to be displayed in a blockslot wanting that many inputs.
 export type InputDescriptorGenerator = (inputCount: number) => string;
 
 //The BlockSlot represents a slot in a block that can hold a child block
@@ -56,7 +57,7 @@ export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: BlockSlot[];
   dynamicChildren?: (block: BlockData) => BlockSlot[];
-  num_values?: { name: string; value: number }[];
+  num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
 }> = {
   "Zero": {
@@ -90,7 +91,7 @@ export const blockConfig: Record<BlockType, {
     type: "Projection" as BlockType,
     children: [],
     num_values: [
-      { name: "i", value: 1 },
+      { name: "i", value: 1, min: 1 }
     ],
     evaluate: (block, inputs, _evaluate, onStepCallback) => {
       // Projection block returns the i-th input
@@ -107,12 +108,9 @@ export const blockConfig: Record<BlockType, {
   },
   "Composition": {
     type: "Composition" as BlockType,
-    children: [
-      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_G, input_set: 1 },
-      { name: "g1", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
-    ],
+    children: [], // Children are dynamically generated based on the "m" value
     num_values: [
-      { name: "m", value: 1 }, 
+      { name: "m", value: 1, min: 0 }
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
@@ -190,7 +188,7 @@ export const blockConfig: Record<BlockType, {
       }
       let n = 0;
       let depth = 0;
-      const MAX_DEPTH = 9999; // Prevent infinite loops
+      const MAX_DEPTH = 100; // Prevent infinite loops
       while (depth < MAX_DEPTH) {
         const result = await evaluate(f_block, inputs.concat(n), evaluate, onStepCallback);
         if (result === 0) {
@@ -208,7 +206,7 @@ export const blockConfig: Record<BlockType, {
   "Custom": {
     type: "Custom" as BlockType,
     children: [//This custom block slot is for internal use and should not be rendered
-      { name: "custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+      { name: "Custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
       // Custom block evaluation logic

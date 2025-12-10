@@ -59,7 +59,7 @@
   
   .block-type {
     font-weight: bold;
-    color: var(--block-text-color);
+    color: black;
     font-size: 0.875rem;
   }
 

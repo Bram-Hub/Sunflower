@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { BlockData } from "./BlockUtil";
+import { blockConfig } from "./BlockConfig";
 
 interface ValueEditorProps {
   block: BlockData;
   onUpdate: (newBlock: BlockData | null) => void;
 }
 
+// JSX element that exists on a JSX Block element that represents the number values of the block, making them accessible to be updated.
+// If the block type doesn't have values, this element is an empty div.
+// Block is the block this value editor is on, and onUpdate is called when a value is updated.
 export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
   // Initialize state with num_values from block, or an empty array if not defined
   const [values, setValues] = useState(block.num_values ?? []);
@@ -22,7 +26,7 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
   // Handle change in an individual value input field
   const handleValueChange = (index: number, newValue: string) => {
     const updatedValues = [...values];
-    updatedValues[index] = { ...updatedValues[index], value: parseFloat(newValue) || 1 };
+    updatedValues[index] = { ...updatedValues[index], value: isNaN(parseInt(newValue)) ? 0 : parseInt(newValue) };
     setValues(updatedValues);
   };
 
@@ -37,11 +41,12 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
           <label className="value-label">{val.name}</label>
           <input
             type="number"
-            min="1"
+            min={blockConfig[block.type].num_values?.find(v => v.name === val.name)?.min || 0}
             step="1"
             value={val.value}
             onChange={(e) => handleValueChange(index, e.target.value)}
             className="value-input"
+            readOnly={block.immutable}
           />
         </div>
       ))}

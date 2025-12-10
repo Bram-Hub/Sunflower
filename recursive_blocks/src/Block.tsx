@@ -1,10 +1,10 @@
 import React from "react";
-import { useDrag, useDrop } from "react-dnd";
-import { BlockData, removeBlockById, isDescendant, getInputCountOfSlot } from "./BlockUtil";
-import { v4 as uuidv4 } from "uuid";
+import { useDrag } from "react-dnd";
+import { BlockData } from "./BlockUtil";
 import './Block.css';
-import { blockConfig, BlockSlot, BlockType, DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
+import { blockConfig, BlockSlot, BlockType } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
+import { BlockSlotDisplay } from "./BlockSlot";
 
 interface Props {
   block: BlockData | null;
@@ -172,7 +172,7 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
       }}
     >
       <div className="block-header" style={{ gap: "0.25rem" }}>
-        <div className="block-type">{block.type.toUpperCase()}</div>
+        <div className="block-type">{block.name || block.type.toUpperCase()}</div>
         <div>
           {block.children.length > 0 && (
             <button
@@ -182,18 +182,20 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
               {collapsed ? "V" : ">"}
             </button>
           )}
-          <button
-            className="remove-button"
-            onClick={() => onUpdate(null)}
-          >
-            X
-          </button>
+          {!block.immutable && (
+            <button
+              className="remove-button"
+              onClick={() => onUpdate(null)}
+            >
+              X
+            </button>
+          )}
         </div>
       </div>
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}>{renderSlot(slot)}</div>
+          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} /></div>
         ))}
       </div>
 
@@ -215,5 +217,8 @@ export function getDefaultChildren(type: BlockType, depth: number = 0): Array<Bl
 
 export function getDefaultValues(type: BlockType): Array<{ name: string; value: number }> {
   const blockDef = blockConfig[type];
-  return blockDef?.num_values ?? [];
+  if (blockDef?.num_values) {
+    return blockDef.num_values.map(v => ({ ...v })); // return a copy
+  }
+  return [];
 }
