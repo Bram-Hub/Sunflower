@@ -1,4 +1,5 @@
-import { blockConfig, BlockType, BlockSlot } from "./BlockConfig";
+import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig";
+import { BlockData } from "./Block.tsx"; // Fix to import from correct location
 
 /*
 A custom data type that contains all the data for a block placed into the block tree.
@@ -55,14 +56,15 @@ export function evaluateBlock(
   return ev;
 }
 
-//Currently, this function is same as evaluateBlock.
-export function stepBlock(
+export async function stepBlock(
   block: BlockData,
-  inputs: number[]
-): number {
+  inputs: number[],
+  evaluate: BlockEvaluator = stepBlock,
+  onStepCallback: (block: BlockData, result: number) => Promise<void>
+): Promise<number> {
   const config = blockConfig[block.type];
-  const ev = config.evaluate(block, inputs, stepBlock);
-  // console.log(`Current Step: block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  const ev = await config.evaluate(block, inputs, evaluate, onStepCallback);
+  await onStepCallback(block, ev);
   return ev;
 }
 
