@@ -1,26 +1,30 @@
-import React, { useState, useRef, useCallback  } from "react";
-import { BlockData, evaluateBlock, removeBlockById, setInputCountOfBlock, stepBlock } from "./BlockUtil";
-import { Block, getDefaultChildren, getDefaultValues } from "./Block";
-import { v4 as uuidv4 } from "uuid";
-import { useDrop } from "react-dnd";
+import React, { useState, useCallback, useEffect, useRef  } from "react";
+import { BlockData, evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
 import './Block.css';
-import { BlockType } from "./BlockConfig";
+import { DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
-import { BlockPalette } from "./BlockPalette";
+import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
+import { useBlockEditor } from "./BlockEditorContext";
+import { BlockSlotDisplay } from "./BlockSlot";
 
-interface EditorSaveState {
+export interface EditorSaveState {
   fileType: string;
-  rootBlock: BlockData | null;
+  rootBlock?: BlockSave;
   inputs: number[];
   inputCount: number;
+  customBlocks: BlockSave[];
 }
 
-const DEFAULT_INPUT_COUNT = 2;
+export const CURRENT_FILETYPE_VERSION = "BRAM_EDITOR_STATE_V2";
 
+export const DEFAULT_INPUT_COUNT = 2;
+
+export const customBlocks: BlockSave[] = [];
+
+// JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const [rootBlock, setRootBlock] = useState<BlockData | null>(null);
-  const [inputs, setInputs] = useState<number[]>(new Array(DEFAULT_INPUT_COUNT).fill(0));
-  const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
+  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
+  const [inputs, setInputs] = useState<number[]>(new Array(inputCount).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -28,17 +32,6 @@ export function BlockEditor() {
   const isHaltedRef = useRef(false);
   const stepQueue = useRef<(() => Promise<void>)[]>([]);
   const isStepping = useRef(false);
-
-  const handleUpdateRoot = (newBlock: BlockData | null, movedId?: string) => {
-    if (!newBlock) return;
-    let cleaned = rootBlock;
-
-    if (movedId && cleaned) {
-      cleaned = removeBlockById(cleaned, movedId);
-    }
-
-    setRootBlock(newBlock);
-  };
 
   React.useEffect(() => {
     if (!rootBlock) {
@@ -48,10 +41,21 @@ export function BlockEditor() {
 
   }, [JSON.stringify(rootBlock), inputCount]);
 
+  useEffect(() => {
+    setInputs((prevInputs) => {
+      const newInputs = Array.from({ length: inputCount }, (_, i) => prevInputs[i] ?? 0);
+      return newInputs;
+    });
+
+    // If rootBlock exists, keep it updated too
+    if (rootBlock) {
+      setInputCountOfBlock(rootBlock, inputCount);
+    }
+  }, [inputCount, rootBlock]);
+
   const handleInputCountChange = (count: number) => {
     const clamped = Math.max(0, count);
     setInputCount(clamped);
-    setInputs(Array.from({ length: clamped }, (_, i) => inputs[i] ?? 0));
   };
 
   const handleInputChange = (index: number, value: number) => {
@@ -61,6 +65,10 @@ export function BlockEditor() {
   };
 
   const handleSave = useCallback(() => {
+    createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount);
+  }, [rootBlock, inputs, inputCount]);
+
+  function createSaveFile(rootBlock: BlockSave | undefined, inputs: number[], inputCount: number) {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -72,10 +80,11 @@ export function BlockEditor() {
     const filename = `${timestamp}.bramflower`;
 
     const stateToSave: EditorSaveState = {
-      fileType: "BRAM_EDITOR_STATE_V1",
+      fileType: CURRENT_FILETYPE_VERSION,
       rootBlock,
       inputs,
       inputCount,
+      customBlocks
     };
 
     try {
@@ -96,7 +105,7 @@ export function BlockEditor() {
       console.error("Failed to save state:", error);
       alert(`Error saving file: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, [rootBlock, inputs, inputCount]);
+  }
 
   const handleLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -111,35 +120,24 @@ export function BlockEditor() {
         try {
           const loadedState: EditorSaveState = JSON.parse(content);
           if (typeof loadedState !== 'object' || loadedState === null ||
-              loadedState.fileType !== "BRAM_EDITOR_STATE_V1" || 
+              loadedState.fileType !== CURRENT_FILETYPE_VERSION || 
               !Array.isArray(loadedState.inputs) ||
               typeof loadedState.inputCount !== 'number') {
              throw new Error("Invalid or incompatible .bramflower file.");
           }
 
-          // Add this function to properly initialize depths when loading
-          const initializeDepths = (block: BlockData | null, currentDepth: number = 0): BlockData | null => {
-            if (!block) return null;
-            
-            return {
-              ...block,
-              depth: currentDepth,
-              children: block.children.map(slot => ({
-                ...slot,
-                block: slot.block ? initializeDepths(slot.block, currentDepth + 1) : null
-              }))
-            };
-          };
-
-          const rootWithDepths = loadedState.rootBlock 
-            ? initializeDepths(loadedState.rootBlock, 0)
-            : null;
-
-          setRootBlock(rootWithDepths);
+          setRootBlock(loadedState.rootBlock ? deserializeBlock(loadedState.rootBlock) : null);
           setInputs(loadedState.inputs);
           setInputCount(loadedState.inputCount);
 
-          console.log("State loaded successfully with depth initialization.");
+          loadedState.customBlocks.forEach(element => {
+            if (!customBlocks.find(b => b.name === element.name)) {
+              customBlocks.push(element);
+            }
+          });
+          setCustomBlockCount(customBlocks.length);
+
+          console.log("State loaded successfully.");
         } catch (error) {
           console.error("Failed to load or parse state file:", error);
           alert(`Error loading file: ${error instanceof Error ? error.message : String(error)}`);
@@ -196,7 +194,7 @@ export function BlockEditor() {
       };
   
       // Don't await this, it will populate the queue
-      stepBlock(rootBlock, inputs, stepBlock, onStepCallback).then(() => {
+      stepBlock(rootBlock, inputs, onStepCallback).then(() => {
         stepQueue.current.push(async () => {
           setHighlightedBlockId(null);
           isStepping.current = false;
@@ -237,7 +235,7 @@ export function BlockEditor() {
 
       if (delay === 0) {
         // Instant evaluation
-        const result = evaluateBlock(rootBlock, inputs);
+        const result = await evaluateBlock(rootBlock, inputs);
         setCurrentResult(result);
       } else {
         // Step-by-step evaluation
@@ -249,7 +247,7 @@ export function BlockEditor() {
           setCurrentResult(result);
           await sleep(delay);
         };
-        await stepBlock(rootBlock, inputs, stepBlock, onStepCallback);
+        await stepBlock(rootBlock, inputs, onStepCallback);
       }
     } catch (error: any) {
       if (error.message !== "Halted") {
@@ -284,69 +282,19 @@ export function BlockEditor() {
         speedToText={speedToText}
         currentResult={currentResult}
       />
-      <div className="flexcont">
-        <BlockPalette />
-        <div className="editor flex-1 border p-4 bg-gray-50">
-          <div className="editor-content">
-            {rootBlock ? (
-              <Block block={rootBlock} onUpdate={setRootBlock} highlightedBlockId={highlightedBlockId} />
-            ) : (
-              <RootDropArea onDrop={handleUpdateRoot} rootBlock={rootBlock} />
-            )}
-          </div>
 
-          <hr className="my-6" />
-        </div>
+      <div className="editor-content">
+        <BlockSlotDisplay 
+          parentBlock={null} 
+          slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} 
+          onUpdate={(block) => {
+            setRootBlock(block);
+          }}
+          highlightedBlockId={highlightedBlockId}
+        />
       </div>
+
+      <hr className="my-6" />
     </>
-  );
-}
-
-function RootDropArea({
-  onDrop,
-  rootBlock,
-}: {
-  onDrop: (newBlock: BlockData | null, movedId?: string) => void;
-  rootBlock: BlockData | null;
-}) {
-  const dropRef = useRef<HTMLDivElement>(null);
-
-  const [, drop] = useDrop(() => ({
-    accept: "BLOCK",
-    drop: (item: { type: BlockType; block?: BlockData }) => {
-      if (item.block) {
-        const newRootBlock = {
-          ...item.block,
-          depth: 0,
-          inputCount: DEFAULT_INPUT_COUNT
-        };
-        onDrop(newRootBlock, item.block.id);
-      } else {
-        onDrop({
-          id: uuidv4(),
-          type: item.type,
-          children: getDefaultChildren(item.type, 0),
-          collapsed: item.type === "Custom",
-          num_values: getDefaultValues(item.type),
-          inputCount: DEFAULT_INPUT_COUNT,
-          depth: 0
-        });
-      }
-    },
-  }));
-
-  React.useEffect(() => {
-    if (dropRef.current) {
-      drop(dropRef.current);
-    }
-  }, [drop]);
-
-  return (
-    <div
-      ref={dropRef}
-      className={`block-slot ${rootBlock ? "filled" : "empty"}`}
-    >
-      {rootBlock ? "Root Block Added" : "Drop a block to start"}
-    </div>
   );
 }

@@ -17,6 +17,7 @@ interface ToolbarProps {
   currentResult: number | null;
 }
 
+// JSX element to represent the toolbar, with functions to save, load, and evaluate.
 export function Toolbar({ 
   onSave, 
   onLoad, 

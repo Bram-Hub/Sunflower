@@ -1,10 +1,14 @@
 import { BlockData } from "./BlockUtil";
 
-// blockConfig.ts
+// Custom enum type to represent all the block types (each type has their own config)
 export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization" | "Custom";
 
+// Function signature for an evaluation function. 
+// It takes in the block to evaluate, the inputs, and the evaluateBlock function, and returns an output number.
+// onStepCallback is optional and used for stepping through evaluation.
 export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator, onStepCallback?: (block: BlockData, result: number) => Promise<void>) => number | Promise<number>;
 
+// Function signature for a function that takes in a number, and returns a string to be displayed in a blockslot wanting that many inputs.
 export type InputDescriptorGenerator = (inputCount: number) => string;
 
 //The BlockSlot represents a slot in a block that can hold a child block
@@ -56,7 +60,7 @@ export const blockConfig: Record<BlockType, {
   type: BlockType;
   children: BlockSlot[];
   dynamicChildren?: (block: BlockData) => BlockSlot[];
-  num_values?: { name: string; value: number }[];
+  num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
 }> = {
   "Zero": {
@@ -90,14 +94,17 @@ export const blockConfig: Record<BlockType, {
     type: "Projection" as BlockType,
     children: [],
     num_values: [
-      { name: "i", value: 1 },
+      { name: "i", value: 1, min: 1 }
     ],
     evaluate: (block, inputs, _evaluate, onStepCallback) => {
       // Projection block returns the i-th input
       if (inputs.length <= 0) {
         throw new Error("Projection block requires at least one input.");
       }
-      const i = block!.num_values!.find(v => v.name === "i")?.value ?? 0;
+      if (!block.num_values || block.num_values.length === 0) {
+        throw new Error("Projection block requires num_values to specify 'i'.");
+      }
+      const i = block.num_values[0].value ?? 0;
       const result = inputs[i-1];
       if (onStepCallback) {
         onStepCallback(block, result);
@@ -107,15 +114,15 @@ export const blockConfig: Record<BlockType, {
   },
   "Composition": {
     type: "Composition" as BlockType,
-    children: [
-      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_G, input_set: 1 },
-      { name: "g1", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
-    ],
+    children: [], // Children are dynamically generated based on the "m" value
     num_values: [
-      { name: "m", value: 1 }, 
+      { name: "m", value: 1, min: 0 }
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
-      const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
+      if (!block.num_values || block.num_values.length === 0) {
+        throw new Error("Composition block requires num_values to specify 'm'.");
+      }
+      const m = block.num_values[0].value ?? 1;
       const g_results = [];
       for (let i = 0; i < m; i++) {
         const g_block = block.children.find(c => c.name === `g${i + 1}`)?.block;
@@ -166,7 +173,7 @@ export const blockConfig: Record<BlockType, {
       } else {
         // Recursive case: evaluate the recursive case block with the inputs
         const inputs_decremented = inputs.slice(0, -1).concat(inputs[inputs.length - 1] - 1);
-        console.log("Inputs for recursive case:", inputs_decremented);
+        // console.log("Inputs for recursive case:", inputs_decremented);
         const intermediateResult = await evaluate(block, inputs_decremented, evaluate, onStepCallback);
         const inputs_combined_with_previous = inputs_decremented.concat(intermediateResult);
         const result = await evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate, onStepCallback);
@@ -190,7 +197,7 @@ export const blockConfig: Record<BlockType, {
       }
       let n = 0;
       let depth = 0;
-      const MAX_DEPTH = 9999; // Prevent infinite loops
+      const MAX_DEPTH = 100; // Prevent infinite loops
       while (depth < MAX_DEPTH) {
         const result = await evaluate(f_block, inputs.concat(n), evaluate, onStepCallback);
         if (result === 0) {
@@ -208,7 +215,7 @@ export const blockConfig: Record<BlockType, {
   "Custom": {
     type: "Custom" as BlockType,
     children: [//This custom block slot is for internal use and should not be rendered
-      { name: "custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+      { name: "Custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
       // Custom block evaluation logic
