@@ -107,7 +107,8 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 						immutable: false,
 						num_values: getDefaultValues(item.type),
 						inputCount: getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : 0),
-						depth: newDepth
+						depth: newDepth,
+						errors: []
 					};
 				}
 

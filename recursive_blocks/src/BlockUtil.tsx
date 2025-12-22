@@ -13,6 +13,7 @@ export interface BlockData {
   num_values?: Array<{ name: string; value: number }>; // e.g., { name: "n", value: 5 }
   inputCount: number;
   depth: number;
+  errors: string[];
 }
 
 //Currently unused.
@@ -98,4 +99,20 @@ export function setInputCountOfBlock(
       setInputCountOfBlock(slot.block, getInputCountOfSlot(slot, count));
     }
   }
+}
+
+export function checkForErrors(block: BlockData) : string[] {
+  block.errors = [];
+  for (const slot of block.children) {
+    if (slot.block) {
+      const errs = checkForErrors(slot.block);
+      if (errs.length > 0) {
+        block.errors.push(`Errors in children`);
+      }
+    } else {
+      const err = `Missing a child block in slot ${slot.name}.`;
+      block.errors.push(err);
+    }
+  }
+  return block.errors;
 }

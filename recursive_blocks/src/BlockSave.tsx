@@ -40,7 +40,8 @@ export function deserializeBlock(data: BlockSave, depth: number = 0, immutable: 
 		immutable: immutable,
 		num_values: getDefaultValues(data.type),
 		inputCount: DEFAULT_INPUT_COUNT,
-		depth: depth
+		depth: depth,
+		errors: []
 	};
 
 	if (!immutable) {

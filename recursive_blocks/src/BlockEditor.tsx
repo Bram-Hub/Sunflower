@@ -293,6 +293,7 @@ export function BlockEditor() {
             parentBlock={null} 
             slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} 
             onUpdate={(block) => {
+              console.log(block);
               setRootBlock(block);
             }}
             highlightedBlockId={highlightedBlockId}
