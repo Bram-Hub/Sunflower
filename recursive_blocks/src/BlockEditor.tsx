@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect  } from "react";
-import { evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
+import React, { useState, useCallback, useEffect, useRef  } from "react";
+import { BlockData, evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
 import './Block.css';
 import { DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
@@ -23,10 +23,15 @@ export const customBlocks: BlockSave[] = [];
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const { inputCount, setInputCount } = useBlockEditor();
+  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount).fill(0));
-
-  const { rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
+  const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
+  const [currentResult, setCurrentResult] = useState<number | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
+  const isHaltedRef = useRef(false);
+  const stepQueue = useRef<(() => Promise<void>)[]>([]);
+  const isStepping = useRef(false);
 
   React.useEffect(() => {
     if (!rootBlock) {
@@ -148,85 +153,148 @@ export function BlockEditor() {
     reader.readAsText(file);
   };
 
-  const handleEvaluate = () => {
-    if (rootBlock) {
-      try {
-        const result = evaluateBlock(rootBlock, inputs);
-        const resultElement = document.querySelector('.result');
-        if (resultElement) {
-          resultElement.textContent = `Result: ${result}`;
-        }
-      } catch (error: any) {
-        alert(`Error: ${error.message}`);
+  const handleHalt = () => {
+    isHaltedRef.current = true;
+    stepQueue.current = [];
+    isStepping.current = false;
+  };
+  
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  const handleStep = async () => {
+    if (isEvaluating) return;
+  
+    if (!isStepping.current) {
+      // Start a new stepping session
+      isStepping.current = true;
+      isHaltedRef.current = false;
+      setCurrentResult(null);
+  
+      if (!rootBlock) {
+        alert("No root block to evaluate.");
+        isStepping.current = false;
+        return;
       }
+  
+      const onStepCallback = async (block: BlockData, result: number) => {
+        return new Promise<void>((resolve) => {
+          stepQueue.current.push(async () => {
+            if (isHaltedRef.current) {
+              stepQueue.current = [];
+              isStepping.current = false;
+              setHighlightedBlockId(null);
+              resolve();
+              return;
+            }
+            setHighlightedBlockId(block.id);
+            setCurrentResult(result);
+            resolve();
+          });
+        });
+      };
+  
+      // Don't await this, it will populate the queue
+      stepBlock(rootBlock, inputs, onStepCallback).then(() => {
+        stepQueue.current.push(async () => {
+          setHighlightedBlockId(null);
+          isStepping.current = false;
+        });
+      });
+    }
+  
+    // Execute the next step in the queue
+    const nextStep = stepQueue.current.shift();
+    if (nextStep) {
+      await nextStep();
     } else {
-      alert("No root block to evaluate.");
+      isStepping.current = false;
+      setHighlightedBlockId(null);
     }
   };
 
-  const handleStep = () => {
-    if (rootBlock) {
-      try {
-        const result = stepBlock(rootBlock, inputs);
-        const resultElement = document.querySelector('.result');
-        if (resultElement) {
-          resultElement.textContent = `Result: ${result}`;
-        }
-      } catch (error: any) {
+  const handleRun = async () => {
+    if (isEvaluating) return;
+    setIsEvaluating(true);
+    isStepping.current = false;
+    stepQueue.current = [];
+    isHaltedRef.current = false;
+    setCurrentResult(null);
+    if (!rootBlock) {
+      alert("No root block to evaluate.");
+      setIsEvaluating(false);
+      return;
+    }
+
+    try {
+      const speedMap: Record<number, number> = {
+        0: 0,
+        1: 100,
+        2: 500,
+      };
+      const delay = speedMap[evaluationSpeed];
+
+      if (delay === 0) {
+        // Instant evaluation
+        const result = await evaluateBlock(rootBlock, inputs);
+        setCurrentResult(result);
+      } else {
+        // Step-by-step evaluation
+        const onStepCallback = async (block: BlockData, result: number) => {
+          if (isHaltedRef.current) {
+            throw new Error("Halted");
+          }
+          setHighlightedBlockId(block.id);
+          setCurrentResult(result);
+          await sleep(delay);
+        };
+        await stepBlock(rootBlock, inputs, onStepCallback);
+      }
+    } catch (error: any) {
+      if (error.message !== "Halted") {
         alert(`Error: ${error.message}`);
       }
-    } else {
-      alert("No root block to evaluate.");
+    } finally {
+      setHighlightedBlockId(null);
+      setIsEvaluating(false);
     }
   };
 
+  const speedToText = (speed: number) => {
+    if (speed === 0) return "Instant";
+    if (speed === 1) return "Fast";
+    return "Slow";
+  };
+  
   return (
-    <div className="editor flex-1 border p-4 bg-gray-50">
+    <>
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
-        onEvaluate={handleEvaluate}
+        onRun={handleRun}
+        onHalt={handleHalt}
         onStep={handleStep}
+        inputCount={inputCount}
+        onInputCountChange={handleInputCountChange}
+        inputs={inputs}
+        onInputChange={handleInputChange}
+        evaluationSpeed={evaluationSpeed}
+        onEvaluationSpeedChange={setEvaluationSpeed}
+        speedToText={speedToText}
+        currentResult={currentResult}
       />
-      <div className="input-section">
-        <h3 className="font-semibold mb-2">Inputs</h3>
-        <label className="block mb-2">
-          Number of Inputs:
-          <input
-            type="number"
-            value={inputCount}
-            min={0}
-            step={1}
-            onChange={(e) => handleInputCountChange(parseInt(e.target.value) || 0)}
-            className="ml-2 px-2 py-1 border rounded w-20"
-          />
-        </label>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {inputs.map((val, i) => (
-            <input
-              key={i}
-              type="number"
-              value={val}
-              min={0}
-              step={1}
-              onChange={(e) => handleInputChange(i, parseInt(e.target.value) || 0)}
-              className="px-2 py-1 border rounded"
-              placeholder={`Input ${i + 1}`}
-            />
-          ))}
-        </div>
-        <p className="result">Result: </p>
-      </div>
 
       <div className="editor-content">
-        <BlockSlotDisplay parentBlock={null} slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} onUpdate={(block) => {
-          // console.log("Root block updated:", block);
-          setRootBlock(block);
-        }} />
+        <BlockSlotDisplay 
+          parentBlock={null} 
+          slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} 
+          onUpdate={(block) => {
+            setRootBlock(block);
+          }}
+          highlightedBlockId={highlightedBlockId}
+        />
       </div>
 
       <hr className="my-6" />
-    </div>
+    </>
   );
 }

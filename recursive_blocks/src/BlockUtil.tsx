@@ -1,4 +1,4 @@
-import { blockConfig, BlockType, BlockSlot } from "./BlockConfig";
+import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig";
 
 /*
 A custom data type that contains all the data for a block placed into the block tree.
@@ -45,24 +45,31 @@ export function isDescendant(parent: BlockData, childId: string): boolean {
 //Each block type has an evaluate function, 
 //which takes in the blockdata, the inputs to evaluate on, 
 //and this evaluation function (to allow calling this function recursively)
-export function evaluateBlock(
+export async function evaluateBlock(
   block: BlockData,
   inputs: number[]
-): number {
+): Promise<number> {
   const config = blockConfig[block.type];
-  const ev = config.evaluate(block, inputs, evaluateBlock);
+  const ev = await config.evaluate(block, inputs, evaluateBlock);
   // console.log(`Evaluating block ${block.type} with inputs ${inputs} => Result: ${ev}`);
   return ev;
 }
 
-//Currently, this function is same as evaluateBlock.
-export function stepBlock(
+//Step through block evaluation with optional callback for visualization
+export async function stepBlock(
   block: BlockData,
-  inputs: number[]
-): number {
+  inputs: number[],
+  onStepCallback?: (block: BlockData, result: number) => Promise<void>
+): Promise<number> {
+  const evaluateWithCallback: BlockEvaluator = async (b, i, _eval, callback) => {
+    return await stepBlock(b, i, callback);
+  };
+  
   const config = blockConfig[block.type];
-  const ev = config.evaluate(block, inputs, stepBlock);
-  // console.log(`Current Step: block ${block.type} with inputs ${inputs} => Result: ${ev}`);
+  const ev = await config.evaluate(block, inputs, evaluateWithCallback, onStepCallback);
+  if (onStepCallback) {
+    await onStepCallback(block, ev);
+  }
   return ev;
 }
 

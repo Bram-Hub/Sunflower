@@ -9,6 +9,7 @@ import { BlockSlotDisplay } from "./BlockSlot";
 interface Props {
   block: BlockData | null;
   onUpdate: (newBlock: BlockData | null) => void;
+  highlightedBlockId?: string | null;
 }
 
 const getDepthColor = (depth: number) => {
@@ -24,7 +25,7 @@ onUpdate is a function that gets called when this block is modified
 (meaning it is deleted, a value is modified, or an ancestor is modified)
 and replaces the old block with the new block.
 */
-export function Block({ block, onUpdate }: Props) {
+export function Block({ block, onUpdate, highlightedBlockId }: Props) {
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
 
   if (!block) {
@@ -49,7 +50,7 @@ export function Block({ block, onUpdate }: Props) {
 
   return (
     <div 
-      className="block-container" 
+      className={`block-container ${highlightedBlockId === block.id ? "block-highlighted" : ""}`}
       ref={dragRef}
       style={{ 
         opacity: isDragging ? 0.5 : 1, 
@@ -81,7 +82,7 @@ export function Block({ block, onUpdate }: Props) {
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} /></div>
+          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} /></div>
         ))}
       </div>
 

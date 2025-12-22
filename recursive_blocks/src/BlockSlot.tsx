@@ -13,8 +13,9 @@ A JSX element that represents a block slot.
 parentBlock is the block this slot exists on. (if null, this is the root slot).
 slot is the slot data type (slot name, block inside, input descriptor, and input modifiers).
 onUpdate is a function that is called when the block inside the slot is modified, it replaces the block inside with the new block.
+highlightedBlockId is the optional ID of the block that should be highlighted (for stepping through evaluation).
 */
-export function BlockSlotDisplay({parentBlock, slot, onUpdate}: {parentBlock: BlockData | null, slot: BlockSlot, onUpdate: (newBlock: BlockData | null) => void}) {
+export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId}: {parentBlock: BlockData | null, slot: BlockSlot, onUpdate: (newBlock: BlockData | null) => void, highlightedBlockId?: string | null}) {
 	const { name, block: child } = slot;
 
     React.useEffect(() => {
@@ -167,6 +168,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate}: {parentBlock: Bl
             );
             onUpdate(updated);
           }}
+          highlightedBlockId={highlightedBlockId}
         />
       </div>
     );
