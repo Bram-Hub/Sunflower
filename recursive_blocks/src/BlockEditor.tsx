@@ -6,6 +6,7 @@ import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
+import { BlockPalette } from "./BlockPalette";
 
 export interface EditorSaveState {
   fileType: string;
@@ -283,15 +284,20 @@ export function BlockEditor() {
         currentResult={currentResult}
       />
 
-      <div className="editor-content">
-        <BlockSlotDisplay 
-          parentBlock={null} 
-          slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} 
-          onUpdate={(block) => {
-            setRootBlock(block);
-          }}
-          highlightedBlockId={highlightedBlockId}
-        />
+      <div className = "flexcont">
+
+        <BlockPalette />
+
+        <div className="editor-content">
+          <BlockSlotDisplay 
+            parentBlock={null} 
+            slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} 
+            onUpdate={(block) => {
+              setRootBlock(block);
+            }}
+            highlightedBlockId={highlightedBlockId}
+          />
+        </div>
       </div>
 
       <hr className="my-6" />

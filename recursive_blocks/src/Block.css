@@ -150,6 +150,9 @@
   .editor-content{
     margin-top: .75rem;
     width: fit-content;
+    max-width: calc(100% - 200px);
+    min-height: 0;
+    overflow-y: auto;
   }
   
   .value-field {
@@ -228,14 +231,14 @@
   .sideP{
     flex: 0 0 auto;
     background-color: var(--alt);
-    margin-left: 15px;
     padding-top: 0;
     overflow-y: auto;
-    min-width: 200px;
+    width: fit-content;
     max-width: 300px;
+    margin-left: 10px;
   }
   
-  .flexcont{
+  .flexcont {
     display: flex;
     width: 100%;
     flex: 1;
@@ -352,12 +355,6 @@
 
   .flexcont {
     flex-direction: row;
-  }
-
-  .sideP {
-    min-width: 150px;
-    max-width: 200px;
-    margin-left: 10px;
   }
 
   .editor {
