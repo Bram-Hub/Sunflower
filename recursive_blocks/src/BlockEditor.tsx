@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef  } from "react";
-import { BlockData, evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
+import { BlockData, checkForErrors, evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
 import './Block.css';
 import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
@@ -292,6 +292,9 @@ export function BlockEditor() {
             parentBlock={null} 
             slot={{ name: "Root", block: rootBlock, input_descriptor_index: 0 }} 
             onUpdate={(block) => {
+              if (block) {
+                checkForErrors(block);
+              }
               setRootBlock(block);
             }}
             highlightedBlockId={highlightedBlockId}

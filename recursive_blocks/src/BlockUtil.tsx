@@ -110,7 +110,7 @@ export function checkForErrors(block: BlockData) : string[] {
         block.errors.push(`Errors in children`);
       }
     } else {
-      const err = `Missing a child block in slot ${slot.name}.`;
+      const err = `Missing ${slot.name}.`;
       block.errors.push(err);
     }
   }

@@ -60,6 +60,13 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
     >
       <div className="block-header" style={{ gap: "0.25rem" }}>
         <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+        <div className="block-error-list">
+          {block.errors.map((error, index) => (
+            <div key={index} className="block-error">
+              {error}
+            </div>
+          ))}
+        </div>
         <div>
           {block.children.length > 0 && (
             <button
