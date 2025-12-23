@@ -69,6 +69,7 @@ export const blockConfig: Record<BlockType, {
   dynamicChildren?: (block: BlockData) => BlockSlot[];
   num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
+  checkForErrors: (block: BlockData) => string[];
 }> = {
   "Zero": {
     type: "Zero" as BlockType,
@@ -80,6 +81,12 @@ export const blockConfig: Record<BlockType, {
         onStepCallback(_block, result);
       }
       return result;
+    },
+    checkForErrors: (_block) => {
+      // if (_block.inputCount > 0) {
+      //   return [`Warning: Zero block should not have any inputs.`];
+      // }
+      return [];
     }
   },
   "Successor": {
@@ -95,6 +102,12 @@ export const blockConfig: Record<BlockType, {
         onStepCallback(_block, result);
       }
       return result;
+    },
+    checkForErrors: (block) => {
+      if (block.inputCount !== 1) {
+        return [`Successor block requires exactly one input, but has ${block.inputCount}.`];
+      }
+      return [];
     }
   },
   "Projection": {
@@ -117,6 +130,19 @@ export const blockConfig: Record<BlockType, {
         onStepCallback(block, result);
       }
       return result;
+    },
+    checkForErrors: (block) => {
+      if (block.inputCount <= 0) {
+        return [`Projection block requires at least one input.`];
+      }
+      const errors: string[] = [];
+      const iValue = block.num_values?.find(v => v.name === "i")?.value;
+      if (iValue === undefined) {
+        errors.push(`Projection block requires 'i' value.`);
+      } else if (iValue < 1 || iValue > block.inputCount) {
+        errors.push(`Projection block 'i' value must be between 1 and ${block.inputCount}, but is ${iValue}.`);
+      }
+      return errors;
     }
   },
   "Composition": {
@@ -157,6 +183,14 @@ export const blockConfig: Record<BlockType, {
           };
         })
       ];
+    },
+    checkForErrors: (block) => {
+      const errors: string[] = [];
+      const mValue = block.num_values?.find(v => v.name === "m")?.value;
+      if (mValue === undefined) {
+        errors.push(`Composition block requires 'm' value.`);
+      }
+      return errors;
     }
   },
   "Primitive Recursion": {
@@ -189,6 +223,13 @@ export const blockConfig: Record<BlockType, {
         }
         return result;
       }
+    },
+    checkForErrors: (block) => {
+      const errors: string[] = [];
+      if (block.inputCount < 1) {
+        errors.push(`Primitive Recursion block requires at least one input.`);
+      }
+      return errors;
     }
   },
   "Minimization": {
@@ -217,6 +258,10 @@ export const blockConfig: Record<BlockType, {
         depth++;
       }
       throw new Error("Minimization did not converge within "+MAX_DEPTH+" iterations.");
+    },
+    checkForErrors: (_block) => {
+      const errors: string[] = [];
+      return errors;
     }
   },
   "Custom": {
@@ -234,6 +279,10 @@ export const blockConfig: Record<BlockType, {
         return result;
       }
       throw new Error("Custom block is empty.");
+    },
+    checkForErrors: (_block) => {
+      const errors: string[] = [];
+      return errors;
     }
   }
 };

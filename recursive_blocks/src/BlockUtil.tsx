@@ -101,6 +101,8 @@ export function setInputCountOfBlock(
   }
 }
 
+// Recursively checks for errors in the block and its children.
+// Adds error messages to the block's errors array and returns it.
 export function checkForErrors(block: BlockData) : string[] {
   block.errors = [];
   for (const slot of block.children) {
@@ -114,6 +116,9 @@ export function checkForErrors(block: BlockData) : string[] {
       block.errors.push(err);
     }
   }
+  const config = blockConfig[block.type];
+  const blockErrors = config.checkForErrors(block);
+  block.errors.push(...blockErrors);
   return block.errors;
 }
 

@@ -92,7 +92,9 @@ export function Toolbar({
                 max="20"
                 step="1"
                 value={inputCount}
-                onChange={(e) => onInputCountChange(parseInt(e.target.value))}
+                onChange={
+                  (e) => onInputCountChange(parseInt(e.target.value))
+                }
                 className="menu-input"
               />
             </div>

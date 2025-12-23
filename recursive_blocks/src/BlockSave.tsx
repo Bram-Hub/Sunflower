@@ -39,7 +39,7 @@ export function deserializeBlock(data: BlockSave, depth: number = 0, immutable: 
 		collapsed: data.type === "Custom",
 		immutable: immutable,
 		num_values: getDefaultValues(data.type),
-		inputCount: DEFAULT_INPUT_COUNT,
+		inputCount: -1,
 		depth: depth,
 		errors: []
 	};

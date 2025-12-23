@@ -33,13 +33,19 @@ export function BlockEditor() {
   const stepQueue = useRef<(() => Promise<void>)[]>([]);
   const isStepping = useRef(false);
 
-  React.useEffect(() => {
-    if (!rootBlock) {
-      return;
-    }
-    setInputCountOfBlock(rootBlock, inputCount);
+  React.useEffect(() => {//This updates the root block when the number of inputs changes
+    if (!rootBlock) return;
+    // Avoid mutating the existing rootBlock in-place; clone then update so React sees the change.
+    if (rootBlock.inputCount === inputCount) return; // no-op if already up-to-date
 
-  }, [JSON.stringify(rootBlock), inputCount]);
+    const clone = (typeof structuredClone === 'function')
+      ? structuredClone(rootBlock)
+      : JSON.parse(JSON.stringify(rootBlock));
+
+    setInputCountOfBlock(clone, inputCount);
+    checkForErrors(clone);
+    setRootBlock(clone);
+  }, [rootBlock, inputCount, setRootBlock]);
 
   useEffect(() => {
     setInputs((prevInputs) => {
