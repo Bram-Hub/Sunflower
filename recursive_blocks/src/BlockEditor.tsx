@@ -24,7 +24,7 @@ export const customBlocks: Record<string, BlockSave> = {};
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
   const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
-  const [inputs, setInputs] = useState<number[]>(new Array(inputCount).fill(0));
+  const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
