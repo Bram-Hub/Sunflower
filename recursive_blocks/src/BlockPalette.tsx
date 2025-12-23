@@ -5,6 +5,7 @@ import { CURRENT_FILETYPE_VERSION, customBlocks, EditorSaveState } from "./Block
 import { getDefaultChildren } from "./Block";
 import { BlockSave, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
+import React from "react";
 
 // JSX element to represent a draggable block type in the block pallete
 // Type is the block type. custom_block_index and onRemove are undefined if type is not Custom. 
@@ -12,6 +13,7 @@ import { useBlockEditor } from "./BlockEditorContext";
 // and onRemove is a method to remove this custom block from the custom blocks array.
 function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType, custom_block_name?: string, onRemove?: (name: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [showInfo, setShowInfo] = React.useState(false);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "BLOCK",
@@ -32,7 +34,17 @@ function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType
       ref={ref}
       className={`palette-block ${isDragging ? "opacity-50" : "palette-block-appear"}`}
     >
-      {custom_block_name !== undefined ? custom_block_name : type.toUpperCase()}
+      <div className="palette-block-name">{custom_block_name !== undefined ? custom_block_name : type.toUpperCase()}</div>
+
+      {showInfo && blockConfig[type].description && (
+        <div className="block-description-popup">
+          <p>{blockConfig[type].description}</p>
+        </div>
+      )}
+
+      {blockConfig[type].description && (
+        <button className="info-button" onClick={() => setShowInfo(!showInfo)}>i</button>
+      )}
       {onRemove !== undefined && (
         <button className="remove-button" onClick={() => onRemove(custom_block_name!)}>X</button>
       )}
