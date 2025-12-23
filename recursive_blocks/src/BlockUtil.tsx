@@ -109,7 +109,7 @@ export function checkForErrors(block: BlockData) : string[] {
     if (slot.block) {
       const errs = checkForErrors(slot.block);
       if (errs.length > 0) {
-        block.errors.push(`Errors in children`);
+        block.errors.push(`Error(s) in children`);
       }
     } else {
       const err = `Missing ${slot.name}.`;

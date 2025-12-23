@@ -70,6 +70,7 @@ export const blockConfig: Record<BlockType, {
   num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
   checkForErrors: (block: BlockData) => string[];
+  description?: string;
 }> = {
   "Zero": {
     type: "Zero" as BlockType,
@@ -87,7 +88,8 @@ export const blockConfig: Record<BlockType, {
       //   return [`Warning: Zero block should not have any inputs.`];
       // }
       return [];
-    }
+    },
+    description: "Ignores inputs. Returns 0."
   },
   "Successor": {
     type: "Successor" as BlockType,
@@ -108,7 +110,8 @@ export const blockConfig: Record<BlockType, {
         return [`Successor block requires exactly one input, but has ${block.inputCount}.`];
       }
       return [];
-    }
+    },
+    description: "1 input. Returns the input incremented by 1."
   },
   "Projection": {
     type: "Projection" as BlockType,
@@ -143,7 +146,8 @@ export const blockConfig: Record<BlockType, {
         errors.push(`Projection block 'i' value must be between 1 and ${block.inputCount}, but is ${iValue}.`);
       }
       return errors;
-    }
+    },
+    description: "n > 0 inputs. Returns the i-th input, where i is a parameter of the block and 1 <= i <= n."
   },
   "Composition": {
     type: "Composition" as BlockType,
@@ -191,7 +195,8 @@ export const blockConfig: Record<BlockType, {
         errors.push(`Composition block requires 'm' value.`);
       }
       return errors;
-    }
+    },
+    description: "n inputs. Contains m blocks g1 ... gm. Runs g1 ... gm on the n inputs. Then returns f evaluated on the results of g1 ... gm."
   },
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
@@ -230,7 +235,10 @@ export const blockConfig: Record<BlockType, {
         errors.push(`Primitive Recursion block requires at least one input.`);
       }
       return errors;
-    }
+    },
+    description: `n >= 1 inputs. 
+    If rightmost input is 0, returns the base case. 
+    Otherwise, returns the recursive case evaluated where y = (rightmost input - 1), and z is the result of the previous recursive step (this block, evaluated with rightmost input decremented).`
   },
   "Minimization": {
     type: "Minimization" as BlockType,
@@ -262,7 +270,8 @@ export const blockConfig: Record<BlockType, {
     checkForErrors: (_block) => {
       const errors: string[] = [];
       return errors;
-    }
+    },
+    description: "Any number of inputs. Finds the smallest non-negative integer n such that f evaluated on the inputs and n returns 0."
   },
   "Custom": {
     type: "Custom" as BlockType,

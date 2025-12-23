@@ -27,6 +27,7 @@ and replaces the old block with the new block.
 */
 export function Block({ block, onUpdate, highlightedBlockId }: Props) {
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
+  const [showInfo, setShowInfo] = React.useState(false);
 
   if (!block) {
     return <span className="empty-text"> Drop block here</span>;
@@ -68,6 +69,13 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
           ))}
         </div>
         <div>
+          <button
+            className="info-button"
+            title={"Show description"}
+            onClick={() => setShowInfo(prev => !prev)}
+          >
+            i
+          </button>
           {block.children.length > 0 && (
             <button
               className="collapse-button"
@@ -86,6 +94,12 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
           )}
         </div>
       </div>
+
+      {showInfo && blockConfig[block.type]?.description && (
+        <div className="block-description">
+          {blockConfig[block.type]?.description ?? "No description available for this block."}
+        </div>
+      )}
 
       <div className="slots-container">
         {block.children.map((slot) => (
