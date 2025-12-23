@@ -14,11 +14,11 @@ export type InputDescriptorGenerator = (inputCount: number) => string;
 //The BlockSlot represents a slot in a block that can hold a child block
 //The name is a unique identifier for the slot
 //The blockData is the child block that occupies the slot, or null if empty
-//Input Descriptor is a function that takes in the input count and returns a string describing the inputs
+//Input Descriptor Index is the index of a function that takes in the input count and returns a string describing the inputs, in the INPUT_DESCRIPTORS array below
 //Input Set and Input Mod are an optional modifiers that adjust the displayed input count for the child block
-export type BlockSlot = { name: string; block: BlockData | null; input_descriptor: InputDescriptorGenerator; input_set?: number; input_mod?: number};
+export type BlockSlot = { name: string; block: BlockData | null; input_descriptor_index: number; input_set?: number; input_mod?: number};
 
-export const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
+const DEFAULT_INPUT_DESCRIPTOR: InputDescriptorGenerator = (inputCount) => {
   let output = "";
   for (let i = 1; i <= inputCount; i++) {
     output += `x${i}, `;
@@ -49,6 +49,13 @@ const INPUT_DESCRIPTOR_RECUR_YZ: InputDescriptorGenerator = (inputCount) => {
   }
   return output + `y, z`;
 }
+
+export const INPUT_DESCRIPTORS: InputDescriptorGenerator[] = [
+  DEFAULT_INPUT_DESCRIPTOR,
+  INPUT_DESCRIPTOR_G,
+  INPUT_DESCRIPTOR_N,
+  INPUT_DESCRIPTOR_RECUR_YZ
+];
 
 // Configuration for each block type
 // type is the block type identifier (string)
@@ -140,13 +147,13 @@ export const blockConfig: Record<BlockType, {
     dynamicChildren: (block: BlockData) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
       return [
-        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor: INPUT_DESCRIPTOR_G, input_set: m },
+        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor_index: 1, input_set: m },
         ...Array.from({ length: m }, (_, i) => {
           const name = `g${i + 1}`;
           return {
             name,
             block: block.children.find(c => c.name === name)?.block ?? null,
-            input_descriptor: DEFAULT_INPUT_DESCRIPTOR,
+            input_descriptor_index: 0,
           };
         })
       ];
@@ -155,8 +162,8 @@ export const blockConfig: Record<BlockType, {
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
     children: [
-      { name: "Base Case", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR, input_mod: -1 },
-      { name: "Recursive Case", block: null, input_descriptor: INPUT_DESCRIPTOR_RECUR_YZ, input_mod: 1 },
+      { name: "Base Case", block: null, input_descriptor_index: 0, input_mod: -1 },
+      { name: "Recursive Case", block: null, input_descriptor_index: 3, input_mod: 1 },
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
@@ -187,7 +194,7 @@ export const blockConfig: Record<BlockType, {
   "Minimization": {
     type: "Minimization" as BlockType,
     children: [
-      { name: "f", block: null, input_descriptor: INPUT_DESCRIPTOR_N, input_mod: 1 },
+      { name: "f", block: null, input_descriptor_index: 2, input_mod: 1 },
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
       // Minimization block finds the smallest n such that f(..., n) = 0
@@ -215,7 +222,7 @@ export const blockConfig: Record<BlockType, {
   "Custom": {
     type: "Custom" as BlockType,
     children: [//This custom block slot is for internal use and should not be rendered
-      { name: "Custom Function", block: null, input_descriptor: DEFAULT_INPUT_DESCRIPTOR },
+      { name: "Custom Function", block: null, input_descriptor_index: 0 },
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {
       // Custom block evaluation logic

@@ -116,3 +116,17 @@ export function checkForErrors(block: BlockData) : string[] {
   }
   return block.errors;
 }
+
+// Return a new BlockData where the child in slot `slotName` is replaced with `newChild`.
+// Performs a deep clone to avoid shared references that can cause subtle mutation bugs.
+export function replaceSlotBlock(parent: BlockData, slotName: string, newChild: BlockData | null): BlockData {
+  const copy = structuredClone(parent);
+  if (!copy.children) return copy;
+  for (const slot of copy.children) {
+    if (slot.name === slotName) {
+      slot.block = newChild ? newChild : null;
+      break;
+    }
+  }
+  return copy;
+}

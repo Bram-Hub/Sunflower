@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef  } from "react";
 import { BlockData, evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
 import './Block.css';
-import { DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
 import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
@@ -291,9 +290,8 @@ export function BlockEditor() {
         <div className="editor-content">
           <BlockSlotDisplay 
             parentBlock={null} 
-            slot={{ name: "Root", block: rootBlock, input_descriptor: DEFAULT_INPUT_DESCRIPTOR }} 
+            slot={{ name: "Root", block: rootBlock, input_descriptor_index: 0 }} 
             onUpdate={(block) => {
-              console.log(block);
               setRootBlock(block);
             }}
             highlightedBlockId={highlightedBlockId}

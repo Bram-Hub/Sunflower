@@ -1,9 +1,10 @@
 import React from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { BlockSlot, BlockType, DEFAULT_INPUT_DESCRIPTOR } from "./BlockConfig";
+import { BlockSlot, BlockType, INPUT_DESCRIPTORS } from "./BlockConfig";
 import { BlockData, getInputCountOfSlot, isDescendant, setInputCountOfBlock } from "./BlockUtil";
 import { blockConfig } from "./BlockConfig";
 import { Block, getDefaultChildren, getDefaultValues } from "./Block";
+import { replaceSlotBlock } from "./BlockUtil";
 import { useDrop } from "react-dnd";
 import { customBlocks } from "./BlockEditor";
 import { deserializeBlock } from "./BlockSave";
@@ -117,12 +118,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 					return;
 				}
 
-				const newBlock = {
-					...parentBlock,
-					children: parentBlock.children.map((slot) =>
-						slot.name === name ? { ...slot, block: newChild } : slot
-					),
-				};
+				const newBlock = replaceSlotBlock(parentBlock, name, newChild);
 				onUpdate(newBlock);
 			}
 		},
@@ -137,8 +133,8 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 	
 	if (parentBlock) {
 
-		if (slot.input_descriptor === undefined) {
-			slot.input_descriptor = blockConfig[parentBlock.type].children.find((s) => s.name === name)?.input_descriptor ?? DEFAULT_INPUT_DESCRIPTOR;
+		if (slot.input_descriptor_index === undefined) {
+			slot.input_descriptor_index = 0;
 		}
 
 		if (parentBlock.collapsed) {
@@ -152,25 +148,20 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
     
     return (
       <div ref={dropRef} className={`block-slot ${child ? "filled" : "empty"}`}>
-        <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : child ? child.inputCount : 0))}):</strong>
-        <Block 
-          key={child?.id ?? `empty-${parentBlock ? parentBlock.id : "root"}-${name}`}
-          block={child}
-          onUpdate={(newChild) => {
-			if (parentBlock === null) {
-				onUpdate(newChild);
-				return;
-			}
-            var updated = {...parentBlock} as BlockData;
-            updated.children = updated.children.map((slot) =>
-              slot.name === name
-                ? { ...slot, block: newChild === null ? null : newChild }
-                : slot
-            );
-            onUpdate(updated);
-          }}
-          highlightedBlockId={highlightedBlockId}
-        />
+        <strong>{name} ({INPUT_DESCRIPTORS[slot.input_descriptor_index](getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : child ? child.inputCount : 0))}):</strong>
+				<Block 
+					key={child?.id ?? `empty-${parentBlock ? parentBlock.id : "root"}-${name}`}
+					block={child}
+					onUpdate={(newChild) => {
+						if (parentBlock === null) {
+								onUpdate(newChild);
+								return;
+						}
+						const updated = replaceSlotBlock(parentBlock, name, newChild === null ? null : newChild);
+						onUpdate(updated);
+					}}
+					highlightedBlockId={highlightedBlockId}
+				/>
       </div>
     );
   };
