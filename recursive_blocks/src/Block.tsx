@@ -69,13 +69,15 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
           ))}
         </div>
         <div>
-          <button
-            className="info-button"
-            title={"Show description"}
-            onClick={() => setShowInfo(prev => !prev)}
-          >
-            i
-          </button>
+          {blockConfig[block.type]?.description && (
+            <button
+              className="info-button"
+              title={"Show description"}
+              onClick={() => setShowInfo(prev => !prev)}
+            >
+              i
+            </button>
+          )}
           {block.children.length > 0 && (
             <button
               className="collapse-button"
