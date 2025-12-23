@@ -103,6 +103,77 @@
     color: var(--block-text-color);
     max-width: 100%;
   }
+
+  .block-description-text{
+    margin-bottom: 0.5rem;
+  }
+
+  .block-comment textarea{
+    width: 100%;
+    resize: vertical;
+    min-height: 48px;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    font-size: 0.875rem;
+    background: var(--block-bg-color);
+    color: var(--block-text-color);
+  }
+
+  .block-comment-actions{
+    margin-top: 0.25rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .comment-save-button{
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid transparent;
+    background-color: #10b981; /* emerald-500 */
+    color: white;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+
+  .comment-save-button:hover{
+    background-color: #059669; /* emerald-600 */
+  }
+
+  /* Comments section inside description */
+  .block-comments-section{
+    margin-top: 0.5rem;
+  }
+
+  .comment-row{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .comments-toggle{
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.125rem 0.25rem;
+    align-self: flex-start;
+  }
+
+  .comment-display{
+    flex: 1 1 auto;
+    padding: 0.5rem;
+    background: rgba(0,0,0,0.03);
+    border-radius: 0.375rem;
+    color: var(--block-text-color);
+    white-space: pre-wrap;
+  }
+
+  .comment-empty{
+    color: #6b7280; /* gray-500 */
+    font-style: italic;
+  }
   
   .remove-button {
     font-size: 0.875rem;

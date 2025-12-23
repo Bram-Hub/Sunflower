@@ -28,6 +28,12 @@ and replaces the old block with the new block.
 export function Block({ block, onUpdate, highlightedBlockId }: Props) {
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
   const [showInfo, setShowInfo] = React.useState(false);
+  const [comment, setComment] = React.useState<string>(block?.comment ?? "");
+  const [commentOpen, setCommentOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setComment(block?.comment ?? "");
+  }, [block?.id]);
 
   if (!block) {
     return <span className="empty-text"> Drop block here</span>;
@@ -95,9 +101,41 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
         </div>
       </div>
 
-      {showInfo && blockConfig[block.type]?.description && (
+      {showInfo && (
         <div className="block-description">
-          {blockConfig[block.type]?.description ?? "No description available for this block."}
+          <div className="block-description-text">{blockConfig[block.type]?.description ?? ""}</div>
+
+          <div className="comment-row">
+            <div className="comment-display">
+              {comment ? comment : <span className="comment-empty">No comment</span>}
+            </div>
+            <button
+              className="comments-toggle"
+              onClick={() => setCommentOpen(prev => !prev)}
+              aria-expanded={commentOpen}
+              title={commentOpen ? "Hide comments" : "Show comments"}
+            >
+              {commentOpen ? '▾' : '▸'}
+            </button>
+          </div>
+
+          {commentOpen && (
+            <div className="block-comment">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                onBlur={() => {
+                  if (!block) return;
+                  if ((block.comment ?? "") !== comment) {
+                    const updated = { ...block, comment };
+                    onUpdate(updated);
+                  }
+                }}
+                placeholder="Add a comment..."
+                rows={3}
+              />
+            </div>
+          )}
         </div>
       )}
 

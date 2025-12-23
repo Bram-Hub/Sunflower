@@ -14,6 +14,7 @@ export interface BlockData {
   inputCount: number;
   depth: number;
   errors: string[];
+  comment?: string;
 }
 
 //Currently unused.
