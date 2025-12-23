@@ -10,12 +10,12 @@ import { useBlockEditor } from "./BlockEditorContext";
 // Type is the block type. custom_block_index and onRemove are undefined if type is not Custom. 
 // If type is Custom, custom_block_index is an index in the custom blocks array corresponding to this block,
 // and onRemove is a method to remove this custom block from the custom blocks array.
-function DraggableBlock({ type, custom_block_index, onRemove }: { type: BlockType, custom_block_index?: number, onRemove?: (i: number) => void }) {
+function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType, custom_block_name?: string, onRemove?: (name: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "BLOCK",
-    item: { type, custom_block_index },
+    item: { type, custom_block_name },
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     })
@@ -32,9 +32,9 @@ function DraggableBlock({ type, custom_block_index, onRemove }: { type: BlockTyp
       ref={ref}
       className={`palette-block ${isDragging ? "opacity-50" : "palette-block-appear"}`}
     >
-      {custom_block_index !== undefined ? customBlocks[custom_block_index]?.name : type.toUpperCase()}
+      {custom_block_name !== undefined ? custom_block_name : type.toUpperCase()}
       {onRemove !== undefined && (
-        <button className="remove-button" onClick={() => onRemove(custom_block_index!)}>X</button>
+        <button className="remove-button" onClick={() => onRemove(custom_block_name!)}>X</button>
       )}
 
     </div>
@@ -69,8 +69,8 @@ export function BlockPalette() {
     // Otherwise, we save the root block itself as the definition of the new custom block.
     newBlock.children[0].child = serializeBlock(rootBlock.type !== "Custom" ? rootBlock : rootBlock.children[0].block!);
 
-    customBlocks.push(newBlock);
-    setCustomBlockCount((prev) => prev + 1);
+    customBlocks[name] = newBlock;
+    setCustomBlockCount((_) => Object.keys(customBlocks).length);
   }
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,8 +113,8 @@ export function BlockPalette() {
         newBlock.children[0].child = parsed.rootBlock;
       }
 
-      customBlocks.push(newBlock);
-      setCustomBlockCount((prev) => prev + 1);
+      customBlocks[newBlock.name || "A:"+ Object.keys(customBlocks).length.toString()] = newBlock;
+      setCustomBlockCount((_) => Object.keys(customBlocks).length);
     }
     catch (error) {
       console.error("Error loading block:", error);
@@ -125,9 +125,9 @@ export function BlockPalette() {
     }
   };
 
-  function removeCustomBlock(index: number) {
-    customBlocks.splice(index, 1);
-    setCustomBlockCount((prev) => prev - 1);
+  function removeCustomBlock(name: string) {
+    delete customBlocks[name];
+    setCustomBlockCount((_) => Object.keys(customBlocks).length);
   }
   
   return (
@@ -139,9 +139,9 @@ export function BlockPalette() {
         }
       })}
       <h2 >Custom</h2>
-      {customBlocks.map((block, index) => (
-        <DraggableBlock key={block.name} type={block.type} custom_block_index={index} onRemove={removeCustomBlock} />
-      ))}
+      {Object.values(customBlocks).map((block) => (
+        <DraggableBlock key={block.name} type={block.type} custom_block_name={block.name} onRemove={removeCustomBlock} />
+    ))}
       <button onClick={turnRootToCustom} className="toolbar-button">Create Custom Block from Root</button>
       <br />
       <br />

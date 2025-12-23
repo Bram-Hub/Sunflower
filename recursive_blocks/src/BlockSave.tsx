@@ -1,6 +1,5 @@
 import { getDefaultChildren, getDefaultValues } from "./Block";
 import { blockConfig, BlockType } from "./BlockConfig";
-import { DEFAULT_INPUT_COUNT } from "./BlockEditor";
 import { BlockData } from "./BlockUtil";
 import { v4 as uuidv4 } from "uuid";
 

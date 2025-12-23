@@ -61,7 +61,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 	// if (parentBlock) {
 		const [, drop] = useDrop(() => ({
 		accept: "BLOCK",
-		drop: (item: { type: BlockType; id?: string; block?: BlockData, custom_block_index?: number }) => {
+		drop: (item: { type: BlockType; id?: string; block?: BlockData, custom_block_name?: string }) => {
 			if (child || parentBlock?.immutable || parentBlock?.type === "Custom") return;//Can't add descendants to custom blocks
 			if (item.block && parentBlock && (item.block.id === parentBlock.id || isDescendant(item.block, parentBlock.id))) {
 				return;
@@ -86,18 +86,17 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 				// onUpdate(newBlock);
 				console.error("Moving existing blocks not yet supported.");
 			} else {
-				if (item.custom_block_index !== undefined) {
-					const customBlock = customBlocks[item.custom_block_index];
+				if (item.custom_block_name !== undefined) {
+					const customBlock = customBlocks[item.custom_block_name];
 					if (customBlock) {
 						newChild = deserializeBlock(customBlock, newDepth);
 						setInputCountOfBlock(newChild, getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : 0));
 					} else {
-						console.error("Invalid custom block index:", item.custom_block_index);
+						console.error("Invalid custom block name:", item.custom_block_name);
 						return;
 					}
 
-					console.log("Dropping custom block:", newChild);
-
+					// console.log("Dropping custom block:", newChild);
 				} else {
 
 					newChild = {

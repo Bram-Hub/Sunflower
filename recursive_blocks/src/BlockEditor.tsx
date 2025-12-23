@@ -12,14 +12,14 @@ export interface EditorSaveState {
   rootBlock?: BlockSave;
   inputs: number[];
   inputCount: number;
-  customBlocks: BlockSave[];
+  customBlocks: Record<string, BlockSave>;
 }
 
 export const CURRENT_FILETYPE_VERSION = "BRAM_EDITOR_STATE_V2";
 
 export const DEFAULT_INPUT_COUNT = 2;
 
-export const customBlocks: BlockSave[] = [];
+export const customBlocks: Record<string, BlockSave> = {};
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
@@ -136,12 +136,10 @@ export function BlockEditor() {
           setInputs(loadedState.inputs);
           setInputCount(loadedState.inputCount);
 
-          loadedState.customBlocks.forEach(element => {
-            if (!customBlocks.find(b => b.name === element.name)) {
-              customBlocks.push(element);
-            }
-          });
-          setCustomBlockCount(customBlocks.length);
+          setCustomBlockCount(Object.keys(customBlocks).length);
+          for (const [name, customBlock] of Object.entries(loadedState.customBlocks)) {
+            customBlocks[customBlock.name ?? name] = customBlock;
+          }
 
           console.log("State loaded successfully.");
         } catch (error) {
