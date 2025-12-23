@@ -231,9 +231,9 @@ export function BlockEditor() {
 
     try {
       const speedMap: Record<number, number> = {
-        0: 0,
+        0: 500,
         1: 100,
-        2: 500,
+        2: 0,
       };
       const delay = speedMap[evaluationSpeed];
 
@@ -264,9 +264,9 @@ export function BlockEditor() {
   };
 
   const speedToText = (speed: number) => {
-    if (speed === 0) return "Instant";
+    if (speed === 0) return "Slow";
     if (speed === 1) return "Fast";
-    return "Slow";
+    return "Instant";
   };
   
   return (
