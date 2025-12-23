@@ -91,7 +91,7 @@ export function Toolbar({
                 min="0"
                 max="20"
                 step="1"
-                value={inputCount}
+                value={inputCount.toString()}
                 onChange={
                   (e) => onInputCountChange(parseInt(e.target.value))
                 }

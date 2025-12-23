@@ -35,6 +35,7 @@ export function BlockEditor() {
 
   React.useEffect(() => {//This updates the root block when the number of inputs changes
     if (!rootBlock) return;
+    if (isNaN(inputCount)) return;
     // Avoid mutating the existing rootBlock in-place; clone then update so React sees the change.
     if (rootBlock.inputCount === inputCount) return; // no-op if already up-to-date
 
@@ -42,20 +43,20 @@ export function BlockEditor() {
       ? structuredClone(rootBlock)
       : JSON.parse(JSON.stringify(rootBlock));
 
-    setInputCountOfBlock(clone, inputCount);
+    setInputCountOfBlock(clone, inputCount > 0 ? inputCount : 0);
     checkForErrors(clone);
     setRootBlock(clone);
   }, [rootBlock, inputCount, setRootBlock]);
 
   useEffect(() => {
     setInputs((prevInputs) => {
-      const newInputs = Array.from({ length: inputCount }, (_, i) => prevInputs[i] ?? 0);
+      const newInputs = Array.from({ length: inputCount > 0 ? inputCount : 0 }, (_, i) => prevInputs[i] ?? 0);
       return newInputs;
     });
 
     // If rootBlock exists, keep it updated too
     if (rootBlock) {
-      setInputCountOfBlock(rootBlock, inputCount);
+      setInputCountOfBlock(rootBlock, inputCount > 0 ? inputCount : 0);
     }
   }, [inputCount, rootBlock]);
 
@@ -71,7 +72,7 @@ export function BlockEditor() {
   };
 
   const handleSave = useCallback(() => {
-    createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount);
+    createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount > 0 ? inputCount : 0);
   }, [rootBlock, inputs, inputCount]);
 
   function createSaveFile(rootBlock: BlockSave | undefined, inputs: number[], inputCount: number) {
