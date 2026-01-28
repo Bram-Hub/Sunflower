@@ -4,6 +4,7 @@ import './Toolbar.css';
 interface ToolbarProps {
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  loadInputRef: React.RefObject<HTMLInputElement | null>;
   onRun: () => void;
   onHalt: () => void;
   onStep: () => void;
@@ -20,7 +21,8 @@ interface ToolbarProps {
 // JSX element to represent the toolbar, with functions to save, load, and evaluate.
 export function Toolbar({ 
   onSave, 
-  onLoad, 
+  onLoad,
+  loadInputRef, 
   onRun, 
   onHalt, 
   onStep,
@@ -45,6 +47,16 @@ export function Toolbar({
 
   return (
     <div className="toolbar-container" onClick={closeMenus}>
+      <input
+        ref={loadInputRef}
+
+        id="load-input"
+        type="file"
+        accept=".bramflower,application/octet-stream"
+        onChange={(e) => { onLoad(e); closeMenus(); }}
+        className="hidden"
+      />
+
       <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
       
       {/* File Menu */}
@@ -63,13 +75,6 @@ export function Toolbar({
             <label htmlFor="load-input" className="menu-item menu-item-label">
               Load
             </label>
-            <input
-              id="load-input"
-              type="file"
-              accept=".bramflower,application/octet-stream"
-              onChange={(e) => { onLoad(e); closeMenus(); }}
-              className="hidden"
-            />
           </div>
         )}
       </div>

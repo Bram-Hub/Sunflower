@@ -32,6 +32,7 @@ export function BlockEditor() {
   const isHaltedRef = useRef(false);
   const stepQueue = useRef<(() => Promise<void>)[]>([]);
   const isStepping = useRef(false);
+  const loadInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {//This updates the root block when the number of inputs changes
     if (!rootBlock) return;
@@ -74,6 +75,34 @@ export function BlockEditor() {
   const handleSave = useCallback(() => {
     createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount > 0 ? inputCount : 0);
   }, [rootBlock, inputs, inputCount]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      const ctrl = isMac ? e.metaKey : e.ctrlKey;
+
+      // Ignore typing in inputs
+      if (
+        document.activeElement instanceof HTMLInputElement ||
+        document.activeElement instanceof HTMLTextAreaElement
+      ) return;
+
+      // Save --> Ctrl+Shift+S
+      if (ctrl && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+
+      // Load --> Ctrl+O
+      if (ctrl && e.key.toLowerCase() === "o") {
+        e.preventDefault();
+        loadInputRef.current?.click();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
 
   function createSaveFile(rootBlock: BlockSave | undefined, inputs: number[], inputCount: number) {
     const now = new Date();
@@ -275,6 +304,9 @@ export function BlockEditor() {
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
+
+        loadInputRef={loadInputRef}
+
         onRun={handleRun}
         onHalt={handleHalt}
         onStep={handleStep}
