@@ -29,6 +29,9 @@ export function BlockEditor() {
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
+  const [paused, setPaused] = useState(false);
+  const pauseResolver = useRef<((value: void | PromiseLike<void>) => void) | null>(null);
+  const ignoreBreakpointsRef = useRef(false);
   const isHaltedRef = useRef(false);
   const stepQueue = useRef<(() => Promise<void>)[]>([]);
   const isStepping = useRef(false);
@@ -191,8 +194,23 @@ export function BlockEditor() {
     isHaltedRef.current = true;
     stepQueue.current = [];
     isStepping.current = false;
+    
+    // resolve any pending pause so execution can proceed to throw "halted"
+    if (pauseResolver.current) {
+      pauseResolver.current();
+      pauseResolver.current = null;
+    }
+    setPaused(false);
   };
   
+  const handleResume = () => {
+    if (pauseResolver.current) {
+      pauseResolver.current();
+      pauseResolver.current = null;
+      setPaused(false);
+    }
+  };
+
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   
   const handleStep = async () => {
@@ -246,13 +264,23 @@ export function BlockEditor() {
     }
   };
 
-  const handleRun = async () => {
+  const handleRun = async (ignoreBreakpoints: boolean = false) => {
+    // if paused, handle the "Run (Ignore Breakpoints)" case
+    if (paused && ignoreBreakpoints) {
+      ignoreBreakpointsRef.current = true;
+      handleResume();
+      return;
+    }
+
+    // if not paused, continue as usual
     if (isEvaluating) return;
     setIsEvaluating(true);
     isStepping.current = false;
     stepQueue.current = [];
     isHaltedRef.current = false;
     setCurrentResult(null);
+    ignoreBreakpointsRef.current = ignoreBreakpoints;
+
     if (!rootBlock) {
       alert("No root block to evaluate.");
       setIsEvaluating(false);
@@ -267,22 +295,29 @@ export function BlockEditor() {
       };
       const delay = speedMap[evaluationSpeed];
 
-      if (delay === 0) {
-        // Instant evaluation
-        const result = await evaluateBlock(rootBlock, inputs);
+      // step by step evaluation
+      const onStepCallback = async (block: BlockData, result: number) => {
+        if (isHaltedRef.current) {
+          throw new Error("Halted");
+        }
+        setHighlightedBlockId(block.id);
         setCurrentResult(result);
-      } else {
-        // Step-by-step evaluation
-        const onStepCallback = async (block: BlockData, result: number) => {
-          if (isHaltedRef.current) {
-            throw new Error("Halted");
-          }
-          setHighlightedBlockId(block.id);
-          setCurrentResult(result);
+
+        // breakpoint logic
+        if (block.hasBreakpoint && !ignoreBreakpointsRef.current) {
+          setPaused(true);
+          await new Promise<void>(resolve => {
+            pauseResolver.current = resolve;
+          });
+          setPaused(false);
+        }
+
+        if (delay > 0) {
           await sleep(delay);
-        };
-        await stepBlock(rootBlock, inputs, onStepCallback);
-      }
+        }
+      };
+      await stepBlock(rootBlock, inputs, onStepCallback);
+
     } catch (error: any) {
       if (error.message !== "Halted") {
         alert(`Error: ${error.message}`);
@@ -290,6 +325,8 @@ export function BlockEditor() {
     } finally {
       setHighlightedBlockId(null);
       setIsEvaluating(false);
+      setPaused(false);
+      ignoreBreakpointsRef.current = false;
     }
   };
 
@@ -307,7 +344,10 @@ export function BlockEditor() {
 
         loadInputRef={loadInputRef}
 
-        onRun={handleRun}
+        onRun={() => handleRun(false)}
+        onRunIgnoreBreakpoints={() => handleRun(true)}
+        onResume={handleResume}
+        paused={paused}
         onHalt={handleHalt}
         onStep={handleStep}
         inputCount={inputCount}
