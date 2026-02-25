@@ -11,6 +11,7 @@ interface ToolbarProps {
   paused: boolean;
   onHalt: () => void;
   onStep: () => void;
+  onTrace: () => void;
   inputCount: number;
   onInputCountChange: (count: number) => void;
   inputs: number[];
@@ -32,6 +33,7 @@ export function Toolbar({
   paused,
   onHalt, 
   onStep,
+  onTrace,
   inputCount,
   onInputCountChange,
   inputs,
@@ -83,6 +85,9 @@ export function Toolbar({
           </button>
           <button onClick={onStep} className="toolbar-button step-button" title="Step through program">
             ⏩ Step
+          </button>
+          <button onClick={onTrace} className="toolbar-button step-button" title="Trace into program">
+            ⤴️ Trace
           </button>
           <button onClick={onHalt} className="toolbar-button halt-button" title="Halt execution">
             ⏹️ Halt
