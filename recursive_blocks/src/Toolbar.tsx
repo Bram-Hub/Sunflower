@@ -81,13 +81,13 @@ export function Toolbar({
             ▶️ {paused ? "Resume" : "Run"}
           </button>
           <button onClick={onRunIgnoreBreakpoints} className="toolbar-button run-button" title="Run program (ignoring breakpoints)">
-            ▶️ Force Run
+            ⏩ Force Run
           </button>
           <button onClick={onStep} className="toolbar-button step-button" title="Step through program">
-            ⏩ Step
+            ⬇️ Step
           </button>
           <button onClick={onTrace} className="toolbar-button step-button" title="Trace into program">
-            ⤴️ Trace
+            ⤵️ Trace
           </button>
           <button onClick={onHalt} className="toolbar-button halt-button" title="Halt execution">
             ⏹️ Halt

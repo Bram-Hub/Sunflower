@@ -44,8 +44,9 @@ export function BlockEditor() {
   const pauseResolver = useRef<((value: void | PromiseLike<void>) => void) | null>(null);
   const isHaltedRef = useRef(false);
   const stepModeRef = useRef<StepMode>(StepMode.None);
-  const breakpointsRef = useRef<Set<string>>(new Set());
   const ignoreBreakpointsRef = useRef(false);
+  const breakpointsRef = useRef<Set<string>>(new Set());
+  const selfRecDepthRef = useRef<Map<string, number>>(new Map());
 
   // Every time the root block changes, rebuild the set of breakpoints (this keeps it dynamic)
   useEffect(() => {
@@ -256,7 +257,7 @@ export function BlockEditor() {
     setPaused(false);
   };
 
-  const startOrResume = async (mode: StepMode, ignoreBreakpoints: boolean = false) => {
+  const startOrResume = async (mode: StepMode, ignoreBreakpoints: boolean) => {
     stepModeRef.current = mode;
     ignoreBreakpointsRef.current = ignoreBreakpoints;
 
@@ -278,6 +279,7 @@ export function BlockEditor() {
     isHaltedRef.current = false;
     setCurrentResult(null);
     setBlockExecutionStates({});
+    selfRecDepthRef.current.clear();
 
     const speedMap: Record<number, number> = { 0: 500, 1: 100, 2: 0 };
     const delay = speedMap[evaluationSpeed];
@@ -298,11 +300,22 @@ export function BlockEditor() {
         [block.id]: { inputs, output: !isBeforeEval ? result : undefined }
       }));
 
-      // pause if a breakpoint is hit, or we are stepping or tracing
       let shouldPause = false;
-      if (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current && isBeforeEval) {
-        shouldPause = true;
+
+      // track self-recursion depth so that breakpoints only pause on the first (outermost) call
+      if (breakpointsRef.current.has(block.id)) {
+        const currentDepth = selfRecDepthRef.current.get(block.id) || 0;
+        if (isBeforeEval) {
+          selfRecDepthRef.current.set(block.id, currentDepth + 1);
+          // pause only if this is the first time we're entering this block
+          if (currentDepth === 0 && !ignoreBreakpointsRef.current) {
+            shouldPause = true;
+          }
+        } else {
+          selfRecDepthRef.current.set(block.id, Math.max(0, currentDepth - 1));
+        }
       }
+
       if (stepModeRef.current === StepMode.Step && !isBeforeEval) {
         shouldPause = true;
       }
