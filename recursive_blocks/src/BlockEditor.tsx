@@ -23,6 +23,12 @@ export const DEFAULT_INPUT_COUNT = 2;
 
 export const customBlocks: Record<string, BlockSave> = {};
 
+enum StepMode {
+  None,
+  Step,
+  Trace
+}
+
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
   const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates } = useBlockEditor();
@@ -37,8 +43,7 @@ export function BlockEditor() {
   const loadInputRef = useRef<HTMLInputElement>(null);
   const pauseResolver = useRef<((value: void | PromiseLike<void>) => void) | null>(null);
   const isHaltedRef = useRef(false);
-  const pauseAtNextStepRef = useRef(false);
-  const traceAtNextStepRef = useRef(false);
+  const stepModeRef = useRef<StepMode>(StepMode.None);
   const breakpointsRef = useRef<Set<string>>(new Set());
   const ignoreBreakpointsRef = useRef(false);
 
@@ -242,124 +247,86 @@ export function BlockEditor() {
 
   const handleHalt = () => {
     isHaltedRef.current = true;
-    pauseAtNextStepRef.current = false;
-    traceAtNextStepRef.current = false;
+    stepModeRef.current = StepMode.None;
     
-    // resolve any pending pause so execution can proceed to throw "halted"
     if (pauseResolver.current) {
       pauseResolver.current();
       pauseResolver.current = null;
     }
     setPaused(false);
   };
-  
-  const handleResume = () => {
-    if (pauseResolver.current) {
-      pauseResolver.current();
-      pauseResolver.current = null;
-      setPaused(false);
-    }
-  };
-  
-  const advanceExecution = (isTrace: boolean) => {
-    pauseAtNextStepRef.current = true;
-    traceAtNextStepRef.current = isTrace;
 
-    if (isEvaluating && paused) {
-      handleResume();
-    } else {
-      handleRun();
-    }
-  };
+  const startOrResume = async (mode: StepMode, ignoreBreakpoints: boolean = false) => {
+    stepModeRef.current = mode;
+    ignoreBreakpointsRef.current = ignoreBreakpoints;
 
-  const handleStep = async () => advanceExecution(false);
-  const handleTrace = async () => advanceExecution(true);
-
-  const handleRun = async (ignoreBreakpoints: boolean = false) => {
-    // if paused, handle the "Run (Ignore Breakpoints)" case
-    if (paused && ignoreBreakpoints) {
-      ignoreBreakpointsRef.current = true;
-      handleResume();
+    if (isEvaluating) {
+      if (paused && pauseResolver.current) {
+        pauseResolver.current();
+        pauseResolver.current = null;
+        setPaused(false);
+      }
       return;
     }
-
-    // if not paused, continue as usual
-    if (isEvaluating) return;
-    setIsEvaluating(true);
-    isHaltedRef.current = false;
-    setCurrentResult(null);
-    setBlockExecutionStates({}); // Clear previous states
-    ignoreBreakpointsRef.current = ignoreBreakpoints;
 
     if (!rootBlock) {
       alert("No root block to evaluate.");
-      setIsEvaluating(false);
       return;
     }
 
+    setIsEvaluating(true);
+    isHaltedRef.current = false;
+    setCurrentResult(null);
+    setBlockExecutionStates({});
+
+    const speedMap: Record<number, number> = { 0: 500, 1: 100, 2: 0 };
+    const delay = speedMap[evaluationSpeed];
+
+    // the callback function to be run after evaluation
+    const onStepCallback = async (block: BlockData, result: number | null, inputs: number[]) => {
+      if (isHaltedRef.current) throw new Error("Halted");
+
+      const isBeforeEval = result === null;
+
+      // update this block's UI
+      setHighlightedBlockId(block.id);
+      if (!isBeforeEval) setCurrentResult(result);
+
+      // update this block's execution state
+      setBlockExecutionStates(prev => ({
+        ...prev,
+        [block.id]: { inputs, output: !isBeforeEval ? result : undefined }
+      }));
+
+      // pause if a breakpoint is hit, or we are stepping or tracing
+      let shouldPause = false;
+      if (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current && isBeforeEval) {
+        shouldPause = true;
+      }
+      if (stepModeRef.current === StepMode.Step && !isBeforeEval) {
+        shouldPause = true;
+      }
+      if (stepModeRef.current === StepMode.Trace) {
+        shouldPause = true;
+      }
+
+      if (shouldPause) {
+        setPaused(true);
+        stepModeRef.current = StepMode.None;
+        await new Promise<void>(resolve => { pauseResolver.current = resolve; });
+      }
+
+      if (delay > 0 && !isBeforeEval) {
+        await sleep(delay);
+      }
+    };
+
+    // execute stepBlock
     try {
-      const speedMap: Record<number, number> = {
-        0: 500,
-        1: 100,
-        2: 0,
-      };
-      const delay = speedMap[evaluationSpeed];
-
-      // the callback function to be run after evaluation
-      const onStepCallback = async (block: BlockData, result: number | null, inputs: number[]) => {
-        if (isHaltedRef.current) throw new Error("Halted");
-
-        const isBeforeEval = result === null;
-
-        // update UI
-        setHighlightedBlockId(block.id);
-        if (result !== null) {
-          setCurrentResult(result);
-        }
-
-        setBlockExecutionStates(prev => ({
-          ...prev,
-          [block.id]: { inputs, output: result !== null ? result : undefined }
-        }));
-
-        let shouldPause = false;
-
-        // breakpoints pause on before eval
-        if (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current && isBeforeEval) {
-          shouldPause = true;
-        }
-
-        // stepping / tracing pause logic
-        if (pauseAtNextStepRef.current) {
-          if (traceAtNextStepRef.current) {
-            shouldPause = true;
-          } else if (!isBeforeEval) {
-            shouldPause = true;
-          }
-        }
-
-        if (shouldPause) {
-          setPaused(true);
-          pauseAtNextStepRef.current = false;
-          traceAtNextStepRef.current = false;
-          await new Promise<void>(resolve => {
-            pauseResolver.current = resolve;
-          });
-          setPaused(false);
-        }
-
-        // wait to simulate execution speed 
-        if (delay > 0 && !isBeforeEval) {
-          await sleep(delay);
-        }
-      };
-      // stepBlock will run evaluation, then handle the callback
       await stepBlock(rootBlock, inputs, onStepCallback);
     } catch (error) {
-      if (error instanceof Error) {
-        if (error.message !== "Halted") {
-          alert(`Error: ${error.message}`);
-        }
+      if (error instanceof Error && error.message !== "Halted") {
+        alert(`Error: ${error.message}`);
       }
     } finally {
       setHighlightedBlockId(null);
@@ -368,6 +335,11 @@ export function BlockEditor() {
       ignoreBreakpointsRef.current = false;
     }
   };
+
+  const handleRun = () => startOrResume(StepMode.None, false);
+  const handleRunIgnoreBreakpoints = () => startOrResume(StepMode.None, true);
+  const handleStep = () => startOrResume(StepMode.Step, false);
+  const handleTrace = () => startOrResume(StepMode.Trace, false);
 
   const speedToText = (speed: number) => {
     if (speed === 0) return "Slow";
@@ -383,9 +355,9 @@ export function BlockEditor() {
 
         loadInputRef={loadInputRef}
 
-        onRun={() => handleRun(false)}
-        onRunIgnoreBreakpoints={() => handleRun(true)}
-        onResume={handleResume}
+        onRun={handleRun}
+        onRunIgnoreBreakpoints={handleRunIgnoreBreakpoints}
+        onResume={handleRun}
         paused={paused}
         onHalt={handleHalt}
         onStep={handleStep}
