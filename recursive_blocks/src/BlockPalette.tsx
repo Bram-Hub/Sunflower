@@ -46,7 +46,7 @@ function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType
         <button className="info-button" onClick={() => setShowInfo(!showInfo)}>i</button>
       )}
       {onRemove !== undefined && (
-        <button className="remove-button" onClick={() => onRemove(custom_block_name!)}>X</button>
+        <button className="remove-button" onClick={() => onRemove(custom_block_name!)}>✕</button>
       )}
 
     </div>
@@ -144,28 +144,28 @@ export function BlockPalette() {
   
   return (
     <div className="sideP">
-      <h2 >Basic</h2>
+      <h2>Basic</h2>
       {Object.keys(blockConfig).map((blockType) => {
         if (blockType !== "Custom") {
           return <DraggableBlock key={blockType} type={blockType as BlockType} />;
         }
       })}
-      <h2 >Custom</h2>
+      <h2>Custom</h2>
       {Object.values(customBlocks).map((block) => (
         <DraggableBlock key={block.name} type={block.type} custom_block_name={block.name} onRemove={removeCustomBlock} />
-    ))}
-      <button onClick={turnRootToCustom} className="toolbar-button">Create Custom Block from Root</button>
-      <br />
-      <br />
-      <label htmlFor="load-custom-block" className="toolbar-button">
+      ))}
+      <div className="custom-block-buttons">
+        <button onClick={turnRootToCustom} className="toolbar-button">Create Custom Block from Root</button>
+        <label htmlFor="load-custom-block" className="toolbar-button">
           Load Custom Block (.bramflower)
-      </label>
-      <input
-        id="load-custom-block"
-        type="file"
-        accept=".bramflower,application/octet-stream"
-        onChange={handleFileSelected}
-      />
+        </label>
+        <input
+          id="load-custom-block"
+          type="file"
+          accept=".bramflower,application/octet-stream"
+          onChange={handleFileSelected}
+        />
+      </div>
     </div>
   );
 }

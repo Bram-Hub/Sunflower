@@ -16,12 +16,10 @@ interface ToolbarProps {
   onEvaluationSpeedChange: (speed: number) => void;
   speedToText: (speed: number) => string;
   currentResult: number | null;
-  // TEMP: Test data handlers
   onAddTestData?: () => void;
   onClearTestData?: () => void;
 }
 
-// JSX element to represent the toolbar, with functions to save, load, and evaluate.
 export function Toolbar({ 
   onSave, 
   onLoad,
@@ -37,7 +35,6 @@ export function Toolbar({
   onEvaluationSpeedChange,
   speedToText,
   currentResult,
-  // TEMP: Test data handlers
   onAddTestData,
   onClearTestData
 }: ToolbarProps) {
@@ -54,94 +51,98 @@ export function Toolbar({
           className="hidden"
         />
 
-        <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
-        
-        {/* File operation buttons */}
-        <div className="toolbar-section">
-          <button onClick={onSave} className="toolbar-button" title="Save (Ctrl+Shift+S)">
-            Save
+        {/* File operations and testing */}
+        <div className="toolbar-left">
+          <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
+          
+          <div className="toolbar-section">
+            <button onClick={onSave} className="toolbar-button" title="Save (Ctrl+Shift+S)">
+              Save
+            </button>
+            <button
+              className="toolbar-button"
+              onClick={() => loadInputRef.current?.click()}
+              title="Load (Ctrl+O)" 
+            >
+              Load
+            </button>
+          </div>
+
+          <div className="toolbar-divider"></div>
+
+          <div className="toolbar-section">
+            <button 
+              onClick={onAddTestData} 
+              className="toolbar-button"
+              title="Add random test data to all blocks"
+            >
+              Test Data
+            </button>
+            <button 
+              onClick={onClearTestData} 
+              className="toolbar-button"
+              title="Clear all test data from blocks"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        {/* Program execution controls */}
+        <div className="toolbar-center">
+          <button onClick={onRun} className="icon-button run-button" title="Run program">
+            <svg viewBox="0 0 24 24" className="icon">
+              <path d="M8 5v14l11-7z" fill="currentColor"/>
+            </svg>
           </button>
-          <button
-            className="toolbar-button"
-            onClick={() => loadInputRef.current?.click()}
-            title="Load (Ctrl+O)" 
-          >
-            Load
+          <button onClick={onStep} className="icon-button step-button" title="Step through program">
+            <svg viewBox="0 0 24 24" className="icon">
+              <path d="M4 5v14l8-7z M13 5v14l8-7z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button onClick={onHalt} className="icon-button halt-button" title="Halt execution">
+            <svg viewBox="0 0 24 24" className="icon">
+              <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+            </svg>
           </button>
         </div>
 
-        {/* Divider between button groups */}
-        <div className="toolbar-divider"></div>
+        {/* Program settings and result */}
+        <div className="toolbar-right">
+          <div className="toolbar-section">
+            <label className="toolbar-label">Inputs:</label>
+            <input
+              type="number"
+              min="0"
+              max="20"
+              step="1"
+              value={inputCount.toString()}
+              onChange={(e) => onInputCountChange(parseInt(e.target.value))}
+              className="toolbar-input"
+            />
+          </div>
 
-        {/* Program operation buttons */}
-        <div className="toolbar-section">
-          <button onClick={onRun} className="toolbar-button run-button" title="Run program">
-            ▶️ Run
-          </button>
-          <button onClick={onStep} className="toolbar-button step-button" title="Step through program">
-            ⏩ Step
-          </button>
-          <button onClick={onHalt} className="toolbar-button halt-button" title="Halt execution">
-            ⏹️ Halt
-          </button>
+          <div className="toolbar-section">
+            <label className="toolbar-label">Speed:</label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="1"
+              value={evaluationSpeed}
+              onChange={(e) => onEvaluationSpeedChange(parseInt(e.target.value))}
+              className="toolbar-slider"
+            />
+            <span className="toolbar-value">{speedToText(evaluationSpeed)}</span>
+          </div>
+
+          <div className="toolbar-divider"></div>
+
+          <div className="toolbar-section">
+            <label className="toolbar-label">Result:</label>
+            <span className="result-value">{currentResult ?? '—'}</span>
+          </div>
         </div>
-
-        <div className="toolbar-divider"></div>
-
-        {/* TEMP: Test data buttons */}
-        <div className="toolbar-section">
-          <button 
-            onClick={onAddTestData} 
-            className="toolbar-button test-button"
-            title="Add random test data to all blocks"
-          >
-            🎲 Test Data
-          </button>
-          <button 
-            onClick={onClearTestData} 
-            className="toolbar-button clear-button"
-            title="Clear all test data from blocks"
-          >
-            🗑️ Clear
-          </button>
-        </div>
-
-        <div className="toolbar-divider"></div>
-
-        {/* Inline settings controls */}
-        <div className="toolbar-section">
-          <label className="toolbar-label">Inputs:</label>
-          <input
-            type="number"
-            min="0"
-            max="20"
-            step="1"
-            value={inputCount.toString()}
-            onChange={(e) => onInputCountChange(parseInt(e.target.value))}
-            className="toolbar-input"
-          />
-        </div>
-
-        <div className="toolbar-section">
-          <label className="toolbar-label">Speed:</label>
-          <input
-            type="range"
-            min="0"
-            max="2"
-            step="1"
-            value={evaluationSpeed}
-            onChange={(e) => onEvaluationSpeedChange(parseInt(e.target.value))}
-            className="toolbar-slider"
-          />
-          <span className="toolbar-value">{speedToText(evaluationSpeed)}</span>
-        </div>
-
-        {/* Result display at the end of toolbar */}
-        <div className="toolbar-section result-section">
-          <label className="toolbar-label">Result:</label>
-          <span className="result-value">{currentResult ?? '—'}</span>
-        </div>
-
 
       </div>
 

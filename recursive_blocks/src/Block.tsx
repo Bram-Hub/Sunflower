@@ -74,7 +74,6 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       }}
 
       onClick={(e) => {
-        // Stop propagation first to prevent parent blocks from handling this
         e.stopPropagation();
         if (onSelectBlock && block) {
           onSelectBlock(block.id);
@@ -82,27 +81,26 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       }}
     >
       <div className="block-header" style={{ gap: "0.25rem" }}>
-        <button 
-          className="breakpoint-button"
-          onClick={() => {
-            onUpdate({ ...block, hasBreakpoint: !block.hasBreakpoint });
-          }}
-          title="Toggle Breakpoint"
-          style={{ color: block.hasBreakpoint ? "red" : "#ccc", border: "none", background: "none", cursor: "pointer", fontSize: "1.2em", padding: "0 0.2rem" }}
-        >
-          {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
-        </button>
-        <div className="block-type">{block.name || block.type.toUpperCase()}</div>
-        
-        {/* Input/Output display in header */}
-        <div className="block-io-display">
-          <span className="block-io-label">In:</span>
-          <span className="block-io-value">{formatInput(block.latestInput)}</span>
-          <span className="block-io-separator">→</span>
-          <span className="block-io-label">Out:</span>
-          <span className="block-io-value">{formatOutput(block.latestOutput)}</span>
+        <div className="block-title-group">
+          <div className="block-name-row">
+            <button 
+              className="breakpoint-button"
+              onClick={() => {
+                onUpdate({ ...block, hasBreakpoint: !block.hasBreakpoint });
+              }}
+              title="Toggle Breakpoint"
+              style={{ color: block.hasBreakpoint ? "red" : "#ccc", border: "none", background: "none", cursor: "pointer", fontSize: "1.2em", padding: "0 0.2rem" }}
+            >
+              {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
+            </button>
+            <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+          </div>
+          <div className="block-io-in">
+            <span className="block-io-label">In:</span>
+            <span className="block-io-value">{formatInput(block.latestInput)}</span>
+          </div>
         </div>
-        
+
         <div className="block-error-list">
           {block.errors.map((error, index) => (
             <div key={index} className="block-error">
@@ -110,7 +108,8 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
             </div>
           ))}
         </div>
-        <div>
+
+        <div className="block-action-buttons">
           {blockConfig[block.type]?.description && (
             <button
               className="info-button"
@@ -125,7 +124,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               className="collapse-button"
               onClick={toggleCollapse}
             >
-              {collapsed ? "V" : ">"}
+              {collapsed ? "▼" : "▶"}
             </button>
           )}
           {!block.immutable && (
@@ -133,7 +132,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               className="remove-button"
               onClick={() => onUpdate(null)}
             >
-              X
+              ✕
             </button>
           )}
         </div>
@@ -152,6 +151,11 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       </div>
 
       <ValueEditor block={block} onUpdate={onUpdate} />
+
+      <div className="block-io-out">
+        <span className="block-io-label">Out:</span>
+        <span className="block-io-value">{formatOutput(block.latestOutput)}</span>
+      </div>
     </div>
   );
 }
