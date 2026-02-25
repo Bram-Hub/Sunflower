@@ -25,7 +25,7 @@ export const customBlocks: Record<string, BlockSave> = {};
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
+  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -288,6 +288,7 @@ export function BlockEditor() {
     setIsEvaluating(true);
     isHaltedRef.current = false;
     setCurrentResult(null);
+    setBlockExecutionStates({}); // Clear previous states
     ignoreBreakpointsRef.current = ignoreBreakpoints;
 
     if (!rootBlock) {
@@ -305,12 +306,19 @@ export function BlockEditor() {
       const delay = speedMap[evaluationSpeed];
 
       // the callback function to be run after evaluation
-      const onStepCallback = async (block: BlockData, result: number) => {
+      const onStepCallback = async (block: BlockData, result: number | null, inputs: number[]) => {
         if (isHaltedRef.current) throw new Error("Halted");
 
         // update UI
         setHighlightedBlockId(block.id);
-        setCurrentResult(result);
+        if (result !== null) {
+          setCurrentResult(result);
+        }
+
+        setBlockExecutionStates(prev => ({
+          ...prev,
+          [block.id]: { inputs, output: result !== null ? result : undefined }
+        }));
 
         // control flow: pause execution if there is a breakpoint or we are stepping
         const shouldPause = (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current) || pauseAtNextStepRef.current;

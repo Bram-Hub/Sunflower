@@ -6,6 +6,9 @@ interface ToolbarProps {
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
   loadInputRef: React.RefObject<HTMLInputElement | null>;
   onRun: () => void;
+  onRunIgnoreBreakpoints: () => void;
+  onResume: () => void;
+  paused: boolean;
   onHalt: () => void;
   onStep: () => void;
   inputCount: number;
@@ -24,6 +27,9 @@ export function Toolbar({
   onLoad,
   loadInputRef, 
   onRun, 
+  onRunIgnoreBreakpoints,
+  onResume,
+  paused,
   onHalt, 
   onStep,
   inputCount,
@@ -69,8 +75,11 @@ export function Toolbar({
 
         {/* Program operation buttons */}
         <div className="toolbar-section">
-          <button onClick={onRun} className="toolbar-button run-button" title="Run program">
-            ▶️ Run
+          <button onClick={paused ? onResume : onRun} className="toolbar-button run-button" title={paused ? "Resume program" : "Run program"}>
+            ▶️ {paused ? "Resume" : "Run"}
+          </button>
+          <button onClick={onRunIgnoreBreakpoints} className="toolbar-button run-button" title="Run program (ignoring breakpoints)">
+            ▶️ Force Run
           </button>
           <button onClick={onStep} className="toolbar-button step-button" title="Step through program">
             ⏩ Step
