@@ -9,21 +9,14 @@ import { useDrop } from "react-dnd";
 import { customBlocks } from "./BlockEditor";
 import { deserializeBlock } from "./BlockSave";
 
-/*
-A JSX element that represents a block slot.
-parentBlock is the block this slot exists on. (if null, this is the root slot).
-slot is the slot data type (slot name, block inside, input descriptor, and input modifiers).
-onUpdate is a function that is called when the block inside the slot is modified, it replaces the block inside with the new block.
-highlightedBlockId is the optional ID of the block that should be highlighted (for stepping through evaluation).
-*/
-
-export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock}: {
+export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false}: {
   parentBlock: BlockData | null, 
   slot: BlockSlot, 
   onUpdate: (newBlock: BlockData | null) => void, 
   highlightedBlockId?: string | null, 
   selectedBlockId?: string | null,
-  onSelectBlock: (id: string) => void 
+  onSelectBlock: (id: string) => void,
+  isRunning?: boolean,
 }) { 
 	const { name, block: child } = slot;
 
@@ -66,11 +59,10 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 
     const dropRef = React.useRef<HTMLDivElement>(null);
 
-	// if (parentBlock) {
-		const [, drop] = useDrop(() => ({
+	const [, drop] = useDrop(() => ({
 		accept: "BLOCK",
 		drop: (item: { type: BlockType; id?: string; block?: BlockData, custom_block_name?: string }) => {
-			if (child || parentBlock?.immutable || parentBlock?.type === "Custom") return;//Can't add descendants to custom blocks
+			if (child || parentBlock?.immutable || parentBlock?.type === "Custom") return;
 			if (item.block && parentBlock && (item.block.id === parentBlock.id || isDescendant(item.block, parentBlock.id))) {
 				return;
 			}
@@ -79,19 +71,6 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 			const newDepth = (parentBlock == null ? -1 : parentBlock.depth) + 1;
 
 			if (item.block) {
-				// newChild = {
-				// 	...item.block, 
-				// 	depth: newDepth
-				// };
-				// const updatedBlock = removeBlockById(parentBlock, item.block.id);
-
-				// const newBlock = {
-				// 	...updatedBlock,
-				// 	children: updatedBlock.children.map((slot) =>
-				// 	slot.name === name ? { ...slot, block: newChild } : slot
-				// 	),
-				// };
-				// onUpdate(newBlock);
 				console.error("Moving existing blocks not yet supported.");
 			} else {
 				if (item.custom_block_name !== undefined) {
@@ -103,10 +82,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 						console.error("Invalid custom block name:", item.custom_block_name);
 						return;
 					}
-
-					// console.log("Dropping custom block:", newChild);
 				} else {
-
 					newChild = {
 						id: uuidv4(),
 						type: item.type,
@@ -129,26 +105,22 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 				onUpdate(newBlock);
 			}
 		},
-		}), [child, parentBlock, name]);
+	}), [child, parentBlock, name]);
 
-		React.useEffect(() => {
+	React.useEffect(() => {
 		if (dropRef.current) {
 			drop(dropRef.current);
 		}
-		}, [drop]);
-	// }
-	
-	if (parentBlock) {
+	}, [drop]);
 
+	if (parentBlock) {
 		if (slot.input_descriptor_index === undefined) {
 			slot.input_descriptor_index = 0;
 		}
 
 		if (parentBlock.collapsed) {
 			return (
-				<div ref={dropRef}>
-				{/* <strong>{name} ({slot.input_descriptor(getInputCountOfSlot(slot, block.inputCount))}):</strong> */}
-				</div>
+				<div ref={dropRef}></div>
 			);
 		}
 	}
@@ -156,23 +128,24 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
     return (
 		<div
 			ref={dropRef}
-			className={`block-slot ${slot.block ? "filled" : "empty"} ${highlightedBlockId === slot.block?.id ? "block-highlighted" : ""}`} 
-			>
+			className={`block-slot ${slot.block ? "filled" : "empty"}`}
+		>
 			<Block 
 				key={slot.block?.id ?? `empty-${parentBlock ? parentBlock.id : "root"}-${slot.name}`}
 				block={slot.block}
 				onUpdate={(newChild) => {
-				if (parentBlock === null) {
-					onUpdate(newChild);
-					return;
-				}
-				const updated = replaceSlotBlock(parentBlock, slot.name, newChild === null ? null : newChild);
-				onUpdate(updated);
+					if (parentBlock === null) {
+						onUpdate(newChild);
+						return;
+					}
+					const updated = replaceSlotBlock(parentBlock, slot.name, newChild === null ? null : newChild);
+					onUpdate(updated);
 				}}
 				highlightedBlockId={highlightedBlockId}
 				selectedBlockId={selectedBlockId} 
-				onSelectBlock={onSelectBlock} // pass down selection
+				onSelectBlock={onSelectBlock}
+				isRunning={isRunning}
 			/>
 		</div>
   	);
-  };
+};

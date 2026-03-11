@@ -5,25 +5,21 @@ import { blockConfig } from "./BlockConfig";
 interface ValueEditorProps {
   block: BlockData;
   onUpdate: (newBlock: BlockData | null) => void;
+  isRunning?: boolean;
 }
 
 // JSX element that exists on a JSX Block element that represents the number values of the block, making them accessible to be updated.
 // If the block type doesn't have values, this element is an empty div.
 // Block is the block this value editor is on, and onUpdate is called when a value is updated.
-export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
-  // Initialize state with num_values from block, or an empty array if not defined
+export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorProps) {
   const [values, setValues] = useState(block.num_values ?? []);
 
-//   console.log("Initial values in Block:", block.num_values);
-
-  // Update num_values only if they change
   useEffect(() => {
     if (JSON.stringify(values) !== JSON.stringify(block.num_values)) {
       onUpdate({ ...block, num_values: values, depth: block.depth || 0 });
     }
   }, [values, block, onUpdate]);
 
-  // Handle change in an individual value input field
   const handleValueChange = (index: number, newValue: string) => {
     const updatedValues = [...values];
     updatedValues[index] = { ...updatedValues[index], value: isNaN(parseInt(newValue)) ? 0 : parseInt(newValue) };
@@ -38,16 +34,24 @@ export function ValueEditor({ block, onUpdate }: ValueEditorProps) {
     <div className="value-editor">
       {values.map((val, index) => (
         <div key={index} className="value-field">
-          <label className="value-label">{val.name}</label>
-          <input
-            type="number"
-            min={blockConfig[block.type].num_values?.find(v => v.name === val.name)?.min || 0}
-            step="1"
-            value={val.value}
-            onChange={(e) => handleValueChange(index, e.target.value)}
-            className="value-input"
-            readOnly={block.immutable}
-          />
+          {isRunning || block.immutable ? (
+            <span className="value-static">
+              <span className="value-static-name">{val.name} =</span>
+              <span className="value-static-val">{val.value}</span>
+            </span>
+          ) : (
+            <>
+              <label className="value-label">{val.name}</label>
+              <input
+                type="number"
+                min={blockConfig[block.type].num_values?.find(v => v.name === val.name)?.min || 0}
+                step="1"
+                value={val.value}
+                onChange={(e) => handleValueChange(index, e.target.value)}
+                className="value-input"
+              />
+            </>
+          )}
         </div>
       ))}
     </div>
