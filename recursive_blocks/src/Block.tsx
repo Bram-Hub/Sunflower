@@ -12,11 +12,45 @@ interface Props {
   highlightedBlockId?: string | null;
   selectedBlockId?: string | null; 
   onSelectBlock: (id: string) => void;
+  isRunning?: boolean;
 }
 
 const getDepthColor = (depth: number) => {
   const colors = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
   return colors[depth % colors.length];
+};
+
+// Generate formal mathematical notation for each block type
+const getMathNotation = (block: BlockData): string => {
+  const n = block.inputCount ?? 0;
+
+  // Build argument list like (x1, x2, ..., xn)
+  const args = (count: number, suffix?: string) => {
+    if (count === 0) return suffix ? `(${suffix})` : "()";
+    const vars = Array.from({ length: count }, (_, i) => `x${i + 1}`).join(", ");
+    return suffix ? `(${vars}, ${suffix})` : `(${vars})`;
+  };
+
+  switch (block.type) {
+    case "Zero":
+      return `z${args(n)}`;
+    case "Successor":
+      return `s(x)`;
+    case "Projection": {
+      const i = block.num_values?.find(v => v.name === "i")?.value ?? 1;
+      return `id[${i},${n}]${args(n)}`;
+    }
+    case "Composition": {
+      const m = block.num_values?.find(v => v.name === "m")?.value ?? 1;
+      return `C${n}[${m}]${args(n)}`;
+    }
+    case "Primitive Recursion":
+      return `Pr[f,g]${args(n > 0 ? n - 1 : 0, "y")}`;
+    case "Minimization":
+      return `Mn[f]${args(n)}`;
+    default:
+      return "";
+  }
 };
 
 /* 
@@ -27,7 +61,7 @@ onUpdate is a function that gets called when this block is modified
 (meaning it is deleted, a value is modified, or an ancestor is modified)
 and replaces the old block with the new block.
 */
-export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock }: Props) { 
+export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
   const [showInfo, setShowInfo] = React.useState(false);
 
@@ -70,7 +104,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       style={{ 
         opacity: isDragging ? 0.5 : 1, 
         backgroundColor: getDepthColor(block.depth || 0),
-        borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`
+        borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`,
       }}
 
       onClick={(e) => {
@@ -93,7 +127,12 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
             >
               {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
             </button>
-            <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+            <div>
+              <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+              {block.type !== "Custom" && (
+                <div className="block-math-notation">{getMathNotation(block)}</div>
+              )}
+            </div>
           </div>
           <div className="block-io-in">
             <span className="block-io-label">In:</span>
@@ -146,11 +185,11 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} selectedBlockId={selectedBlockId} onSelectBlock={onSelectBlock} /></div>
+          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} selectedBlockId={selectedBlockId} onSelectBlock={onSelectBlock} isRunning={isRunning} /></div>
         ))}
       </div>
 
-      <ValueEditor block={block} onUpdate={onUpdate} />
+      <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
 
       <div className="block-io-out">
         <span className="block-io-label">Out:</span>

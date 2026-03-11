@@ -14,5 +14,3 @@ export default function App() {
     </DndProvider>
   );
 }
-
-// TEST

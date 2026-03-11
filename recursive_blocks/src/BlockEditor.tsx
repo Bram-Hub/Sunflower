@@ -35,6 +35,7 @@ export function BlockEditor() {
 
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [hasRun, setHasRun] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
   const [paused, setPaused] = useState(false);
   const loadInputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +45,6 @@ export function BlockEditor() {
   const breakpointsRef = useRef<Set<string>>(new Set());
   const ignoreBreakpointsRef = useRef(false);
 
-  // Every time the root block changes, rebuild the set of breakpoints (this keeps it dynamic)
   useEffect(() => {
     const newBreakpoints = new Set<string>();
     const traverse = (b: BlockData) => {
@@ -63,11 +63,10 @@ export function BlockEditor() {
     breakpointsRef.current = newBreakpoints;
   }, [rootBlock]);
 
-  React.useEffect(() => {//This updates the root block when the number of inputs changes
+  React.useEffect(() => {
     if (!rootBlock) return;
     if (isNaN(inputCount)) return;
-    // Avoid mutating the existing rootBlock in-place; clone then update so React sees the change.
-    if (rootBlock.inputCount === inputCount) return; // no-op if already up-to-date
+    if (rootBlock.inputCount === inputCount) return;
 
     const clone = (typeof structuredClone === 'function')
       ? structuredClone(rootBlock)
@@ -84,7 +83,6 @@ export function BlockEditor() {
       return newInputs;
     });
 
-    // If rootBlock exists, keep it updated too
     if (rootBlock) {
       setInputCountOfBlock(rootBlock, inputCount > 0 ? inputCount : 0);
     }
@@ -122,19 +120,16 @@ export function BlockEditor() {
     setHighlightedBlockId(null);
   }, [rootBlock, selectedBlockId]);
 
-  // ADDED: Handler to add garbage test data to all blocks
   const handleAddTestData = useCallback(() => {
     if (!rootBlock) {
       alert("No blocks to add test data to. Create some blocks first!");
       return;
     }
     addGarbageTestData(rootBlock);
-    // Force React to re-render by creating a new reference
     setRootBlock({ ...rootBlock });
     console.log("Test data added to all blocks");
   }, [rootBlock, setRootBlock]);
 
-  // ADDED: Handler to clear all execution data from blocks
   const handleClearTestData = useCallback(() => {
     if (!rootBlock) return;
     clearExecutionData(rootBlock);
@@ -147,25 +142,21 @@ export function BlockEditor() {
       const isMac = navigator.platform.toUpperCase().includes("MAC");
       const ctrl = isMac ? e.metaKey : e.ctrlKey;
 
-      // Ignore typing in inputs
       if (
         document.activeElement instanceof HTMLInputElement ||
         document.activeElement instanceof HTMLTextAreaElement
       ) return;
 
-      // Delete block --> Backspace or Delete
       if ((e.key === "Backspace" || e.key === "Delete") && selectedBlockId) {
         e.preventDefault();
         handleDeleteSelectedBlock();
       }
 
-      // Save --> Ctrl+Shift+S
       if (ctrl && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         handleSave();
       }
 
-      // Load --> Ctrl+O
       if (ctrl && e.key.toLowerCase() === "o") {
         e.preventDefault();
         loadInputRef.current?.click();
@@ -264,8 +255,8 @@ export function BlockEditor() {
   const handleHalt = () => {
     isHaltedRef.current = true;
     pauseAtNextStepRef.current = false;
+    setHasRun(false);
     
-    // resolve any pending pause so execution can proceed to throw "halted"
     if (pauseResolver.current) {
       pauseResolver.current();
       pauseResolver.current = null;
@@ -287,27 +278,24 @@ export function BlockEditor() {
             pauseAtNextStepRef.current = true;
             handleResume();
         } else {
-             // already running, so pause?
              pauseAtNextStepRef.current = true; 
         }
     } else {
-        // start new session
         pauseAtNextStepRef.current = true;
         handleRun();
     }
   };
 
   const handleRun = async (ignoreBreakpoints: boolean = false) => {
-    // if paused, handle the "Run (Ignore Breakpoints)" case
     if (paused && ignoreBreakpoints) {
       ignoreBreakpointsRef.current = true;
       handleResume();
       return;
     }
 
-    // if not paused, continue as usual
     if (isEvaluating) return;
     setIsEvaluating(true);
+    setHasRun(true);
     isHaltedRef.current = false;
     setCurrentResult(null);
     ignoreBreakpointsRef.current = ignoreBreakpoints;
@@ -326,15 +314,12 @@ export function BlockEditor() {
       };
       const delay = speedMap[evaluationSpeed];
 
-      // the callback function to be run after evaluation
       const onStepCallback = async (block: BlockData, result: number) => {
         if (isHaltedRef.current) throw new Error("Halted");
 
-        // update UI
         setHighlightedBlockId(block.id);
         setCurrentResult(result);
 
-        // control flow: pause execution if there is a breakpoint or we are stepping
         const shouldPause = (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current) || pauseAtNextStepRef.current;
         if (shouldPause) {
           setPaused(true);
@@ -345,10 +330,8 @@ export function BlockEditor() {
           setPaused(false);
         }
 
-        // wait to simulate execution speed 
         if (delay > 0) await sleep(delay);
       };
-      // stepBlock will run evaluation, then handle the callback
       await stepBlock(rootBlock, inputs, onStepCallback);
     } catch (error) {
       if (error instanceof Error) {
@@ -375,9 +358,7 @@ export function BlockEditor() {
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
-
         loadInputRef={loadInputRef}
-
         onRun={() => handleRun(false)}
         onRunIgnoreBreakpoints={() => handleRun(true)}
         onResume={handleResume}
@@ -392,16 +373,12 @@ export function BlockEditor() {
         onEvaluationSpeedChange={setEvaluationSpeed}
         speedToText={speedToText}
         currentResult={currentResult}
-        
-        // TEMP: Pass test data handlers to toolbar
         onAddTestData={handleAddTestData}
         onClearTestData={handleClearTestData}
       />
 
-      <div className = "flexcont">
-
+      <div className="flexcont">
         <BlockPalette />
-
         <div className="editor-content">
           <BlockSlotDisplay 
             parentBlock={null} 
@@ -411,10 +388,12 @@ export function BlockEditor() {
                 checkForErrors(block);
               }
               setRootBlock(block);
+              setHasRun(false);
             }}
             highlightedBlockId={highlightedBlockId}
             selectedBlockId={selectedBlockId}
             onSelectBlock={(id) => setSelectedBlockId(id)}
+            isRunning={isEvaluating || hasRun}
           />
         </div>
       </div>
