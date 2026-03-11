@@ -138,10 +138,6 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               )}
             </div>
           </div>
-          <div className="block-io-in">
-            <span className="block-io-label">In:</span>
-            <span className="block-io-value">{formatInput(executionState?.inputs ?? block.latestInput)}</span>
-          </div>
         </div>
 
         <div className="block-error-list">
@@ -186,6 +182,11 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           {blockConfig[block.type]?.description ?? "No description available for this block."}
         </div>
       )}
+
+      <div className="block-io-in">
+        <span className="block-io-label">In:</span>
+        <span className="block-io-value">{formatInput(executionState?.inputs ?? block.latestInput)}</span>
+      </div>
 
       <div className="slots-container">
         {block.children.map((slot) => (

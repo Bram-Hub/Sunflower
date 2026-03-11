@@ -111,13 +111,13 @@
 .block-math-notation {
   font-size: 0.72rem;
   font-style: italic;
-  color: rgba(0,0,0,0.5);
+  color: rgba(0,0,0,0.75);
   margin-top: 1px;
   font-family: Georgia, 'Times New Roman', serif;
   letter-spacing: 0.01em;
 }
 
-.block-highlighted .block-math-notation {
+.block-highlighted > .block-header .block-math-notation {
   color: rgba(255,255,255,0.45);
 }
 
@@ -130,38 +130,41 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: inherit;
+  width: max-content;
+  font-family: monospace;
   font-size: 0.75rem;
   padding-left: 0.2rem;
+  /*background-color: rgba(255,255,255,0.6);*/
 }
 
 .block-io-out {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: inherit;
+  width: max-content;
+  font-family: monospace;
   font-size: 0.75rem;
   margin-top: 0.5rem;
-  padding-top: 0.4rem;
-  border-top: 1px solid rgba(0,0,0,0.12);
+  padding: 0.2rem 0.4rem;
+  /*background-color: rgba(255,255,255,0.6);*/
 }
 
 .block-io-label {
   font-weight: 600;
-  color: rgba(255,255,255,0.95) !important;
+  color: rgba(0,0,0,0.95) !important;
   font-size: 0.75rem;
   letter-spacing: 0.02em;
 }
 
 .block-io-value {
   font-weight: 700;
-  color: rgba(255,255,255,0.95) !important;
+  color: rgba(0,0,0,0.95) !important;
   min-width: 1.5rem;
   text-align: center;
 }
 
 .block-io-separator {
-  color: rgba(255,255,255,0.6) !important;
+  color: rgba(0,0,0,0.6) !important;
   font-weight: 400;
 }
 
@@ -188,14 +191,14 @@
   letter-spacing: 0.03em;
 }
 
-.collapse-button { color: rgba(255,255,255,0.5); }
+.collapse-button { color: rgba(0,0,0,0.4); }
 .collapse-button:hover {
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.85);
 }
 
 .info-button { 
-  color: rgba(255,255,255,0.5);
+  color: rgba(0,0,0,0.4);
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-size: 0.85rem;
@@ -285,6 +288,7 @@
 /* Value Editor */
 .value-editor {
   margin-top: 0.75rem;
+  padding-left: 0.2rem;
   padding-right: 1rem;
 }
 
@@ -302,6 +306,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.625rem;
+  color: rgba(0,0,0,0.95);
 }
 
 .value-label {
