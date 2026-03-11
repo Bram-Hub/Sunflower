@@ -6,7 +6,7 @@ export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "P
 // Function signature for an evaluation function. 
 // It takes in the block to evaluate, the inputs, and the evaluateBlock function, and returns an output number.
 // onStepCallback is optional and used for stepping through evaluation.
-export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator, onStepCallback?: (block: BlockData, result: number) => Promise<void>) => number | Promise<number>;
+export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator, onStepCallback?: (block: BlockData, result: number | null, inputs: number[]) => Promise<void>) => number | Promise<number>;
 
 // Function signature for a function that takes in a number, and returns a string to be displayed in a blockslot wanting that many inputs.
 export type InputDescriptorGenerator = (inputCount: number) => string;

@@ -61,16 +61,21 @@ export async function evaluateBlock(
 export async function stepBlock(
   block: BlockData,
   inputs: number[],
-  onStepCallback?: (block: BlockData, result: number) => Promise<void>
+  onStepCallback?: (block: BlockData, result: number | null, inputs: number[]) => Promise<void>
 ): Promise<number> {
   const evaluateWithCallback: BlockEvaluator = async (b, i, _eval, callback) => {
     return await stepBlock(b, i, callback);
   };
   
+  if (onStepCallback) {
+    await onStepCallback(block, null, inputs);
+  }
+
   const config = blockConfig[block.type];
   const ev = await config.evaluate(block, inputs, evaluateWithCallback, onStepCallback);
+  
   if (onStepCallback) {
-    await onStepCallback(block, ev);
+    await onStepCallback(block, ev, inputs);
   }
   return ev;
 }

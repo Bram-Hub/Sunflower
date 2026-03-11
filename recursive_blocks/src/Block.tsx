@@ -5,6 +5,7 @@ import './Block.css';
 import { blockConfig, BlockSlot, BlockType } from "./BlockConfig"; 
 import { ValueEditor } from "./ValueEditor";
 import { BlockSlotDisplay } from "./BlockSlot";
+import { useBlockEditor } from "./BlockEditorContext";
 
 interface Props {
   block: BlockData | null;
@@ -64,6 +65,7 @@ and replaces the old block with the new block.
 export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
   const [showInfo, setShowInfo] = React.useState(false);
+  const { blockExecutionStates } = useBlockEditor();
 
   if (!block) {
     return <span className="empty-text"> Drop block here</span>;
@@ -84,6 +86,8 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
 
   const dragRef = React.useRef<HTMLDivElement>(null);
   drag(dragRef);
+
+  const executionState = blockExecutionStates[block.id];
 
   // Format input/output for display
   const formatInput = (input: number[] | undefined) => {
@@ -176,6 +180,13 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           )}
         </div>
       </div>
+
+      {/*executionState && (executionState.inputs !== undefined || executionState.output !== undefined) && (
+        <div className="block-execution-state" style={{ padding: '0.2rem 0.5rem', backgroundColor: 'rgba(255,255,255,0.6)', fontSize: '0.9em', display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace' }}>
+           <span>In: {executionState.inputs !== undefined ? `[${executionState.inputs.join(', ')}]` : '-'}</span>
+           <span>Out: {executionState.output !== undefined ? executionState.output : '-'}</span>
+        </div>
+      )*/}
 
       {showInfo && blockConfig[block.type]?.description && (
         <div className="block-description">
