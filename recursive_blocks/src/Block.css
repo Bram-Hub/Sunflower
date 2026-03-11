@@ -581,7 +581,7 @@ label { color: var(--block-text-color); }
 
 /* Highlighted Block */
 .block-highlighted {
-  background-color: rgba(0,0,0,0.88) !important;
+  background-color: rgba(128,128,128,0.88) !important;
   animation: pulse 0.8s ease-in-out infinite;
 }
 

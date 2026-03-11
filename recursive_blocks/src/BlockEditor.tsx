@@ -9,8 +9,7 @@ import { BlockPalette } from "./BlockPalette";
 import { removeBlockById } from "./BlockUtil";
 
 // TEMP: Import test helper functions
-//import { addGarbageTestData, clearExecutionData } from "./TEST_HELPER";
-
+import { addGarbageTestData, clearExecutionData } from "./TEST_HELPER";
 
 export interface EditorSaveState {
   fileType: string;
@@ -126,7 +125,7 @@ export function BlockEditor() {
     setSelectedBlockId(null);
     setHighlightedBlockId(null);
   }, [rootBlock, selectedBlockId]);
-/*
+
   const handleAddTestData = useCallback(() => {
     if (!rootBlock) {
       alert("No blocks to add test data to. Create some blocks first!");
@@ -143,7 +142,7 @@ export function BlockEditor() {
     setRootBlock({ ...rootBlock });
     console.log("Test data cleared from all blocks");
   }, [rootBlock, setRootBlock]);
-*/
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const isMac = navigator.platform.toUpperCase().includes("MAC");
@@ -363,7 +362,7 @@ export function BlockEditor() {
   };
 
   const handleRun = () => startOrResume(StepMode.None, false);
-  const handleRunIgnoreBreakpoints = () => startOrResume(StepMode.None, true);
+  const handleForceRun = () => startOrResume(StepMode.None, true);
   const handleStep = () => startOrResume(StepMode.Step, false);
   const handleTrace = () => startOrResume(StepMode.Trace, false);
 
@@ -381,9 +380,8 @@ export function BlockEditor() {
         loadInputRef={loadInputRef}
 
         onRun={handleRun}
-        onRunIgnoreBreakpoints={handleRunIgnoreBreakpoints}
-        onResume={handleRun}
-        paused={paused}
+        onForceRun={handleForceRun}
+        //paused={paused}
         onHalt={handleHalt}
         onStep={handleStep}
         onTrace={handleTrace}

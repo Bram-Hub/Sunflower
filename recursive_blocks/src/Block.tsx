@@ -140,7 +140,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           </div>
           <div className="block-io-in">
             <span className="block-io-label">In:</span>
-            <span className="block-io-value">{formatInput(block.latestInput)}</span>
+            <span className="block-io-value">{formatInput(executionState?.inputs ?? block.latestInput)}</span>
           </div>
         </div>
 
@@ -181,13 +181,6 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
         </div>
       </div>
 
-      {/*executionState && (executionState.inputs !== undefined || executionState.output !== undefined) && (
-        <div className="block-execution-state" style={{ padding: '0.2rem 0.5rem', backgroundColor: 'rgba(255,255,255,0.6)', fontSize: '0.9em', display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace' }}>
-           <span>In: {executionState.inputs !== undefined ? `[${executionState.inputs.join(', ')}]` : '-'}</span>
-           <span>Out: {executionState.output !== undefined ? executionState.output : '-'}</span>
-        </div>
-      )*/}
-
       {showInfo && blockConfig[block.type]?.description && (
         <div className="block-description">
           {blockConfig[block.type]?.description ?? "No description available for this block."}
@@ -204,7 +197,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
 
       <div className="block-io-out">
         <span className="block-io-label">Out:</span>
-        <span className="block-io-value">{formatOutput(block.latestOutput)}</span>
+        <span className="block-io-value">{formatOutput(executionState?.output ?? block.latestOutput)}</span>
       </div>
     </div>
   );

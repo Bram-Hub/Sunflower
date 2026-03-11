@@ -8,7 +8,7 @@ interface ToolbarProps {
   onRun: () => void;
   onForceRun: () => void;
   onStep: () => void;
-  onTrace?: () => void;
+  onTrace: () => void;
   onHalt: () => void;
   inputCount: number;
   onInputCountChange: (count: number) => void;
