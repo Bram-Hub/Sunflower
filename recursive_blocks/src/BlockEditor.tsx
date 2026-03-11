@@ -360,11 +360,11 @@ export function BlockEditor() {
         onLoad={handleLoad}
         loadInputRef={loadInputRef}
         onRun={() => handleRun(false)}
-        onRunIgnoreBreakpoints={() => handleRun(true)}
+        onForceRun={() => handleRun(true)}
+        onStep={handleStep}
+        onHalt={handleHalt}
         onResume={handleResume}
         paused={paused}
-        onHalt={handleHalt}
-        onStep={handleStep}
         inputCount={inputCount}
         onInputCountChange={handleInputCountChange}
         inputs={inputs}
