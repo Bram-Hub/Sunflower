@@ -70,6 +70,7 @@ export const blockConfig: Record<BlockType, {
   num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
   checkForErrors: (block: BlockData) => string[];
+  displayName?: string;
   description?: string;
 }> = {
   "Zero": {
@@ -109,6 +110,7 @@ export const blockConfig: Record<BlockType, {
   },
   "Projection": {
     type: "Projection" as BlockType,
+    displayName: "IDENTITY",
     children: [],
     num_values: [
       { name: "i", value: 1, min: 1 }
@@ -254,7 +256,7 @@ export const blockConfig: Record<BlockType, {
   },
   "Custom": {
     type: "Custom" as BlockType,
-    children: [//This custom block slot is for internal use and should not be rendered
+    children: [ //This custom block slot is for internal use and should not be rendered
       { name: "Custom Function", block: null, input_descriptor_index: 0 },
     ],
     evaluate: async (block, inputs, evaluate, onStepCallback) => {

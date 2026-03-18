@@ -17,6 +17,8 @@ const BlockEditorContext = createContext<{
   setRootBlock: React.Dispatch<React.SetStateAction<BlockData | null>>;
   setCustomBlockCount: React.Dispatch<React.SetStateAction<number>>;
   setBlockExecutionStates: React.Dispatch<React.SetStateAction<Record<string, ExecutionState>>>;
+  editMode: boolean;
+  setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 } | null>(null);
 
 export function BlockEditorProvider({ children }: { children: React.ReactNode }) {
@@ -24,13 +26,15 @@ export function BlockEditorProvider({ children }: { children: React.ReactNode })
   const [inputCount, setInputCount] = useState<number>(DEFAULT_INPUT_COUNT);
   const [customBlockCount, setCustomBlockCount] = useState<number>(0);
   const [blockExecutionStates, setBlockExecutionStates] = useState<Record<string, ExecutionState>>({});
+  const [editMode, setEditMode] = useState<boolean>(false);
   
   return (
     <BlockEditorContext.Provider value={{ 
       rootBlock, setRootBlock, 
       inputCount, setInputCount, 
       customBlockCount, setCustomBlockCount,
-      blockExecutionStates, setBlockExecutionStates
+      blockExecutionStates, setBlockExecutionStates,
+      editMode, setEditMode,
     }}>
       {children}
     </BlockEditorContext.Provider>

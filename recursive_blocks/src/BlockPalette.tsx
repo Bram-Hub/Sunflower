@@ -34,7 +34,8 @@ function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType
       ref={ref}
       className={`palette-block ${isDragging ? "opacity-50" : "palette-block-appear"}`}
     >
-      <div className="palette-block-name">{custom_block_name !== undefined ? custom_block_name : type.toUpperCase()}</div>
+      {/* use displayName from blockConfig if available */}
+      <div className="palette-block-name">{custom_block_name !== undefined ? custom_block_name : (blockConfig[type]?.displayName ?? type.toUpperCase())}</div>
 
       {showInfo && blockConfig[type].description && (
         <div className="block-description-popup">

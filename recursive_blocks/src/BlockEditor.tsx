@@ -8,9 +8,6 @@ import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { removeBlockById } from "./BlockUtil";
 
-// TEMP: Import test helper functions
-import { addGarbageTestData, clearExecutionData } from "./TEST_HELPER";
-
 export interface EditorSaveState {
   fileType: string;
   rootBlock?: BlockSave;
@@ -131,14 +128,12 @@ export function BlockEditor() {
       alert("No blocks to add test data to. Create some blocks first!");
       return;
     }
-    addGarbageTestData(rootBlock);
     setRootBlock({ ...rootBlock });
     console.log("Test data added to all blocks");
   }, [rootBlock, setRootBlock]);
 
   const handleClearTestData = useCallback(() => {
     if (!rootBlock) return;
-    clearExecutionData(rootBlock);
     setRootBlock({ ...rootBlock });
     console.log("Test data cleared from all blocks");
   }, [rootBlock, setRootBlock]);
@@ -393,8 +388,6 @@ export function BlockEditor() {
         onEvaluationSpeedChange={setEvaluationSpeed}
         speedToText={speedToText}
         currentResult={currentResult}
-        onAddTestData={handleAddTestData}
-        onClearTestData={handleClearTestData}
       />
 
       <div className="flexcont">

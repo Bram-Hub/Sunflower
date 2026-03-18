@@ -115,6 +115,24 @@
   box-shadow: none;
 }
 
+/* disabled state for Edit button during execution */
+.toolbar-button-disabled,
+.toolbar-button-disabled:hover {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: transparent !important;
+}
+.toolbar-button-active {
+  border-color: var(--contrast-col) !important;
+  color: var(--contrast-col) !important;
+  border-radius: 4px !important;
+}
+
+.toolbar-button-active:hover {
+  border-color: var(--contrast-col) !important;
+  border-radius: 4px !important;
+}
+
 /* Icon Buttons */
 .icon-button {
   width: 38px;

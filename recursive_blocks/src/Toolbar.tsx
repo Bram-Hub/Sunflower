@@ -1,5 +1,6 @@
 import React, { } from "react";
 import './Toolbar.css';
+import { useBlockEditor } from "./BlockEditorContext";
 
 interface ToolbarProps {
   onSave: () => void;
@@ -18,8 +19,6 @@ interface ToolbarProps {
   onEvaluationSpeedChange: (speed: number) => void;
   speedToText: (speed: number) => string;
   currentResult: number | null;
-  onAddTestData?: () => void;
-  onClearTestData?: () => void;
 }
 
 export function Toolbar({ 
@@ -39,9 +38,9 @@ export function Toolbar({
   onEvaluationSpeedChange,
   speedToText,
   currentResult,
-  onAddTestData,
-  onClearTestData
 }: ToolbarProps) {
+  const { editMode, setEditMode } = useBlockEditor();
+  const [executionLocked, setExecutionLocked] = React.useState(false);
   
   return (
     <>
@@ -72,49 +71,45 @@ export function Toolbar({
             </button>
           </div>
 
+          {/* Edit mode toggle button */}
           <div className="toolbar-divider"></div>
 
           <div className="toolbar-section">
-            <button 
-              onClick={onAddTestData} 
-              className="toolbar-button"
-              title="Add random test data to all blocks"
+            <button
+              onClick={() => !executionLocked && setEditMode(prev => !prev)}
+              className={`toolbar-button${editMode && !executionLocked ? " toolbar-button-active" : ""}${executionLocked ? " toolbar-button-disabled" : ""}`}
+              title={executionLocked ? "Cannot edit while executing" : "Toggle edit mode to change block values"}
+              disabled={executionLocked}
             >
-              Test Data
-            </button>
-            <button 
-              onClick={onClearTestData} 
-              className="toolbar-button"
-              title="Clear all test data from blocks"
-            >
-              Clear
+              {editMode && !executionLocked ? "Editing" : "Edit"}
             </button>
           </div>
         </div>
 
         {/* Program execution controls */}
-        <div className="toolbar-center">
-          <button onClick={onRun} className="icon-button run-button" title="Run program">
+        <div className="toolbar-center">   
+          {/* run buttons lock edit; halt unlocks it - no async race condition */}
+          <button onClick={() => { setExecutionLocked(true); onRun(); }} className="icon-button run-button" title="Run program">
             <svg viewBox="0 0 24 24" className="icon">
               <path d="M8 5v14l11-7z" fill="currentColor"/>
             </svg>
           </button>
-          <button onClick={onForceRun} className="icon-button step-button" title="Run without breakpoints">
+          <button onClick={() => { setExecutionLocked(true); onForceRun(); }} className="icon-button step-button" title="Run without breakpoints">
             <svg viewBox="0 0 24 24" className="icon">
               <path d="M4 5v14l8-7z M13 5v14l8-7z" fill="currentColor"/>
             </svg>
           </button>
-          <button onClick={onStep} className="icon-button step-button" title="Step through program">
+          <button onClick={() => { setExecutionLocked(true); onStep(); }} className="icon-button step-button" title="Step through program">
             <svg viewBox="0 0 24 24" className="icon">
               <path d="M5 8h14l-7 11z" fill="currentColor"/>
             </svg>
           </button>
-          <button onClick={onTrace} className="icon-button step-button" title="Trace through program">
+          <button onClick={() => { setExecutionLocked(true); onTrace(); }} className="icon-button step-button" title="Trace through program">
             <svg viewBox="0 0 24 24" className="icon">
               <path d="M4 5h7a7 7 0 0 1 7 7v3h4l-6 7-6-7h4v-3a3 3 0 0 0-3-3H4z" fill="currentColor"/>
             </svg>
           </button>
-          <button onClick={onHalt} className="icon-button halt-button" title="Halt execution">
+          <button onClick={() => { setExecutionLocked(false); onHalt(); }} className="icon-button halt-button" title="Halt execution">
             <svg viewBox="0 0 24 24" className="icon">
               <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
             </svg>

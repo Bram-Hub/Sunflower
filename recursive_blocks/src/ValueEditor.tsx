@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BlockData } from "./BlockUtil";
 import { blockConfig } from "./BlockConfig";
+import { useBlockEditor } from "./BlockEditorContext";
 
 interface ValueEditorProps {
   block: BlockData;
@@ -13,6 +14,7 @@ interface ValueEditorProps {
 // Block is the block this value editor is on, and onUpdate is called when a value is updated.
 export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorProps) {
   const [values, setValues] = useState(block.num_values ?? []);
+  const { editMode } = useBlockEditor();
 
   useEffect(() => {
     if (JSON.stringify(values) !== JSON.stringify(block.num_values)) {
@@ -34,9 +36,9 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
     <div className="value-editor">
       {values.map((val, index) => (
         <div key={index} className="value-field">
-          {isRunning || block.immutable ? (
+          {isRunning || block.immutable || !editMode ? (
             <span className="value-static">
-              <span className="value-static-name">{val.name} =</span>
+              <span className="value-static-name">{val.name} →</span>
               <span className="value-static-val">{val.value}</span>
             </span>
           ) : (

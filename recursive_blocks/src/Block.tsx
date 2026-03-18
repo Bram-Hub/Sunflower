@@ -63,7 +63,7 @@ onUpdate is a function that gets called when this block is modified
 and replaces the old block with the new block.
 */
 export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
-  const [collapsed, setCollapsed] = React.useState(block?.collapsed);
+  const [collapsed, setCollapsed] = React.useState(block?.collapsed ?? false);
   const [showInfo, setShowInfo] = React.useState(false);
   const { blockExecutionStates } = useBlockEditor();
 
@@ -132,7 +132,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
             </button>
             <div>
-              <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+              <div className="block-type">{block.name || blockConfig[block.type]?.displayName || block.type.toUpperCase()}</div>
               {block.type !== "Custom" && (
                 <div className="block-math-notation">{getMathNotation(block)}</div>
               )}
@@ -155,10 +155,10 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               title={"Show description"}
               onClick={() => setShowInfo(prev => !prev)}
             >
-              i
+              {block.type === "Projection" ? "→" : "i"}
             </button>
           )}
-          {block.children.length > 0 && (
+          {(block.children.length > 0 || (block.num_values && block.num_values.length > 0)) && (
             <button
               className="collapse-button"
               onClick={toggleCollapse}
@@ -188,13 +188,16 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
         <span className="block-io-value">{formatInput(executionState?.inputs ?? block.latestInput)}</span>
       </div>
 
-      <div className="slots-container">
-        {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} selectedBlockId={selectedBlockId} onSelectBlock={onSelectBlock} isRunning={isRunning} /></div>
-        ))}
-      </div>
+      {/* hide slots and ValueEditor when collapsed */}
+      {!collapsed && (
+        <div className="slots-container">
+          {block.children.map((slot) => (
+            <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} selectedBlockId={selectedBlockId} onSelectBlock={onSelectBlock} isRunning={isRunning} /></div>
+          ))}
+        </div>
+      )}
 
-      <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
+      {!collapsed && <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />}
 
       <div className="block-io-out">
         <span className="block-io-label">Out:</span>
