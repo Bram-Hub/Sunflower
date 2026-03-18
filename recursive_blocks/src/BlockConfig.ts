@@ -161,13 +161,16 @@ export const blockConfig: Record<BlockType, {
         }
         g_results.push(await evaluate(g_block, inputs, evaluate, onStepCallback));
       }
-      const result = await evaluate(block.children[0].block!, g_results, evaluate, onStepCallback);
+      const f_block = block.children.find(c => c.name === "f")?.block;
+      if (!f_block) {
+        throw new Error(`f block is missing in Composition.`);
+      }
+      const result = await evaluate(f_block, g_results, evaluate, onStepCallback);
       return result;
     },
     dynamicChildren: (block: BlockData) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
       return [
-        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor_index: 1, input_set: m },
         ...Array.from({ length: m }, (_, i) => {
           const name = `g${i + 1}`;
           return {
@@ -175,7 +178,8 @@ export const blockConfig: Record<BlockType, {
             block: block.children.find(c => c.name === name)?.block ?? null,
             input_descriptor_index: 0,
           };
-        })
+        }),
+        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor_index: 1, input_set: m }
       ];
     },
     checkForErrors: (block) => {

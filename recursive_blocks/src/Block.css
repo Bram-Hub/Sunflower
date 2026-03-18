@@ -145,7 +145,7 @@
   font-family: monospace;
   font-size: 0.75rem;
   margin-top: 0.5rem;
-  padding: 0.2rem 0.4rem;
+  padding-left: 0.2rem;
   /*background-color: rgba(255,255,255,0.6);*/
 }
 
@@ -231,6 +231,33 @@
 .slots-container {
   margin-left: 0.75rem;
   margin-top: 0.375rem;
+}
+
+/* Composition Slots Layout */
+.slots-container.composition-slots {
+  margin-left: 0;
+}
+
+.composition-slot-row {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.composition-slot-label {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(0,0,0,0.95);
+  padding-left: 0.2rem;
+  width: 0.9rem;
+  flex-shrink: 0;
+  margin-top: 0.875rem; /* align roughly */
+}
+
+.composition-slot-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .block-slot {
