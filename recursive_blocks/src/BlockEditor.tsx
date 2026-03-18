@@ -30,7 +30,7 @@ enum StepMode {
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates } = useBlockEditor();
+  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates, setEditMode } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -265,6 +265,7 @@ export function BlockEditor() {
   };
 
   const startOrResume = async (mode: StepMode, ignoreBreakpoints: boolean) => {
+    setEditMode(false); // kick user out of edit mode to ensure stable block values
     stepModeRef.current = mode;
     ignoreBreakpointsRef.current = ignoreBreakpoints;
 
