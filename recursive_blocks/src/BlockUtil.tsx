@@ -1,4 +1,4 @@
-import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig";
+import { blockConfig, BlockType, BlockEvaluator, BlockSlot, ExecutionContext } from "./BlockConfig";
 
 /* A custom data type that contains all the data for a block placed into the block tree. */
 export interface BlockData {
@@ -57,26 +57,25 @@ export async function evaluateBlock(
   return ev;
 }
 
-// Step through block evaluation with optional callback for visualization
+// Step through block evaluation with optional execution context for visualization/callbacks
 export async function stepBlock(
   block: BlockData,
   inputs: number[],
-  onStepCallback?: (block: BlockData, result: number | null, inputs: number[]) => Promise<void>,
-  onClearSubtree?: (blockToClear: BlockData) => void
+  context?: ExecutionContext
 ): Promise<number> {
-  const evaluateWithCallback: BlockEvaluator = async (b, i, _eval, callback, clearCallback) => {
-    return await stepBlock(b, i, callback, clearCallback);
+  const evaluateWithCallback: BlockEvaluator = async (b, i, _eval, ctx) => {
+    return await stepBlock(b, i, ctx);
   };
   
-  if (onStepCallback) {
-    await onStepCallback(block, null, inputs);
+  if (context?.onStepCallback) {
+    await context.onStepCallback(block, null, inputs);
   }
 
   const config = blockConfig[block.type];
-  const ev = await config.evaluate(block, inputs, evaluateWithCallback, onStepCallback, onClearSubtree);
+  const ev = await config.evaluate(block, inputs, evaluateWithCallback, context);
   
-  if (onStepCallback) {
-    await onStepCallback(block, ev, inputs);
+  if (context?.onStepCallback) {
+    await context.onStepCallback(block, ev, inputs);
   }
   return ev;
 }

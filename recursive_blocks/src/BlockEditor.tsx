@@ -365,7 +365,7 @@ export function BlockEditor() {
 
     // execute stepBlock
     try {
-      await stepBlock(rootBlock, inputs, onStepCallback, handleClearSubtree);
+      await stepBlock(rootBlock, inputs, { onStepCallback, onClearSubtree: handleClearSubtree });
     } catch (error) {
       if (error instanceof Error && error.message !== "Halted") {
         alert(`Error: ${error.message}`);
