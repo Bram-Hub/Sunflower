@@ -264,6 +264,27 @@ export function BlockEditor() {
     setPaused(false);
   };
 
+  const handleClearSubtree = useCallback((rootToClear: BlockData) => {
+    const getIds = (b: BlockData): string[] => {
+      const ids = [b.id];
+      for (const slot of b.children) {
+        if (slot.block) {
+          ids.push(...getIds(slot.block));
+        }
+      }
+      return ids;
+    };
+
+    const idsToClear = getIds(rootToClear);
+    setBlockExecutionStates(prev => {
+      const next = { ...prev };
+      for (const id of idsToClear) {
+        delete next[id];
+      }
+      return next;
+    });
+  }, [setBlockExecutionStates]);
+
   const startOrResume = async (mode: StepMode, ignoreBreakpoints: boolean) => {
     setEditMode(false); // kick user out of edit mode to ensure stable block values
     stepModeRef.current = mode;
@@ -344,7 +365,7 @@ export function BlockEditor() {
 
     // execute stepBlock
     try {
-      await stepBlock(rootBlock, inputs, onStepCallback);
+      await stepBlock(rootBlock, inputs, onStepCallback, handleClearSubtree);
     } catch (error) {
       if (error instanceof Error && error.message !== "Halted") {
         alert(`Error: ${error.message}`);
