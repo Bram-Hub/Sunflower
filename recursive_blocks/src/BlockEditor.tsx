@@ -257,6 +257,9 @@ export function BlockEditor() {
     isHaltedRef.current = true;
     stepModeRef.current = StepMode.None;
     
+    setBlockExecutionStates({});
+    setCurrentResult(null);
+    
     if (pauseResolver.current) {
       pauseResolver.current();
       pauseResolver.current = null;
@@ -410,6 +413,7 @@ export function BlockEditor() {
         onEvaluationSpeedChange={setEvaluationSpeed}
         speedToText={speedToText}
         currentResult={currentResult}
+        isEvaluating={isEvaluating}
       />
 
       <div className="flexcont">
