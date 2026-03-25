@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import { BlockData } from "./BlockUtil";
 import { DEFAULT_INPUT_COUNT } from "./BlockEditor";
+import { PRTraceFrame } from "./Trace";
 
 /*
 Defines a React Context, which makes the variables inside accessable by any React element within the context.
@@ -19,6 +20,10 @@ const BlockEditorContext = createContext<{
   setBlockExecutionStates: React.Dispatch<React.SetStateAction<Record<string, ExecutionState>>>;
   editMode: boolean;
   setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+  prTraceMode: Record<string, boolean>;
+  setPRTraceMode: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  prTraceFrames: Record<string, PRTraceFrame | null>;
+  setPRTraceFrames: React.Dispatch<React.SetStateAction<Record<string, PRTraceFrame | null>>>;
 } | null>(null);
 
 export function BlockEditorProvider({ children }: { children: React.ReactNode }) {
@@ -27,14 +32,18 @@ export function BlockEditorProvider({ children }: { children: React.ReactNode })
   const [customBlockCount, setCustomBlockCount] = useState<number>(0);
   const [blockExecutionStates, setBlockExecutionStates] = useState<Record<string, ExecutionState>>({});
   const [editMode, setEditMode] = useState<boolean>(false);
-  
+  const [prTraceMode, setPRTraceMode] = useState<Record<string, boolean>>({});
+  const [prTraceFrames, setPRTraceFrames] = useState<Record<string, PRTraceFrame | null>>({});
+
   return (
-    <BlockEditorContext.Provider value={{ 
-      rootBlock, setRootBlock, 
-      inputCount, setInputCount, 
+    <BlockEditorContext.Provider value={{
+      rootBlock, setRootBlock,
+      inputCount, setInputCount,
       customBlockCount, setCustomBlockCount,
       blockExecutionStates, setBlockExecutionStates,
       editMode, setEditMode,
+      prTraceMode, setPRTraceMode,
+      prTraceFrames, setPRTraceFrames,
     }}>
       {children}
     </BlockEditorContext.Provider>

@@ -7,7 +7,7 @@ import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { removeBlockById } from "./BlockUtil";
-import { generateTrace, TraceEvent, TraceEventType } from "./Trace";
+import { generateTrace, TraceEvent, TraceEventType, buildPRFrames, PRTraceFrame } from "./Trace";
 
 export interface EditorSaveState {
   fileType: string;
@@ -32,7 +32,7 @@ enum PlaybackMode {
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates, setEditMode } = useBlockEditor();
+  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates, setEditMode, prTraceMode, setPRTraceFrames } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -50,6 +50,10 @@ export function BlockEditor() {
   const cursorRef = useRef<number>(0);
   const finalResultRef = useRef<number | null>(null);
   const playbackDepthsRef = useRef<Map<string, number>>(new Map());
+
+  // PR trace panel state
+  const prFrameListRef = useRef<Record<string, PRTraceFrame[]>>({});
+  const prCursorRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     const newBreakpoints = new Set<string>();
@@ -262,11 +266,24 @@ export function BlockEditor() {
     cursorRef.current = 0;
     finalResultRef.current = null;
     playbackDepthsRef.current.clear();
+    prFrameListRef.current = {};
+    prCursorRef.current = {};
     setBlockExecutionStates({});
+    setPRTraceFrames({});
     setCurrentResult(null);
     setHighlightedBlockId(null);
     setIsEvaluating(false);
     setPaused(false);
+  };
+
+  const advancePRPanel = (blockId: string) => {
+    if (!prTraceMode[blockId] || !prFrameListRef.current[blockId]) return;
+    const cursor = prCursorRef.current[blockId] ?? 0;
+    const frames = prFrameListRef.current[blockId];
+    if (cursor < frames.length) {
+      setPRTraceFrames(prev => ({ ...prev, [blockId]: frames[cursor] }));
+      prCursorRef.current[blockId] = cursor + 1;
+    }
   };
 
   const advance = async (mode: PlaybackMode) => {
@@ -293,6 +310,9 @@ export function BlockEditor() {
         const d = depths.get(event.blockId) || 0;
         depths.set(event.blockId, d + 1);
 
+        // Advance PR trace panel if this block is in trace mode
+        advancePRPanel(event.blockId);
+
         let shouldPause = false;
         if (mode === PlaybackMode.Trace) shouldPause = true;
         if (mode === PlaybackMode.Run && breakpointsRef.current.has(event.blockId) && d === 0) {
@@ -314,6 +334,9 @@ export function BlockEditor() {
 
         const d = depths.get(event.blockId) || 0;
         depths.set(event.blockId, Math.max(0, d - 1));
+
+        // Advance PR trace panel if this block is in trace mode
+        advancePRPanel(event.blockId);
 
         let shouldPause = false;
         if (mode === PlaybackMode.Trace) shouldPause = true;
@@ -379,6 +402,17 @@ export function BlockEditor() {
       traceRef.current = events;
       cursorRef.current = 0;
       finalResultRef.current = result;
+
+      // Build PR trace frames for all PR blocks in trace mode
+      const prBlockIds = Object.keys(prTraceMode).filter(id => prTraceMode[id]);
+      prFrameListRef.current = {};
+      prCursorRef.current = {};
+      for (const id of prBlockIds) {
+        prFrameListRef.current[id] = buildPRFrames(events, id);
+        prCursorRef.current[id] = 0;
+      }
+      setPRTraceFrames({});
+
       await advance(mode);
     } catch (error) {
       if (error instanceof Error) {
