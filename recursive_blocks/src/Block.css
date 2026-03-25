@@ -96,11 +96,30 @@
 
 .block-action-buttons {
   display: flex;
-  align-items: center;
-  gap: 0.1rem;
+  align-items: flex-start;
+  gap: 0.5rem;
   flex-shrink: 0;
   margin-left: auto;
 }
+
+/* ===================== IO SPACING FIX START ===================== */
+
+.block-io-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  /* Force consistent spacing */
+  gap: 6px; /* matches Successor visually */
+}
+
+/* Remove any accidental spacing inconsistencies */
+.block-io-in,
+.block-io-out {
+  margin: 0;
+}
+
+/* ====================== IO SPACING FIX END ====================== */
 
 .block-type {
   font-weight: 700;
@@ -125,43 +144,53 @@
   .block-type { color: rgba(255,255,255,0.92); }
 }
 
-/* IO Display */
-.block-io-in {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  width: max-content;
-  font-family: monospace;
-  font-size: 0.75rem;
-  padding-left: 0.2rem;
-  /*background-color: rgba(255,255,255,0.6);*/
-}
+/* ===================== IO DISPLAY MINIMAL CLEAN START ===================== */
 
+.block-io-in,
 .block-io-out {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   width: max-content;
-  font-family: monospace;
+
+  font-family: inherit;
   font-size: 0.75rem;
-  margin-top: 0.5rem;
-  padding-left: 0.2rem;
-  /*background-color: rgba(255,255,255,0.6);*/
+
+  padding: 0.2rem 0.6rem;
+
+  /* Clean neutral background */
+  background: #ffffff;
+
+  /* Uniform border on all sides */
+  border: 1px solid rgba(0, 0, 0, 0.2);
+
+  border-radius: 6px;
+
+  /* No shadow, no effects */
+  box-shadow: none;
 }
+
+/* ====================== IO DISPLAY MINIMAL CLEAN END ====================== */
+
+/* ===================== IO TEXT CLEAN START ===================== */
 
 .block-io-label {
   font-weight: 600;
-  color: rgba(0,0,0,0.95) !important;
+  color: #444;
   font-size: 0.75rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
 .block-io-value {
   font-weight: 700;
-  color: rgba(0,0,0,0.95) !important;
+  color: #000;
   min-width: 1.5rem;
   text-align: center;
 }
+
+/* ====================== IO TEXT CLEAN END ====================== */
+
+/* ====================== IO TEXT NEUTRAL UPGRADE END ====================== */
 
 .block-io-separator {
   color: rgba(0,0,0,0.6) !important;
@@ -253,7 +282,7 @@
   padding-left: 0.2rem;
   width: 0.9rem;
   flex-shrink: 0;
-  margin-top: 0.875rem; /* align roughly */
+  margin-top: 0.875rem;
 }
 
 .composition-slot-content {
@@ -312,6 +341,24 @@
   .empty-text { color: rgba(255,255,255,0.28); }
   .block-slot.empty { border-color: rgba(255,255,255,0.1); }
 }
+
+@media (prefers-color-scheme: dark) {
+  .block-io-in,
+  .block-io-out {
+    background: #f4f4f4;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+  }
+
+  .block-io-label {
+    color: #333;
+  }
+
+  .block-io-value {
+    color: #000;
+  }
+}
+
+
 
 /* Value Editor */
 .value-editor {
@@ -621,6 +668,53 @@ label { color: var(--block-text-color); }
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 6px 2px rgba(255,215,0,0.4); }
   50%       { box-shadow: 0 0 20px 6px rgba(255,215,0,0.9); }
+}
+
+/* Visual styles for Custom/Immutable blocks */
+
+/* In the Editor */
+.block-custom-style {
+  filter: grayscale(0.9) brightness(0.9);
+  opacity: 0.85;
+}
+
+.block-custom-style .block-type {
+  color: #555 !important;
+}
+
+/* In the Sidebar Palette */
+.palette-block-custom {
+  background-color: #d1d1d1 !important; 
+  border-left: 4px solid #888 !important;
+  color: #666 !important;
+  filter: grayscale(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .block-custom-style {
+    filter: grayscale(0.7) brightness(0.8);
+  }
+  
+  .palette-block-custom {
+    background-color: #2d2d2d !important;
+    border-left: 4px solid #555 !important;
+    color: #999 !important;
+  }
+}
+
+/* Highlight for updated IO values */
+.value-changed {
+  color: var(--contrast-col) !important;
+  font-weight: 800;
+  transition: color 0.2s ease; /* Returns to black over 0.2s */
+  display: inline-block;
+  animation: valuePop 0.3s ease-out;
+}
+
+@keyframes valuePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 /* Mobile */
