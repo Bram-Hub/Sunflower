@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef  } from "react";
-import { BlockData, checkForErrors, evaluateBlock, setInputCountOfBlock, stepBlock } from "./BlockUtil";
+import { BlockData, checkForErrors, setInputCountOfBlock } from "./BlockUtil";
 import './Block.css';
 import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
@@ -7,6 +7,7 @@ import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { removeBlockById } from "./BlockUtil";
+import { generateTrace, TraceEvent, TraceEventType } from "./Trace";
 
 export interface EditorSaveState {
   fileType: string;
@@ -22,8 +23,9 @@ export const DEFAULT_INPUT_COUNT = 2;
 
 export const customBlocks: Record<string, BlockSave> = {};
 
-enum StepMode {
-  None,
+enum PlaybackMode {
+  Run,
+  ForceRun,
   Step,
   Trace
 }
@@ -37,16 +39,17 @@ export function BlockEditor() {
 
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [hasRun, setHasRun] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
   const [paused, setPaused] = useState(false);
   const loadInputRef = useRef<HTMLInputElement>(null);
-  const pauseResolver = useRef<((value: void | PromiseLike<void>) => void) | null>(null);
   const isHaltedRef = useRef(false);
-  const stepModeRef = useRef<StepMode>(StepMode.None);
-  const ignoreBreakpointsRef = useRef(false);
   const breakpointsRef = useRef<Set<string>>(new Set());
-  const selfRecDepthRef = useRef<Map<string, number>>(new Map());
+
+  // Trace playback state
+  const traceRef = useRef<TraceEvent[] | null>(null);
+  const cursorRef = useRef<number>(0);
+  const finalResultRef = useRef<number | null>(null);
+  const playbackDepthsRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     const newBreakpoints = new Set<string>();
@@ -255,52 +258,110 @@ export function BlockEditor() {
 
   const handleHalt = () => {
     isHaltedRef.current = true;
-    stepModeRef.current = StepMode.None;
-    
+    traceRef.current = null;
+    cursorRef.current = 0;
+    finalResultRef.current = null;
+    playbackDepthsRef.current.clear();
     setBlockExecutionStates({});
     setCurrentResult(null);
-    
-    if (pauseResolver.current) {
-      pauseResolver.current();
-      pauseResolver.current = null;
-    }
+    setHighlightedBlockId(null);
+    setIsEvaluating(false);
     setPaused(false);
   };
 
-  const handleClearSubtree = useCallback((rootToClear: BlockData) => {
-    const getIds = (b: BlockData): string[] => {
-      const ids = [b.id];
-      for (const slot of b.children) {
-        if (slot.block) {
-          ids.push(...getIds(slot.block));
+  const advance = async (mode: PlaybackMode) => {
+    const trace = traceRef.current;
+    if (!trace) return;
+
+    const speedMap: Record<number, number> = { 0: 500, 1: 100, 2: 0 };
+    const delay = speedMap[evaluationSpeed];
+    const depths = playbackDepthsRef.current;
+
+    while (cursorRef.current < trace.length) {
+      if (isHaltedRef.current) break;
+
+      const event = trace[cursorRef.current];
+      cursorRef.current++;
+
+      if (event.type === TraceEventType.Enter) {
+        setHighlightedBlockId(event.blockId);
+        setBlockExecutionStates(prev => ({
+          ...prev,
+          [event.blockId]: { inputs: event.inputs, output: undefined }
+        }));
+
+        const d = depths.get(event.blockId) || 0;
+        depths.set(event.blockId, d + 1);
+
+        let shouldPause = false;
+        if (mode === PlaybackMode.Trace) shouldPause = true;
+        if (mode === PlaybackMode.Run && breakpointsRef.current.has(event.blockId) && d === 0) {
+          shouldPause = true;
+        }
+
+        if (shouldPause) {
+          setPaused(true);
+          return;
+        }
+
+      } else if (event.type === TraceEventType.Exit) {
+        setHighlightedBlockId(event.blockId);
+        setCurrentResult(event.output);
+        setBlockExecutionStates(prev => ({
+          ...prev,
+          [event.blockId]: { inputs: event.inputs, output: event.output }
+        }));
+
+        const d = depths.get(event.blockId) || 0;
+        depths.set(event.blockId, Math.max(0, d - 1));
+
+        let shouldPause = false;
+        if (mode === PlaybackMode.Trace) shouldPause = true;
+        if (mode === PlaybackMode.Step) shouldPause = true;
+
+        if (shouldPause) {
+          setPaused(true);
+          return;
+        }
+
+        if (delay > 0) {
+          await sleep(delay);
+          if (trace !== traceRef.current) return; // stale trace after halt+restart
+        }
+
+      } else if (event.type === TraceEventType.ClearSubtree) {
+        setBlockExecutionStates(prev => {
+          const next = { ...prev };
+          for (const id of event.blockIds) {
+            delete next[id];
+          }
+          return next;
+        });
+        for (const id of event.blockIds) {
+          depths.delete(id);
         }
       }
-      return ids;
-    };
+    }
 
-    const idsToClear = getIds(rootToClear);
-    setBlockExecutionStates(prev => {
-      const next = { ...prev };
-      for (const id of idsToClear) {
-        delete next[id];
-      }
-      return next;
-    });
-  }, [setBlockExecutionStates]);
+    // Playback complete
+    if (!isHaltedRef.current && finalResultRef.current !== null) {
+      setCurrentResult(finalResultRef.current);
+    }
+    setHighlightedBlockId(null);
+    setIsEvaluating(false);
+    setPaused(false);
+  };
 
-  const startOrResume = async (mode: StepMode, ignoreBreakpoints: boolean) => {
-    setEditMode(false); // kick user out of edit mode to ensure stable block values
-    stepModeRef.current = mode;
-    ignoreBreakpointsRef.current = ignoreBreakpoints;
+  const startOrResume = async (mode: PlaybackMode) => {
+    setEditMode(false);
 
-    if (isEvaluating) {
-      if (paused && pauseResolver.current) {
-        pauseResolver.current();
-        pauseResolver.current = null;
-        setPaused(false);
-      }
+    if (isEvaluating && paused) {
+      setPaused(false);
+      await advance(mode);
       return;
     }
+
+    if (isEvaluating) return;
 
     if (!rootBlock) {
       alert("No root block to evaluate.");
@@ -311,80 +372,28 @@ export function BlockEditor() {
     isHaltedRef.current = false;
     setCurrentResult(null);
     setBlockExecutionStates({});
-    selfRecDepthRef.current.clear();
+    playbackDepthsRef.current.clear();
 
-    const speedMap: Record<number, number> = { 0: 500, 1: 100, 2: 0 };
-    const delay = speedMap[evaluationSpeed];
-
-    // the callback function to be run after evaluation
-    const onStepCallback = async (block: BlockData, result: number | null, inputs: number[]) => {
-      if (isHaltedRef.current) throw new Error("Halted");
-
-      const isBeforeEval = result === null;
-
-      // update this block's UI
-      setHighlightedBlockId(block.id);
-      if (!isBeforeEval) setCurrentResult(result);
-
-      // update this block's execution state
-      setBlockExecutionStates(prev => ({
-        ...prev,
-        [block.id]: { inputs, output: !isBeforeEval ? result : undefined }
-      }));
-
-      let shouldPause = false;
-
-      // track self-recursion depth so that breakpoints only pause on the first (outermost) call
-      if (breakpointsRef.current.has(block.id)) {
-        const currentDepth = selfRecDepthRef.current.get(block.id) || 0;
-        if (isBeforeEval) {
-          selfRecDepthRef.current.set(block.id, currentDepth + 1);
-          // pause only if this is the first time we're entering this block
-          if (currentDepth === 0 && !ignoreBreakpointsRef.current) {
-            shouldPause = true;
-          }
-        } else {
-          selfRecDepthRef.current.set(block.id, Math.max(0, currentDepth - 1));
-        }
-      }
-
-      if (stepModeRef.current === StepMode.Step && !isBeforeEval) {
-        shouldPause = true;
-      }
-      if (stepModeRef.current === StepMode.Trace) {
-        shouldPause = true;
-      }
-
-      if (shouldPause) {
-        setPaused(true);
-        stepModeRef.current = StepMode.None;
-        await new Promise<void>(resolve => { pauseResolver.current = resolve; });
-      }
-
-      if (delay > 0 && !isBeforeEval) {
-        await sleep(delay);
-      }
-    };
-
-    // execute stepBlock
     try {
-      await stepBlock(rootBlock, inputs, { onStepCallback, onClearSubtree: handleClearSubtree });
+      const { result, events } = await generateTrace(rootBlock, inputs);
+      traceRef.current = events;
+      cursorRef.current = 0;
+      finalResultRef.current = result;
+      await advance(mode);
     } catch (error) {
-      if (error instanceof Error && error.message !== "Halted") {
+      if (error instanceof Error) {
         alert(`Error: ${error.message}`);
       }
-    } finally {
       setHighlightedBlockId(null);
       setIsEvaluating(false);
       setPaused(false);
-      ignoreBreakpointsRef.current = false;
     }
   };
 
-  const handleRun = () => startOrResume(StepMode.None, false);
-  const handleForceRun = () => startOrResume(StepMode.None, true);
-  const handleStep = () => startOrResume(StepMode.Step, false);
-  const handleTrace = () => startOrResume(StepMode.Trace, false);
+  const handleRun = () => startOrResume(PlaybackMode.Run);
+  const handleForceRun = () => startOrResume(PlaybackMode.ForceRun);
+  const handleStep = () => startOrResume(PlaybackMode.Step);
+  const handleTrace = () => startOrResume(PlaybackMode.Trace);
 
   const speedToText = (speed: number) => {
     if (speed === 0) return "Slow";
@@ -427,12 +436,11 @@ export function BlockEditor() {
                 checkForErrors(block);
               }
               setRootBlock(block);
-              setHasRun(false);
             }}
             highlightedBlockId={highlightedBlockId}
             selectedBlockId={selectedBlockId}
             onSelectBlock={(id) => setSelectedBlockId(id)}
-            isRunning={isEvaluating || hasRun}
+            isRunning={isEvaluating}
           />
         </div>
       </div>
