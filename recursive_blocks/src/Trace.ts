@@ -50,51 +50,50 @@ export type PRTraceFrame = {
  * Descent frames show inputs flowing down; ascent frames show outputs building up.
  */
 export function buildPRFrames(events: TraceEvent[], prBlockId: string): PRTraceFrame[] {
-  const enters: Array<{ inputs: number[] }> = [];
-  const exits: Array<{ inputs: number[]; output: number }> = [];
+  const frames: PRTraceFrame[] = [];
+  let depth = 0;
+  let prevExitOutput: number | null = null;
 
   for (const e of events) {
-    if (e.type === TraceEventType.Enter && e.blockId === prBlockId) {
-      enters.push({ inputs: e.inputs });
-    } else if (e.type === TraceEventType.Exit && e.blockId === prBlockId) {
-      exits.push({ inputs: e.inputs, output: e.output });
-    }
-  }
+    if (e.type === TraceEventType.ClearSubtree) continue;
+    if (e.blockId !== prBlockId) continue;
 
-  const frames: PRTraceFrame[] = [];
+    if (e.type === TraceEventType.Enter) {
+      if (depth === 0) {
+        // New invocation — reset ascent state
+        prevExitOutput = null;
+      }
+      depth++;
 
-  // Descent frames (one per Enter event)
-  for (const e of enters) {
-    const y = e.inputs[e.inputs.length - 1];
-    if (y > 0) {
-      frames.push({
-        xy_prime: e.inputs,
-        xy: [...e.inputs.slice(0, -1), y - 1],
-        hxy: null,
-        hxy_prime: null,
-      });
-    } else {
-      // Base case enter: inputs visible, results pending
-      frames.push({ xy_prime: e.inputs, xy: null, hxy: null, hxy_prime: null });
-    }
-  }
+      const y = e.inputs[e.inputs.length - 1];
+      if (y > 0) {
+        frames.push({
+          xy_prime: e.inputs,
+          xy: [...e.inputs.slice(0, -1), y - 1],
+          hxy: null,
+          hxy_prime: null,
+        });
+      } else {
+        // Base case enter: inputs visible, results pending
+        frames.push({ xy_prime: e.inputs, xy: null, hxy: null, hxy_prime: null });
+      }
+    } else if (e.type === TraceEventType.Exit) {
+      depth--;
 
-  // Exit frames (base case first, then ascent)
-  for (let i = 0; i < exits.length; i++) {
-    const e = exits[i];
-    const y = e.inputs[e.inputs.length - 1];
-    if (y === 0) {
-      // Base case exit: reveal h(x,y')
-      frames.push({ xy_prime: e.inputs, xy: null, hxy: null, hxy_prime: e.output });
-    } else {
-      // Ascent: show current level and the level below it
-      const prevOutput = i > 0 ? exits[i - 1].output : null;
-      frames.push({
-        xy_prime: e.inputs,
-        xy: [...e.inputs.slice(0, -1), y - 1],
-        hxy: prevOutput,
-        hxy_prime: e.output,
-      });
+      const y = e.inputs[e.inputs.length - 1];
+      if (y === 0) {
+        // Base case exit: reveal h(x,y')
+        frames.push({ xy_prime: e.inputs, xy: null, hxy: null, hxy_prime: e.output });
+      } else {
+        // Ascent: show current level with result from the level below
+        frames.push({
+          xy_prime: e.inputs,
+          xy: [...e.inputs.slice(0, -1), y - 1],
+          hxy: prevExitOutput,
+          hxy_prime: e.output,
+        });
+      }
+      prevExitOutput = e.output;
     }
   }
 
