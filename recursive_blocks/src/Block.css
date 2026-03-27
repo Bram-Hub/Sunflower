@@ -207,7 +207,8 @@
 /* Buttons */
 .collapse-button,
 .info-button,
-.remove-button {
+.remove-button,
+.pr-trace-toggle-button {
   font-size: 0.75rem;
   font-family: inherit;
   font-weight: 600;
@@ -741,4 +742,62 @@ label { color: var(--block-text-color); }
   .block-io-label  { font-size: 0.68rem; }
   .block-io-value  { min-width: 1rem; }
   .sideP           { padding: 1rem 0.5rem; }
+}
+
+/* PR Trace Toggle Button */
+.pr-trace-toggle-button {
+  color: rgba(0,0,0,0.4);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.pr-trace-toggle-button:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.85);
+}
+.pr-trace-toggle-button.pr-trace-active {
+  color: var(--contrast-col);
+  background: rgba(223,109,38,0.12);
+}
+
+/* PR Trace Panel */
+.pr-trace-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.25rem 0.75rem;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.15);
+}
+
+.pr-trace-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pr-trace-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pr-trace-label {
+  font-style: italic;
+  font-size: 0.8rem;
+  min-width: 3rem;
+  opacity: 0.7;
+}
+
+.pr-trace-value {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 3px;
+  min-width: 2rem;
+  text-align: center;
+  background: rgba(255,255,255,0.25);
 }

@@ -2,10 +2,11 @@ import React from "react";
 import { useDrag } from "react-dnd";
 import { BlockData } from "./BlockUtil";
 import './Block.css';
-import { blockConfig, BlockSlot, BlockType } from "./BlockConfig"; 
+import { blockConfig, BlockSlot, BlockType } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { useBlockEditor } from "./BlockEditorContext";
+import { PRTracePanel } from "./PRTracePanel";
 
 interface Props {
   block: BlockData | null;
@@ -49,7 +50,7 @@ const getMathNotation = (block: BlockData): string => {
 export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
   const [collapsed, setCollapsed] = React.useState(block?.collapsed ?? false);
   const [showInfo, setShowInfo] = React.useState(false);
-  const { blockExecutionStates } = useBlockEditor();
+  const { blockExecutionStates, prTraceMode, setPRTraceMode, prTraceFrames } = useBlockEditor();
 
   if (!block) {
     return <span className="empty-text"> Drop block here</span>;
@@ -139,6 +140,15 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           {blockConfig[block.type]?.description && (
             <button className="info-button" title={"Show description"} onClick={() => setShowInfo(prev => !prev)}>i</button>
           )}
+          {block.type === "Primitive Recursion" && (
+            <button
+              className={`pr-trace-toggle-button ${prTraceMode[block.id] ? "pr-trace-active" : ""}`}
+              title="Toggle recursion trace panel"
+              onClick={() => setPRTraceMode(prev => ({ ...prev, [block.id]: !prev[block.id] }))}
+            >
+              T
+            </button>
+          )}
           {(block.children.length > 0 || (block.num_values && block.num_values.length > 0)) && (
             <button className="collapse-button" onClick={toggleCollapse}>{collapsed ? "▼" : "▶"}</button>
           )}
@@ -165,39 +175,44 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       </div>
 
       {!collapsed && (
-        <div className={`slots-container ${block.type === "Composition" ? "composition-slots" : ""}`}>
-          {block.children.map((slot) => {
-            const slotDisplay = (
-              <BlockSlotDisplay 
-                parentBlock={block} 
-                slot={slot} 
-                onUpdate={onUpdate} 
-                highlightedBlockId={highlightedBlockId} 
-                selectedBlockId={selectedBlockId} 
-                onSelectBlock={onSelectBlock} 
-                isRunning={isRunning} 
-              />
-            );
+        block.type === "Primitive Recursion" && prTraceMode[block.id]
+          ? <PRTracePanel frame={prTraceFrames[block.id]} />
+          : (
+            <>
+              <div className={`slots-container ${block.type === "Composition" ? "composition-slots" : ""}`}>
+                {block.children.map((slot) => {
+                  const slotDisplay = (
+                    <BlockSlotDisplay
+                      parentBlock={block}
+                      slot={slot}
+                      onUpdate={onUpdate}
+                      highlightedBlockId={highlightedBlockId}
+                      selectedBlockId={selectedBlockId}
+                      onSelectBlock={onSelectBlock}
+                      isRunning={isRunning}
+                    />
+                  );
 
-            if (block.type === "Composition") {
-              const label = slot.name.startsWith("g") 
-                ? <span>g<sub>{slot.name.slice(1)}</sub></span> 
-                : <span>f</span>;
+                  if (block.type === "Composition") {
+                    const label = slot.name.startsWith("g")
+                      ? <span>g<sub>{slot.name.slice(1)}</sub></span>
+                      : <span>f</span>;
 
-              return (
-                <div key={`${block.id}-${slot.name}`} className="composition-slot-row">
-                  <div className="composition-slot-label">{label}:</div>
-                  <div className="composition-slot-content">{slotDisplay}</div>
-                </div>
-              );
-            }
+                    return (
+                      <div key={`${block.id}-${slot.name}`} className="composition-slot-row">
+                        <div className="composition-slot-label">{label}:</div>
+                        <div className="composition-slot-content">{slotDisplay}</div>
+                      </div>
+                    );
+                  }
 
-            return <div key={`${block.id}-${slot.name}`}>{slotDisplay}</div>;
-          })}
-        </div>
+                  return <div key={`${block.id}-${slot.name}`}>{slotDisplay}</div>;
+                })}
+              </div>
+              <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
+            </>
+          )
       )}
-
-      {!collapsed && <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />}
 
       <div className="block-io-out">
         <span className="block-io-label">Out:</span>

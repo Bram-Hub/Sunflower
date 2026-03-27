@@ -1,4 +1,4 @@
-import { blockConfig, BlockType, BlockEvaluator, BlockSlot, ExecutionContext } from "./BlockConfig";
+import { blockConfig, BlockType, BlockSlot } from "./BlockConfig";
 
 /* A custom data type that contains all the data for a block placed into the block tree. */
 export interface BlockData {
@@ -57,27 +57,15 @@ export async function evaluateBlock(
   return ev;
 }
 
-// Step through block evaluation with optional execution context for visualization/callbacks
-export async function stepBlock(
-  block: BlockData,
-  inputs: number[],
-  context?: ExecutionContext
-): Promise<number> {
-  const evaluateWithCallback: BlockEvaluator = async (b, i, _eval, ctx) => {
-    return await stepBlock(b, i, ctx);
-  };
-  
-  if (context?.onStepCallback) {
-    await context.onStepCallback(block, null, inputs);
+// Recursively collects all block IDs in a subtree (including the root).
+export function collectDescendantIds(block: BlockData): string[] {
+  const ids = [block.id];
+  for (const slot of block.children) {
+    if (slot.block) {
+      ids.push(...collectDescendantIds(slot.block));
+    }
   }
-
-  const config = blockConfig[block.type];
-  const ev = await config.evaluate(block, inputs, evaluateWithCallback, context);
-  
-  if (context?.onStepCallback) {
-    await context.onStepCallback(block, ev, inputs);
-  }
-  return ev;
+  return ids;
 }
 
 // Takes in a defaultCount, and modifies it using the slot's input modifiers to get the actual input count the slot wants.

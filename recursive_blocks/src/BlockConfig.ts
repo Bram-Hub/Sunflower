@@ -5,7 +5,6 @@ export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "P
 
 // Execution context for passing runtime options and callbacks deeply through the tree
 export interface ExecutionContext {
-  onStepCallback?: (block: BlockData, result: number | null, inputs: number[]) => Promise<void>;
   onClearSubtree?: (blockToClear: BlockData) => void;
 }
 
@@ -82,7 +81,7 @@ export const blockConfig: Record<BlockType, {
   "Zero": {
     type: "Zero" as BlockType,
     children: [],
-    evaluate: (_block, _inputs, _evaluate, context) => {
+    evaluate: (_block, _inputs, _evaluate, _context) => {
       // Zero block always returns 0
       const result = 0;
       return result;
@@ -98,7 +97,7 @@ export const blockConfig: Record<BlockType, {
   "Successor": {
     type: "Successor" as BlockType,
     children: [],
-    evaluate: (_block, inputs, _evaluate, context) => {
+    evaluate: (_block, inputs, _evaluate, _context) => {
       // Successor block returns the input incremented by 1
       if (inputs.length !== 1) {
         throw new Error("Successor block requires exactly one input.");
@@ -121,7 +120,7 @@ export const blockConfig: Record<BlockType, {
     num_values: [
       { name: "i", value: 1, min: 1 }
     ],
-    evaluate: (block, inputs, _evaluate, context) => {
+    evaluate: (block, inputs, _evaluate, _context) => {
       // Projection block returns the i-th input
       if (inputs.length <= 0) {
         throw new Error("Projection block requires at least one input.");
