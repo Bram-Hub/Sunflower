@@ -674,12 +674,15 @@ label { color: var(--block-text-color); }
 
 /* In the Editor */
 .block-custom-style {
-  filter: grayscale(0.9) brightness(0.9);
-  opacity: 0.85;
+  opacity: 0.92;
 }
 
 .block-custom-style .block-type {
   color: #555 !important;
+}
+
+.block-custom-style .block-math-notation {
+  color: rgba(60, 60, 60, 0.78);
 }
 
 /* In the Sidebar Palette */
@@ -692,7 +695,7 @@ label { color: var(--block-text-color); }
 
 @media (prefers-color-scheme: dark) {
   .block-custom-style {
-    filter: grayscale(0.7) brightness(0.8);
+    opacity: 0.9;
   }
   
   .palette-block-custom {

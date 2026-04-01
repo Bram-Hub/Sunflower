@@ -16,6 +16,30 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
   const [values, setValues] = useState(block.num_values ?? []);
   const { editMode } = useBlockEditor();
 
+  const formatStaticValue = (valueName: string, value: number) => {
+    if (block.type === "Projection" && valueName === "i") {
+      const inputCount = Math.max(block.inputCount, value, 1);
+      const args = Array.from({ length: inputCount }, (_, i) => `x${i + 1}`).join(", ");
+
+      return {
+        label: `(${args}) →`,
+        value: `x${value}`,
+      };
+    }
+
+    if (block.type === "Composition" && valueName === "m") {
+      return {
+        label: "arity →",
+        value: `${value} inner block${value === 1 ? "" : "s"}`,
+      };
+    }
+
+    return {
+      label: `${valueName} →`,
+      value: value.toString(),
+    };
+  };
+
   useEffect(() => {
     if (JSON.stringify(values) !== JSON.stringify(block.num_values)) {
       onUpdate({ ...block, num_values: values, depth: block.depth || 0 });
@@ -34,28 +58,32 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
 
   return (
     <div className="value-editor">
-      {values.map((val, index) => (
-        <div key={index} className="value-field">
-          {isRunning || block.immutable || !editMode ? (
-            <span className="value-static">
-              <span className="value-static-name">{val.name} →</span>
-              <span className="value-static-val">{val.value}</span>
-            </span>
-          ) : (
-            <>
-              <label className="value-label">{val.name}</label>
-              <input
-                type="number"
-                min={blockConfig[block.type].num_values?.find(v => v.name === val.name)?.min || 0}
-                step="1"
-                value={val.value}
-                onChange={(e) => handleValueChange(index, e.target.value)}
-                className="value-input"
-              />
-            </>
-          )}
-        </div>
-      ))}
+      {values.map((val, index) => {
+        const staticValue = formatStaticValue(val.name, val.value);
+
+        return (
+          <div key={index} className="value-field">
+            {isRunning || !editMode ? (
+              <span className="value-static">
+                <span className="value-static-name">{staticValue.label}</span>
+                <span className="value-static-val">{staticValue.value}</span>
+              </span>
+            ) : (
+              <>
+                <label className="value-label">{val.name}</label>
+                <input
+                  type="number"
+                  min={blockConfig[block.type].num_values?.find(v => v.name === val.name)?.min || 0}
+                  step="1"
+                  value={val.value}
+                  onChange={(e) => handleValueChange(index, e.target.value)}
+                  className="value-input"
+                />
+              </>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

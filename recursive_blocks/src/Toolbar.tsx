@@ -1,6 +1,7 @@
 import React, { } from "react";
 import './Toolbar.css';
 import { useBlockEditor } from "./BlockEditorContext";
+import { MAX_INPUT_COUNT } from "./BlockEditor";
 
 interface ToolbarProps {
   onSave: () => void;
@@ -124,7 +125,7 @@ export function Toolbar({
             <input
               type="number"
               min="0"
-              max="20"
+              max={MAX_INPUT_COUNT}
               step="1"
               value={inputCount.toString()}
               onChange={(e) => onInputCountChange(parseInt(e.target.value))}

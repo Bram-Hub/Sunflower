@@ -20,8 +20,15 @@ export interface EditorSaveState {
 export const CURRENT_FILETYPE_VERSION = "BRAM_EDITOR_STATE_V2";
 
 export const DEFAULT_INPUT_COUNT = 2;
+export const MAX_INPUT_COUNT = 12;
+export const MAX_CUSTOM_BLOCKS = 40;
 
 export const customBlocks: Record<string, BlockSave> = {};
+
+const clampInputCount = (count: number) => {
+  if (!Number.isFinite(count)) return 0;
+  return Math.min(MAX_INPUT_COUNT, Math.max(0, count));
+};
 
 enum PlaybackMode {
   Run,
@@ -99,7 +106,10 @@ export function BlockEditor() {
   }, [inputCount, rootBlock]);
 
   const handleInputCountChange = (count: number) => {
-    const clamped = Math.max(0, count);
+    if (Number.isFinite(count) && count > MAX_INPUT_COUNT) {
+      alert(`Input count is capped at ${MAX_INPUT_COUNT}.`);
+    }
+    const clamped = clampInputCount(count);
     setInputCount(clamped);
   };
 
@@ -233,13 +243,34 @@ export function BlockEditor() {
              throw new Error("Invalid or incompatible .bramflower file.");
           }
 
-          setRootBlock(loadedState.rootBlock ? deserializeBlock(loadedState.rootBlock) : null);
-          setInputs(loadedState.inputs);
-          setInputCount(loadedState.inputCount);
+          const clampedInputCount = clampInputCount(loadedState.inputCount);
+          const normalizedInputs = Array.from(
+            { length: clampedInputCount },
+            (_, i) => loadedState.inputs[i] ?? 0
+          );
 
-          setCustomBlockCount(Object.keys(customBlocks).length);
-          for (const [name, customBlock] of Object.entries(loadedState.customBlocks)) {
+          setRootBlock(loadedState.rootBlock ? deserializeBlock(loadedState.rootBlock) : null);
+          setInputs(normalizedInputs);
+          setInputCount(clampedInputCount);
+
+          const nextCustomBlocks = Object.entries(loadedState.customBlocks ?? {});
+          const limitedCustomBlocks = nextCustomBlocks.slice(0, MAX_CUSTOM_BLOCKS);
+
+          Object.keys(customBlocks).forEach((key) => {
+            delete customBlocks[key];
+          });
+
+          for (const [name, customBlock] of limitedCustomBlocks) {
             customBlocks[customBlock.name ?? name] = customBlock;
+          }
+          setCustomBlockCount(Object.keys(customBlocks).length);
+
+          if (loadedState.inputCount !== clampedInputCount) {
+            alert(`Loaded file used ${loadedState.inputCount} inputs. The editor cap is ${MAX_INPUT_COUNT}, so it was reduced.`);
+          }
+
+          if (nextCustomBlocks.length > MAX_CUSTOM_BLOCKS) {
+            alert(`Loaded file had ${nextCustomBlocks.length} custom blocks. Only the first ${MAX_CUSTOM_BLOCKS} were loaded.`);
           }
 
           console.log("State loaded successfully.");

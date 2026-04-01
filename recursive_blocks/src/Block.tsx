@@ -17,9 +17,43 @@ interface Props {
   isRunning?: boolean;
 }
 
-const getDepthColor = (depth: number) => {
-  const colors = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
-  return colors[depth % colors.length];
+const DEPTH_COLORS = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
+const CUSTOM_BLOCK_TINT = '#9a9a9a';
+
+const getDepthColor = (depth: number) => DEPTH_COLORS[depth % DEPTH_COLORS.length];
+
+const hexToRgb = (hex: string) => {
+  const normalized = hex.replace('#', '');
+  const value = normalized.length === 3
+    ? normalized.split('').map((char) => char + char).join('')
+    : normalized;
+
+  const parsed = Number.parseInt(value, 16);
+
+  return {
+    r: (parsed >> 16) & 255,
+    g: (parsed >> 8) & 255,
+    b: parsed & 255,
+  };
+};
+
+const blendHexColors = (base: string, tint: string, tintWeight: number) => {
+  const baseRgb = hexToRgb(base);
+  const tintRgb = hexToRgb(tint);
+  const baseWeight = 1 - tintWeight;
+  const blendChannel = (baseChannel: number, tintChannel: number) =>
+    Math.round(baseChannel * baseWeight + tintChannel * tintWeight);
+
+  return `rgb(${blendChannel(baseRgb.r, tintRgb.r)}, ${blendChannel(baseRgb.g, tintRgb.g)}, ${blendChannel(baseRgb.b, tintRgb.b)})`;
+};
+
+const getCustomBlockColors = (depth: number) => {
+  const baseColor = getDepthColor(depth);
+
+  return {
+    background: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.72),
+    border: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.56),
+  };
 };
 
 const getMathNotation = (block: BlockData): string => {
@@ -73,6 +107,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
   drag(dragRef);
 
   const executionState = blockExecutionStates[block.id];
+  const isMutedCustomBlock = block.type === "Custom" || block.immutable;
 
   // Link highlight strictly to the active step
   // This ensures that as soon as the 'Step' moves the highlight elsewhere, the color reverts.
@@ -89,17 +124,20 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
     return output !== undefined ? output.toString() : '—';
   };
 
+  const depthColor = getDepthColor(block.depth || 0);
+  const customColors = isMutedCustomBlock ? getCustomBlockColors(block.depth || 0) : null;
+
   return (
     <div 
       className={`block-container
         ${highlightedBlockId === block.id ? "block-highlighted" : ""} 
         ${selectedBlockId === block.id ? "selected-block" : ""}
-        ${block.type === "Custom" ? "block-custom-style" : ""}`}
+        ${isMutedCustomBlock ? "block-custom-style" : ""}`}
       ref={dragRef}
       style={{ 
         opacity: isDragging ? 0.5 : 1, 
-        backgroundColor: getDepthColor(block.depth || 0),
-        borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`,
+        backgroundColor: customColors?.background ?? depthColor,
+        borderLeft: `5px solid ${customColors?.border ?? depthColor}`,
       }}
       onClick={(e) => {
         e.stopPropagation();

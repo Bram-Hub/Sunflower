@@ -1,11 +1,15 @@
 import { useRef, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { blockConfig, BlockType } from "./BlockConfig";
-import { CURRENT_FILETYPE_VERSION, customBlocks, EditorSaveState } from "./BlockEditor";
+import { CURRENT_FILETYPE_VERSION, customBlocks, EditorSaveState, MAX_CUSTOM_BLOCKS } from "./BlockEditor";
 import { getDefaultChildren } from "./Block";
 import { BlockSave, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 import React from "react";
+
+function canAddCustomBlock() {
+  return Object.keys(customBlocks).length < MAX_CUSTOM_BLOCKS;
+}
 
 function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType, custom_block_name?: string, onRemove?: (name: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -61,6 +65,11 @@ export function BlockPalette() {
       return;
     }
 
+    if (!canAddCustomBlock()) {
+      alert(`Custom block limit reached. You can load up to ${MAX_CUSTOM_BLOCKS} custom blocks at once.`);
+      return;
+    }
+
     const name = prompt("Enter a name for the new custom block:");
     if (!name) {
       alert("Block creation cancelled.");
@@ -96,6 +105,11 @@ export function BlockPalette() {
 
       if (!parsed || !parsed.rootBlock) {
         alert("Invalid block definition.");
+        return;
+      }
+
+      if (!canAddCustomBlock()) {
+        alert(`Custom block limit reached. You can load up to ${MAX_CUSTOM_BLOCKS} custom blocks at once.`);
         return;
       }
 
