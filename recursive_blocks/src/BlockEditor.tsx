@@ -333,16 +333,25 @@ export function BlockEditor() {
 
       if (event.type === TraceEventType.Enter) {
         setHighlightedBlockId(event.blockId);
-        setBlockExecutionStates(prev => ({
-          ...prev,
-          [event.blockId]: { inputs: event.inputs, output: undefined }
-        }));
 
         const d = depths.get(event.blockId) || 0;
         depths.set(event.blockId, d + 1);
 
-        // Advance PR trace panel if this block is in trace mode
-        advancePRPanel(event.blockId);
+        if (prTraceMode[event.blockId]) {
+          // PR trace mode: only set execution state on the first entry (original inputs)
+          if (d === 0) {
+            setBlockExecutionStates(prev => ({
+              ...prev,
+              [event.blockId]: { inputs: event.inputs, output: undefined }
+            }));
+          }
+          advancePRPanel(event.blockId);
+        } else {
+          setBlockExecutionStates(prev => ({
+            ...prev,
+            [event.blockId]: { inputs: event.inputs, output: undefined }
+          }));
+        }
 
         let shouldPause = false;
         if (mode === PlaybackMode.Trace) shouldPause = true;
@@ -358,16 +367,25 @@ export function BlockEditor() {
       } else if (event.type === TraceEventType.Exit) {
         setHighlightedBlockId(event.blockId);
         setCurrentResult(event.output);
-        setBlockExecutionStates(prev => ({
-          ...prev,
-          [event.blockId]: { inputs: event.inputs, output: event.output }
-        }));
 
         const d = depths.get(event.blockId) || 0;
         depths.set(event.blockId, Math.max(0, d - 1));
 
-        // Advance PR trace panel if this block is in trace mode
-        advancePRPanel(event.blockId);
+        if (prTraceMode[event.blockId]) {
+          advancePRPanel(event.blockId);
+          // Show final output when outermost call completes
+          if (d === 1) {
+            setBlockExecutionStates(prev => ({
+              ...prev,
+              [event.blockId]: { ...prev[event.blockId], output: event.output }
+            }));
+          }
+        } else {
+          setBlockExecutionStates(prev => ({
+            ...prev,
+            [event.blockId]: { inputs: event.inputs, output: event.output }
+          }));
+        }
 
         let shouldPause = false;
         if (mode === PlaybackMode.Trace) shouldPause = true;
@@ -394,6 +412,18 @@ export function BlockEditor() {
         for (const id of event.blockIds) {
           depths.delete(id);
         }
+        // Clear PR trace panels for any blocks in the cleared subtrees
+        setPRTraceFrames(prev => {
+          const next = { ...prev };
+          let changed = false;
+          for (const id of event.blockIds) {
+            if (id in next) {
+              delete next[id];
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
       }
     }
 

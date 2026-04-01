@@ -45,14 +45,15 @@ export type PRTraceFrame = {
 };
 
 /**
- * Extract PR-specific animation frames from a flat trace.
- * Each Enter/Exit event for the given PR block maps 1:1 to a frame.
- * Descent frames show inputs flowing down; ascent frames show outputs building up.
+ * Build the frame sequence for a PR trace panel from a completed trace.
+ * Each Enter/Exit event for the given PR block produces exactly one frame.
+ * Descent frames show inputs flowing down, ascent frames show outputs building up.
  */
 export function buildPRFrames(events: TraceEvent[], prBlockId: string): PRTraceFrame[] {
   const frames: PRTraceFrame[] = [];
   let depth = 0;
   let prevExitOutput: number | null = null;
+  let lastDescentFrame: PRTraceFrame | null = null;
 
   for (const e of events) {
     if (e.type === TraceEventType.ClearSubtree) continue;
@@ -60,29 +61,43 @@ export function buildPRFrames(events: TraceEvent[], prBlockId: string): PRTraceF
 
     if (e.type === TraceEventType.Enter) {
       if (depth === 0) {
-        // New invocation — reset ascent state
+        // Reset state on new invocations
         prevExitOutput = null;
+        lastDescentFrame = null;
       }
       depth++;
 
       const y = e.inputs[e.inputs.length - 1];
       if (y > 0) {
-        frames.push({
+        const frame: PRTraceFrame = {
           xy_prime: e.inputs,
           xy: [...e.inputs.slice(0, -1), y - 1],
           hxy: null,
           hxy_prime: null,
-        });
+        };
+        lastDescentFrame = frame;
+        frames.push(frame);
+      } else if (lastDescentFrame) {
+        // Base case enter after descent, hold the last descent view
+        frames.push({ ...lastDescentFrame });
       } else {
-        // Base case enter: inputs visible, results pending
+        // Direct call with y = 0 is an edge case, no descent to hold, so show as own level
         frames.push({ xy_prime: e.inputs, xy: null, hxy: null, hxy_prime: null });
       }
     } else if (e.type === TraceEventType.Exit) {
       depth--;
 
       const y = e.inputs[e.inputs.length - 1];
-      if (y === 0) {
-        // Base case exit: reveal h(x,y')
+      if (y === 0 && lastDescentFrame) {
+        // Base case exit after descent, stay at last descent view, fill in h(x,y)
+        frames.push({
+          xy_prime: lastDescentFrame.xy_prime,
+          xy: lastDescentFrame.xy,
+          hxy: e.output,
+          hxy_prime: null,
+        });
+      } else if (y === 0) {
+        // Direct call with y = 0, just show result
         frames.push({ xy_prime: e.inputs, xy: null, hxy: null, hxy_prime: e.output });
       } else {
         // Ascent: show current level with result from the level below
