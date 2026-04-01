@@ -224,43 +224,46 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       </div>
 
       {!collapsed && (
-        block.type === "Primitive Recursion" && prTraceMode[block.id]
-          ? <PRTracePanel frame={prTraceFrames[block.id]} />
-          : (
-            <>
-              <div className={`slots-container ${block.type === "Composition" ? "composition-slots" : ""}`}>
-                {block.children.map((slot) => {
-                  const slotDisplay = (
-                    <BlockSlotDisplay
-                      parentBlock={block}
-                      slot={slot}
-                      onUpdate={onUpdate}
-                      highlightedBlockId={highlightedBlockId}
-                      selectedBlockId={selectedBlockId}
-                      onSelectBlock={onSelectBlock}
-                      isRunning={isRunning}
-                    />
-                  );
+        <>
+          <div className={`slots-container ${block.type === "Composition" ? "composition-slots" : ""}`}>
+            {(block.type === "Primitive Recursion" ? [...block.children].reverse() : block.children).map((slot, i) => {
+              const slotDisplay = (
+                <BlockSlotDisplay
+                  parentBlock={block}
+                  slot={slot}
+                  onUpdate={onUpdate}
+                  highlightedBlockId={highlightedBlockId}
+                  selectedBlockId={selectedBlockId}
+                  onSelectBlock={onSelectBlock}
+                  isRunning={isRunning}
+                />
+              );
 
-                  if (block.type === "Composition") {
-                    const label = slot.name.startsWith("g")
-                      ? <span>g<sub>{slot.name.slice(1)}</sub></span>
-                      : <span>f</span>;
+              if (block.type === "Composition") {
+                const label = slot.name.startsWith("g")
+                  ? <span>g<sub>{slot.name.slice(1)}</sub></span>
+                  : <span>f</span>;
 
-                    return (
-                      <div key={`${block.id}-${slot.name}`} className="composition-slot-row">
-                        <div className="composition-slot-label">{label}:</div>
-                        <div className="composition-slot-content">{slotDisplay}</div>
-                      </div>
-                    );
-                  }
+                return (
+                  <div key={`${block.id}-${slot.name}`} className="composition-slot-row">
+                    <div className="composition-slot-label">{label}:</div>
+                    <div className="composition-slot-content">{slotDisplay}</div>
+                  </div>
+                );
+              }
 
-                  return <div key={`${block.id}-${slot.name}`}>{slotDisplay}</div>;
-                })}
-              </div>
-              <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
-            </>
-          )
+              return (
+                <React.Fragment key={`${block.id}-${slot.name}`}>
+                  <div>{slotDisplay}</div>
+                  {block.type === "Primitive Recursion" && i === 0 && prTraceMode[block.id] && (
+                    <PRTracePanel frame={prTraceFrames[block.id]} />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+          <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
+        </>
       )}
 
       <div className="block-io-out">
