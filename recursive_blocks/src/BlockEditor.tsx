@@ -39,7 +39,7 @@ enum PlaybackMode {
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates, setEditMode, prTraceMode, setPRTraceFrames } = useBlockEditor();
+  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates, setEditMode, setPRTraceFrames, setPROriginalInputs, setPRFinalOutputs } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -301,6 +301,8 @@ export function BlockEditor() {
     prCursorRef.current = {};
     setBlockExecutionStates({});
     setPRTraceFrames({});
+    setPROriginalInputs({});
+    setPRFinalOutputs({});
     setCurrentResult(null);
     setHighlightedBlockId(null);
     setIsEvaluating(false);
@@ -308,7 +310,7 @@ export function BlockEditor() {
   };
 
   const advancePRPanel = (blockId: string) => {
-    if (!prTraceMode[blockId] || !prFrameListRef.current[blockId]) return;
+    if (!prFrameListRef.current[blockId]) return;
     const cursor = prCursorRef.current[blockId] ?? 0;
     const frames = prFrameListRef.current[blockId];
     if (cursor < frames.length) {
@@ -337,20 +339,18 @@ export function BlockEditor() {
         const d = depths.get(event.blockId) || 0;
         depths.set(event.blockId, d + 1);
 
-        if (prTraceMode[event.blockId]) {
-          // PR trace mode: only set execution state on the first entry (original inputs)
-          if (d === 0) {
-            setBlockExecutionStates(prev => ({
-              ...prev,
-              [event.blockId]: { inputs: event.inputs, output: undefined }
-            }));
-          }
+        // Store original inputs on first entry for PR blocks
+        if (d === 0 && prFrameListRef.current[event.blockId]) {
+          setPROriginalInputs(prev => ({ ...prev, [event.blockId]: [...event.inputs] }));
+        }
+
+        setBlockExecutionStates(prev => ({
+          ...prev,
+          [event.blockId]: { inputs: event.inputs, output: undefined }
+        }));
+
+        if (prFrameListRef.current[event.blockId]) {
           advancePRPanel(event.blockId);
-        } else {
-          setBlockExecutionStates(prev => ({
-            ...prev,
-            [event.blockId]: { inputs: event.inputs, output: undefined }
-          }));
         }
 
         let shouldPause = false;
@@ -371,20 +371,17 @@ export function BlockEditor() {
         const d = depths.get(event.blockId) || 0;
         depths.set(event.blockId, Math.max(0, d - 1));
 
-        if (prTraceMode[event.blockId]) {
+        setBlockExecutionStates(prev => ({
+          ...prev,
+          [event.blockId]: { inputs: event.inputs, output: event.output }
+        }));
+
+        if (prFrameListRef.current[event.blockId]) {
           advancePRPanel(event.blockId);
-          // Show final output when outermost call completes
+          // Store final output when outermost call completes
           if (d === 1) {
-            setBlockExecutionStates(prev => ({
-              ...prev,
-              [event.blockId]: { ...prev[event.blockId], output: event.output }
-            }));
+            setPRFinalOutputs(prev => ({ ...prev, [event.blockId]: event.output }));
           }
-        } else {
-          setBlockExecutionStates(prev => ({
-            ...prev,
-            [event.blockId]: { inputs: event.inputs, output: event.output }
-          }));
         }
 
         let shouldPause = false;
@@ -412,18 +409,29 @@ export function BlockEditor() {
         for (const id of event.blockIds) {
           depths.delete(id);
         }
-        // Clear PR trace panels for any blocks in the cleared subtrees
-        setPRTraceFrames(prev => {
-          const next = { ...prev };
-          let changed = false;
-          for (const id of event.blockIds) {
-            if (id in next) {
-              delete next[id];
-              changed = true;
-            }
-          }
-          return changed ? next : prev;
-        });
+
+        // Clear PR state for any blocks in the cleared subtrees
+
+        // Refactor these separate PR states into one later, a single type with { frame, originalInputs, finalOutput}
+        // Would be easier to manage and no repetition like this
+        const prIdsToDelete = event.blockIds.filter(id => id in prFrameListRef.current);
+        if (prIdsToDelete.length > 0) {
+          setPRTraceFrames(prev => {
+            const next = { ...prev };
+            for (const id of prIdsToDelete) delete next[id];
+            return next;
+          });
+          setPROriginalInputs(prev => {
+            const next = { ...prev };
+            for (const id of prIdsToDelete) delete next[id];
+            return next;
+          });
+          setPRFinalOutputs(prev => {
+            const next = { ...prev };
+            for (const id of prIdsToDelete) delete next[id];
+            return next;
+          });
+        }
       }
     }
 
@@ -464,15 +472,24 @@ export function BlockEditor() {
       cursorRef.current = 0;
       finalResultRef.current = result;
 
-      // Build PR trace frames for all PR blocks in trace mode
-      const prBlockIds = Object.keys(prTraceMode).filter(id => prTraceMode[id]);
+      // Build PR trace frames for all PR blocks in the tree
+      const collectPRIds = (b: BlockData): string[] => {
+        const ids: string[] = [];
+        if (b.type === "Primitive Recursion") ids.push(b.id);
+        for (const slot of b.children) {
+          if (slot.block) ids.push(...collectPRIds(slot.block));
+        }
+        return ids;
+      };
       prFrameListRef.current = {};
       prCursorRef.current = {};
-      for (const id of prBlockIds) {
+      for (const id of collectPRIds(rootBlock)) {
         prFrameListRef.current[id] = buildPRFrames(events, id);
         prCursorRef.current[id] = 0;
       }
       setPRTraceFrames({});
+      setPROriginalInputs({});
+      setPRFinalOutputs({});
 
       await advance(mode);
     } catch (error) {

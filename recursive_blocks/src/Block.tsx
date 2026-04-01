@@ -84,7 +84,7 @@ const getMathNotation = (block: BlockData): string => {
 export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
   const [collapsed, setCollapsed] = React.useState(block?.collapsed ?? false);
   const [showInfo, setShowInfo] = React.useState(false);
-  const { blockExecutionStates, prTraceMode, setPRTraceMode, prTraceFrames } = useBlockEditor();
+  const { blockExecutionStates, prTraceMode, setPRTraceMode, prTraceFrames, prOriginalInputs, prFinalOutputs } = useBlockEditor();
 
   if (!block) {
     return <span className="empty-text"> Drop block here</span>;
@@ -114,6 +114,17 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
   const isCurrentlyActive = highlightedBlockId === block.id;
   const showInputChange = isCurrentlyActive && executionState?.inputs !== undefined;
   const showOutputChange = isCurrentlyActive && executionState?.output !== undefined;
+
+  const isPRTraceActive = block.type === "Primitive Recursion" && prTraceMode[block.id];
+
+  // When PR trace panel is on, freeze in at original inputs, hide out while running
+  const displayInput = isPRTraceActive && prOriginalInputs[block.id]
+    ? prOriginalInputs[block.id]
+    : executionState?.inputs ?? block.latestInput;
+
+  const displayOutput = isPRTraceActive
+    ? (prFinalOutputs[block.id] !== undefined ? prFinalOutputs[block.id] : undefined)
+    : executionState?.output ?? block.latestOutput;
 
   const formatInput = (input: number[] | undefined) => {
     if (!input || input.length === 0) return '—';
@@ -208,7 +219,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           key={`in-${block.id}-${JSON.stringify(executionState?.inputs)}`}
           className={`block-io-value ${showInputChange ? 'value-changed' : ''}`}
         >
-          {formatInput(executionState?.inputs ?? block.latestInput)}
+          {formatInput(displayInput)}
         </span>
       </div>
 
@@ -258,7 +269,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           key={`out-${block.id}-${executionState?.output}`}
           className={`block-io-value ${showOutputChange ? 'value-changed' : ''}`}
         >
-          {formatOutput(executionState?.output ?? block.latestOutput)}
+          {formatOutput(displayOutput)}
         </span>
       </div>
     </div>

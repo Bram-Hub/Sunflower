@@ -24,6 +24,10 @@ const BlockEditorContext = createContext<{
   setPRTraceMode: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   prTraceFrames: Record<string, PRTraceFrame | null>;
   setPRTraceFrames: React.Dispatch<React.SetStateAction<Record<string, PRTraceFrame | null>>>;
+  prOriginalInputs: Record<string, number[]>;
+  setPROriginalInputs: React.Dispatch<React.SetStateAction<Record<string, number[]>>>;
+  prFinalOutputs: Record<string, number>;
+  setPRFinalOutputs: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 } | null>(null);
 
 export function BlockEditorProvider({ children }: { children: React.ReactNode }) {
@@ -34,6 +38,8 @@ export function BlockEditorProvider({ children }: { children: React.ReactNode })
   const [editMode, setEditMode] = useState<boolean>(false);
   const [prTraceMode, setPRTraceMode] = useState<Record<string, boolean>>({});
   const [prTraceFrames, setPRTraceFrames] = useState<Record<string, PRTraceFrame | null>>({});
+  const [prOriginalInputs, setPROriginalInputs] = useState<Record<string, number[]>>({});
+  const [prFinalOutputs, setPRFinalOutputs] = useState<Record<string, number>>({});
 
   return (
     <BlockEditorContext.Provider value={{
@@ -44,6 +50,8 @@ export function BlockEditorProvider({ children }: { children: React.ReactNode })
       editMode, setEditMode,
       prTraceMode, setPRTraceMode,
       prTraceFrames, setPRTraceFrames,
+      prOriginalInputs, setPROriginalInputs,
+      prFinalOutputs, setPRFinalOutputs,
     }}>
       {children}
     </BlockEditorContext.Provider>
