@@ -1,12 +1,11 @@
-import React, { useState, useCallback, useEffect, useRef  } from "react";
-import { BlockData, checkForErrors, setInputCountOfBlock } from "./BlockUtil";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { BlockData, checkForErrors, removeBlockById, setInputCountOfBlock } from "./BlockUtil";
 import './Block.css';
 import { Toolbar } from "./Toolbar";
 import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
-import { removeBlockById } from "./BlockUtil";
 import { generateTrace, TraceEvent, TraceEventType, buildPRFrames, PRTraceFrame } from "./Trace";
 
 export interface EditorSaveState {
@@ -39,7 +38,7 @@ enum PlaybackMode {
 
 // JSX element that represents the editor, containing a root block and the header.
 export function BlockEditor() {
-  const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount, setBlockExecutionStates, setEditMode, setPRTraceFrames, setPROriginalInputs, setPRFinalOutputs } = useBlockEditor();
+  const { inputCount, setInputCount, rootBlock, setRootBlock, setCustomBlockCount, setBlockExecutionStates, setEditMode, setPRTraceFrames, setPROriginalInputs, setPRFinalOutputs } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -140,46 +139,31 @@ export function BlockEditor() {
     setHighlightedBlockId(null);
   }, [rootBlock, selectedBlockId]);
 
-  const handleAddTestData = useCallback(() => {
-    if (!rootBlock) {
-      alert("No blocks to add test data to. Create some blocks first!");
-      return;
-    }
-    setRootBlock({ ...rootBlock });
-    console.log("Test data added to all blocks");
-  }, [rootBlock, setRootBlock]);
-
-  const handleClearTestData = useCallback(() => {
-    if (!rootBlock) return;
-    setRootBlock({ ...rootBlock });
-    console.log("Test data cleared from all blocks");
-  }, [rootBlock, setRootBlock]);
-
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      const isMac = navigator.platform.toUpperCase().includes("MAC");
-      const ctrl = isMac ? e.metaKey : e.ctrlKey;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isMac = navigator.userAgent.toUpperCase().includes("MAC");
+      const ctrl = isMac ? event.metaKey : event.ctrlKey;
 
       if (
         document.activeElement instanceof HTMLInputElement ||
         document.activeElement instanceof HTMLTextAreaElement
       ) return;
 
-      if ((e.key === "Backspace" || e.key === "Delete") && selectedBlockId) {
-        e.preventDefault();
+      if ((event.key === "Backspace" || event.key === "Delete") && selectedBlockId) {
+        event.preventDefault();
         handleDeleteSelectedBlock();
       }
 
-      if (ctrl && e.shiftKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
+      if (ctrl && event.shiftKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
         handleSave();
       }
 
-      if (ctrl && e.key.toLowerCase() === "o") {
-        e.preventDefault();
+      if (ctrl && event.key.toLowerCase() === "o") {
+        event.preventDefault();
         loadInputRef.current?.click();
       }
-    }
+    };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
