@@ -51,9 +51,18 @@ const getCustomBlockColors = (depth: number) => {
   const baseColor = getDepthColor(depth);
 
   return {
-    background: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.72),
+    background: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.6),
     border: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.56),
   };
+};
+
+const getSlotLabel = (blockType: BlockType, slotName: string): React.ReactNode => {
+  if (blockType === "Composition") {
+    return slotName.startsWith("g")
+      ? <span>g<sub>{slotName.slice(1)}</sub></span>
+      : <span>{slotName}</span>;
+  }
+  return slotName;
 };
 
 const getMathNotation = (block: BlockData): string => {
@@ -198,7 +207,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               T
             </button>
           )}
-          {(block.children.length > 0 || (block.num_values && block.num_values.length > 0)) && (
+          {(block.children.length > 0 || (block.num_values && block.num_values.length > 0) || block.type === "Zero" || block.type === "Successor") && (
             <button className="collapse-button" onClick={toggleCollapse}>{collapsed ? "▼" : "▶"}</button>
           )}
           {!block.immutable && (
@@ -225,7 +234,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
 
       {!collapsed && (
         <>
-          <div className={`slots-container ${block.type === "Composition" ? "composition-slots" : ""}`}>
+          <div className="slots-container">
             {(block.type === "Primitive Recursion" ? [...block.children].reverse() : block.children).map((slot, i) => {
               const slotDisplay = (
                 <BlockSlotDisplay
@@ -239,24 +248,17 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
                 />
               );
 
-              if (block.type === "Composition") {
-                const label = slot.name.startsWith("g")
-                  ? <span>g<sub>{slot.name.slice(1)}</sub></span>
-                  : <span>f</span>;
-
-                return (
-                  <div key={`${block.id}-${slot.name}`} className="composition-slot-row">
-                    <div className="composition-slot-label">{label}:</div>
-                    <div className="composition-slot-content">{slotDisplay}</div>
-                  </div>
-                );
-              }
-
               return (
                 <React.Fragment key={`${block.id}-${slot.name}`}>
+                  {blockConfig[block.type].showSlotLabels && (
+                    <div className="slot-label">{getSlotLabel(block.type, slot.name)}</div>
+                  )}
                   <div>{slotDisplay}</div>
                   {block.type === "Primitive Recursion" && i === 0 && prTraceMode[block.id] && (
-                    <PRTracePanel frame={prTraceFrames[block.id]} />
+                    <>
+                      <div className="slot-label">Trace Panel</div>
+                      <PRTracePanel frame={prTraceFrames[block.id]} />
+                    </>
                   )}
                 </React.Fragment>
               );

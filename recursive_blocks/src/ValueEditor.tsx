@@ -9,6 +9,14 @@ interface ValueEditorProps {
   isRunning?: boolean;
 }
 
+const getDisplayOnlyNotation = (block: BlockData): { label: string; value: string } | null => {
+  const n = block.inputCount ?? 0;
+  const args = n === 0 ? "()" : `(${Array.from({ length: n }, (_, i) => `x${i + 1}`).join(", ")})`;
+  if (block.type === "Zero") return { label: `f${args} =`, value: "0" };
+  if (block.type === "Successor") return { label: "f(x) =", value: "x + 1" };
+  return null;
+};
+
 // JSX element that exists on a JSX Block element that represents the number values of the block, making them accessible to be updated.
 // If the block type doesn't have values, this element is an empty div.
 // Block is the block this value editor is on, and onUpdate is called when a value is updated.
@@ -22,7 +30,7 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
       const args = Array.from({ length: inputCount }, (_, i) => `x${i + 1}`).join(", ");
 
       return {
-        label: `(${args}) →`,
+        label: `f(${args}) =`,
         value: `x${value}`,
       };
     }
@@ -53,7 +61,18 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
   };
 
   if (!values || values.length === 0) {
-    return;
+    const notation = getDisplayOnlyNotation(block);
+    if (!notation) return;
+    return (
+      <div className="value-editor">
+        <div className="value-field">
+          <span className="value-static">
+            <span className="value-static-name">{notation.label}</span>
+            <span className="value-static-val">{notation.value}</span>
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (

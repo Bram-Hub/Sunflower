@@ -77,6 +77,7 @@ export const blockConfig: Record<BlockType, {
   checkForErrors: (block: BlockData) => string[];
   displayName?: string;
   description?: string;
+  showSlotLabels?: boolean;
 }> = {
   "Zero": {
     type: "Zero" as BlockType,
@@ -195,7 +196,8 @@ export const blockConfig: Record<BlockType, {
       }
       return errors;
     },
-    description: "n inputs. Contains m blocks g1 ... gm. Runs g1 ... gm on the n inputs. Then returns f evaluated on the results of g1 ... gm."
+    description: "n inputs. Contains m blocks g1 ... gm. Runs g1 ... gm on the n inputs. Then returns f evaluated on the results of g1 ... gm.",
+    showSlotLabels: true,
   },
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
@@ -234,9 +236,10 @@ export const blockConfig: Record<BlockType, {
       }
       return errors;
     },
-    description: `n >= 1 inputs. 
-    If rightmost input is 0, returns the base case. 
-    Otherwise, returns the recursive case evaluated where y = (rightmost input - 1), and z is the result of the previous recursive step (this block, evaluated with rightmost input decremented).`
+    description: `n >= 1 inputs.
+    If rightmost input is 0, returns the base case.
+    Otherwise, returns the recursive case evaluated where y = (rightmost input - 1), and z is the result of the previous recursive step (this block, evaluated with rightmost input decremented).`,
+    showSlotLabels: true,
   },
   "Minimization": {
     type: "Minimization" as BlockType,
