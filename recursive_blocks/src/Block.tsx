@@ -7,6 +7,7 @@ import { ValueEditor } from "./ValueEditor";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { useBlockEditor } from "./BlockEditorContext";
 import { PRTracePanel } from "./PRTracePanel";
+import { getHeaderNotation } from "./Notation";
 
 interface Props {
   block: BlockData | null;
@@ -63,31 +64,6 @@ const getSlotLabel = (blockType: BlockType, slotName: string): React.ReactNode =
       : <span>{slotName}</span>;
   }
   return slotName;
-};
-
-const getMathNotation = (block: BlockData): string => {
-  const n = block.inputCount ?? 0;
-  const args = (count: number, suffix?: string) => {
-    if (count === 0) return suffix ? `(${suffix})` : "()";
-    const vars = Array.from({ length: count }, (_, i) => `x${i + 1}`).join(", ");
-    return suffix ? `(${vars}, ${suffix})` : `(${vars})`;
-  };
-
-  switch (block.type) {
-    case "Zero": return `z${args(n)}`;
-    case "Successor": return `s(x)`;
-    case "Projection": {
-      const i = block.num_values?.find(v => v.name === "i")?.value ?? 1;
-      return `id[${i},${n}]${args(n)}`;
-    }
-    case "Composition": {
-      const m = block.num_values?.find(v => v.name === "m")?.value ?? 1;
-      return `C${n}[${m}]${args(n)}`;
-    }
-    case "Primitive Recursion": return `Pr[f,g]${args(n > 0 ? n - 1 : 0, "y")}`;
-    case "Minimization": return `Mn[f]${args(n)}`;
-    default: return "";
-  }
 };
 
 export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
@@ -182,7 +158,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
             <div>
               <div className="block-type">{block.name || blockConfig[block.type]?.displayName || block.type.toUpperCase()}</div>
               {block.type !== "Custom" && (
-                <div className="block-math-notation">{getMathNotation(block)}</div>
+                <div className="block-math-notation">{getHeaderNotation(block)}</div>
               )}
             </div>
           </div>

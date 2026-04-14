@@ -7,6 +7,7 @@ import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { generateTrace, TraceEvent, TraceEventType, buildPRFrames, PRTraceFrame } from "./Trace";
+import { getFormalNotation } from "./Notation";
 
 export interface EditorSaveState {
   fileType: string;
@@ -121,6 +122,15 @@ export function BlockEditor() {
   const handleSave = useCallback(() => {
     createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount > 0 ? inputCount : 0);
   }, [rootBlock, inputs, inputCount]);
+
+  const handleShowNotation = useCallback(() => {
+    if (!rootBlock) {
+      alert("No root block to format.");
+      return;
+    }
+
+    alert(getFormalNotation(rootBlock));
+  }, [rootBlock]);
 
   const handleDeleteSelectedBlock = useCallback(() => {
     if (!rootBlock || !selectedBlockId) return;
@@ -502,6 +512,7 @@ export function BlockEditor() {
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
+        onShowNotation={handleShowNotation}
         loadInputRef={loadInputRef}
 
         onRun={handleRun}
