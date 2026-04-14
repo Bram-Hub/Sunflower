@@ -3,10 +3,15 @@ import { BlockData } from "./BlockUtil";
 // Custom enum type to represent all the block types (each type has their own config)
 export type BlockType = "Zero" | "Successor" | "Projection" | "Composition" | "Primitive Recursion" | "Minimization" | "Custom";
 
+// Execution context for passing runtime options and callbacks deeply through the tree
+export interface ExecutionContext {
+  onClearSubtree?: (blockToClear: BlockData) => void;
+}
+
 // Function signature for an evaluation function. 
 // It takes in the block to evaluate, the inputs, and the evaluateBlock function, and returns an output number.
-// onStepCallback is optional and used for stepping through evaluation.
-export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator, onStepCallback?: (block: BlockData, result: number) => Promise<void>) => number | Promise<number>;
+// context is optional and used for stepping through evaluation or handling lifecycle events.
+export type BlockEvaluator = (block: BlockData, inputs: number[], evaluate: BlockEvaluator, context?: ExecutionContext) => number | Promise<number>;
 
 // Function signature for a function that takes in a number, and returns a string to be displayed in a blockslot wanting that many inputs.
 export type InputDescriptorGenerator = (inputCount: number) => string;
@@ -70,12 +75,14 @@ export const blockConfig: Record<BlockType, {
   num_values?: { name: string; value: number; min: number }[];
   evaluate: BlockEvaluator;
   checkForErrors: (block: BlockData) => string[];
+  displayName?: string;
   description?: string;
+  showSlotLabels?: boolean;
 }> = {
   "Zero": {
     type: "Zero" as BlockType,
     children: [],
-    evaluate: (_block, _inputs, _evaluate, onStepCallback) => {
+    evaluate: (_block, _inputs, _evaluate, _context) => {
       // Zero block always returns 0
       const result = 0;
       return result;
@@ -91,7 +98,7 @@ export const blockConfig: Record<BlockType, {
   "Successor": {
     type: "Successor" as BlockType,
     children: [],
-    evaluate: (_block, inputs, _evaluate, onStepCallback) => {
+    evaluate: (_block, inputs, _evaluate, _context) => {
       // Successor block returns the input incremented by 1
       if (inputs.length !== 1) {
         throw new Error("Successor block requires exactly one input.");
@@ -109,11 +116,12 @@ export const blockConfig: Record<BlockType, {
   },
   "Projection": {
     type: "Projection" as BlockType,
+    displayName: "IDENTITY",
     children: [],
     num_values: [
       { name: "i", value: 1, min: 1 }
     ],
-    evaluate: (block, inputs, _evaluate, onStepCallback) => {
+    evaluate: (block, inputs, _evaluate, _context) => {
       // Projection block returns the i-th input
       if (inputs.length <= 0) {
         throw new Error("Projection block requires at least one input.");
@@ -146,7 +154,7 @@ export const blockConfig: Record<BlockType, {
     num_values: [
       { name: "m", value: 1, min: 0 }
     ],
-    evaluate: async (block, inputs, evaluate, onStepCallback) => {
+    evaluate: async (block, inputs, evaluate, context) => {
       if (!block.num_values || block.num_values.length === 0) {
         throw new Error("Composition block requires num_values to specify 'm'.");
       }
@@ -157,15 +165,18 @@ export const blockConfig: Record<BlockType, {
         if (!g_block) {
           throw new Error(`g${i + 1} block is missing in Composition.`);
         }
-        g_results.push(await evaluate(g_block, inputs, evaluate, onStepCallback));
+        g_results.push(await evaluate(g_block, inputs, evaluate, context));
       }
-      const result = await evaluate(block.children[0].block!, g_results, evaluate, onStepCallback);
+      const f_block = block.children.find(c => c.name === "f")?.block;
+      if (!f_block) {
+        throw new Error(`f block is missing in Composition.`);
+      }
+      const result = await evaluate(f_block, g_results, evaluate, context);
       return result;
     },
     dynamicChildren: (block: BlockData) => {
       const m = block!.num_values!.find(v => v.name === "m")?.value ?? 1;
       return [
-        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor_index: 1, input_set: m },
         ...Array.from({ length: m }, (_, i) => {
           const name = `g${i + 1}`;
           return {
@@ -173,7 +184,8 @@ export const blockConfig: Record<BlockType, {
             block: block.children.find(c => c.name === name)?.block ?? null,
             input_descriptor_index: 0,
           };
-        })
+        }),
+        { name: "f", block: block.children.find(c => c.name === "f")?.block ?? null, input_descriptor_index: 1, input_set: m }
       ];
     },
     checkForErrors: (block) => {
@@ -184,7 +196,8 @@ export const blockConfig: Record<BlockType, {
       }
       return errors;
     },
-    description: "n inputs. Contains m blocks g1 ... gm. Runs g1 ... gm on the n inputs. Then returns f evaluated on the results of g1 ... gm."
+    description: "n inputs. Contains m blocks g1 ... gm. Runs g1 ... gm on the n inputs. Then returns f evaluated on the results of g1 ... gm.",
+    showSlotLabels: true,
   },
   "Primitive Recursion": {
     type: "Primitive Recursion" as BlockType,
@@ -192,22 +205,27 @@ export const blockConfig: Record<BlockType, {
       { name: "Base Case", block: null, input_descriptor_index: 0, input_mod: -1 },
       { name: "Recursive Case", block: null, input_descriptor_index: 3, input_mod: 1 },
     ],
-    evaluate: async (block, inputs, evaluate, onStepCallback) => {
+    evaluate: async (block, inputs, evaluate, context) => {
       // Primitive Recursion block evaluates based on the base case and recursive case
       if (inputs.length < 1) {
         throw new Error("Primitive Recursion block requires at least one inputs.");
       }
       if (inputs[inputs.length - 1] <= 0) {
         // Base case: if the last input is 0, evaluate the base case block
-        const result = await evaluate(block.children[0].block!, inputs.slice(0, -1), evaluate, onStepCallback);
+        const result = await evaluate(block.children[0].block!, inputs.slice(0, -1), evaluate, context);
         return result;
       } else {
         // Recursive case: evaluate the recursive case block with the inputs
         const inputs_decremented = inputs.slice(0, -1).concat(inputs[inputs.length - 1] - 1);
         // console.log("Inputs for recursive case:", inputs_decremented);
-        const intermediateResult = await evaluate(block, inputs_decremented, evaluate, onStepCallback);
+        const intermediateResult = await evaluate(block, inputs_decremented, evaluate, context);
         const inputs_combined_with_previous = inputs_decremented.concat(intermediateResult);
-        const result = await evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate, onStepCallback);
+        
+        if (context?.onClearSubtree && block.children[1].block) {
+            context.onClearSubtree(block.children[1].block);
+        }
+
+        const result = await evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate, context);
         return result;
       }
     },
@@ -218,16 +236,17 @@ export const blockConfig: Record<BlockType, {
       }
       return errors;
     },
-    description: `n >= 1 inputs. 
-    If rightmost input is 0, returns the base case. 
-    Otherwise, returns the recursive case evaluated where y = (rightmost input - 1), and z is the result of the previous recursive step (this block, evaluated with rightmost input decremented).`
+    description: `n >= 1 inputs.
+    If rightmost input is 0, returns the base case.
+    Otherwise, returns the recursive case evaluated where y = (rightmost input - 1), and z is the result of the previous recursive step (this block, evaluated with rightmost input decremented).`,
+    showSlotLabels: true,
   },
   "Minimization": {
     type: "Minimization" as BlockType,
     children: [
       { name: "f", block: null, input_descriptor_index: 2, input_mod: 1 },
     ],
-    evaluate: async (block, inputs, evaluate, onStepCallback) => {
+    evaluate: async (block, inputs, evaluate, context) => {
       // Minimization block finds the smallest n such that f(..., n) = 0
       const f_block = block.children[0].block;
       if (!f_block) {
@@ -237,7 +256,7 @@ export const blockConfig: Record<BlockType, {
       let depth = 0;
       const MAX_DEPTH = 100; // Prevent infinite loops
       while (depth < MAX_DEPTH) {
-        const result = await evaluate(f_block, inputs.concat(n), evaluate, onStepCallback);
+        const result = await evaluate(f_block, inputs.concat(n), evaluate, context);
         if (result === 0) {
           return n;
         }
@@ -254,13 +273,13 @@ export const blockConfig: Record<BlockType, {
   },
   "Custom": {
     type: "Custom" as BlockType,
-    children: [//This custom block slot is for internal use and should not be rendered
+    children: [ //This custom block slot is for internal use and should not be rendered
       { name: "Custom Function", block: null, input_descriptor_index: 0 },
     ],
-    evaluate: async (block, inputs, evaluate, onStepCallback) => {
+    evaluate: async (block, inputs, evaluate, context) => {
       // Custom block evaluation logic
       if (block.children[0].block) {
-        const result = await evaluate(block.children[0].block, inputs, evaluate, onStepCallback);
+        const result = await evaluate(block.children[0].block, inputs, evaluate, context);
         return result;
       }
       throw new Error("Custom block is empty.");
