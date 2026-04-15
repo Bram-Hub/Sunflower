@@ -1,7 +1,6 @@
 import { BlockData } from "./BlockUtil";
 
-// Use unicode for sub and superscripts in the alert
-// When a UI panel is made for this, maybe handle them with react, but this is simpler
+// Use unicode for sub and superscripts. Could be handled with react, but this is simpler
 const SUPERSCRIPT_DIGITS: Record<string, string> = {
   "0": "\u2070",
   "1": "\u00b9",

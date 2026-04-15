@@ -45,6 +45,7 @@ export function BlockEditor() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
   const [currentResult, setCurrentResult] = useState<number | null>(null);
+  const [notationPopupText, setNotationPopupText] = useState<string | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
   const [paused, setPaused] = useState(false);
@@ -125,12 +126,16 @@ export function BlockEditor() {
 
   const handleShowNotation = useCallback(() => {
     if (!rootBlock) {
-      alert("No root block to format.");
+      setNotationPopupText("No root block to format.");
       return;
     }
 
-    alert(getFormalNotation(rootBlock));
+    setNotationPopupText(getFormalNotation(rootBlock));
   }, [rootBlock]);
+
+  const handleCloseNotationPopup = useCallback(() => {
+    setNotationPopupText(null);
+  }, []);
 
   const handleDeleteSelectedBlock = useCallback(() => {
     if (!rootBlock || !selectedBlockId) return;
@@ -553,6 +558,20 @@ export function BlockEditor() {
       </div>
 
       <hr className="my-6" />
+
+      {notationPopupText !== null && (
+        <div className="notation-popup-overlay" role="dialog">
+          <div className="notation-popup-panel">
+            <div className="notation-popup-header">
+              <div className="notation-popup-title">Formal Notation</div>
+              <button className="toolbar-button notation-popup-close" onClick={handleCloseNotationPopup}>
+                Close
+              </button>
+            </div>
+            <pre className="notation-popup-body">{notationPopupText}</pre>
+          </div>
+        </div>
+      )}
     </>
   );
 }
