@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BlockData } from "./BlockUtil";
 import { blockConfig } from "./BlockConfig";
 import { useBlockEditor } from "./BlockEditorContext";
+import { getInformalNotation } from "./Notation";
 
 interface ValueEditorProps {
   block: BlockData;
@@ -9,44 +10,12 @@ interface ValueEditorProps {
   isRunning?: boolean;
 }
 
-const getDisplayOnlyNotation = (block: BlockData): { label: string; value: string } | null => {
-  const n = block.inputCount ?? 0;
-  const args = n === 0 ? "()" : `(${Array.from({ length: n }, (_, i) => `x${i + 1}`).join(", ")})`;
-  if (block.type === "Zero") return { label: `f${args} =`, value: "0" };
-  if (block.type === "Successor") return { label: "f(x) =", value: "x + 1" };
-  return null;
-};
-
 // JSX element that exists on a JSX Block element that represents the number values of the block, making them accessible to be updated.
 // If the block type doesn't have values, this element is an empty div.
 // Block is the block this value editor is on, and onUpdate is called when a value is updated.
 export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorProps) {
   const [values, setValues] = useState(block.num_values ?? []);
   const { editMode } = useBlockEditor();
-
-  const formatStaticValue = (valueName: string, value: number) => {
-    if (block.type === "Projection" && valueName === "i") {
-      const inputCount = Math.max(block.inputCount, value, 1);
-      const args = Array.from({ length: inputCount }, (_, i) => `x${i + 1}`).join(", ");
-
-      return {
-        label: `f(${args}) =`,
-        value: `x${value}`,
-      };
-    }
-
-    if (block.type === "Composition" && valueName === "m") {
-      return {
-        label: "arity →",
-        value: `${value} inner block${value === 1 ? "" : "s"}`,
-      };
-    }
-
-    return {
-      label: `${valueName} →`,
-      value: value.toString(),
-    };
-  };
 
   useEffect(() => {
     if (JSON.stringify(values) !== JSON.stringify(block.num_values)) {
@@ -61,7 +30,7 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
   };
 
   if (!values || values.length === 0) {
-    const notation = getDisplayOnlyNotation(block);
+    const notation = getInformalNotation(block);
     if (!notation) return;
     return (
       <div className="value-editor">
@@ -76,9 +45,10 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
   }
 
   return (
-    <div className="value-editor">
+      <div className="value-editor">
       {values.map((val, index) => {
-        const staticValue = formatStaticValue(val.name, val.value);
+        const staticValue = getInformalNotation(block, val.name, val.value);
+        if (!staticValue) return null;
 
         return (
           <div key={index} className="value-field">

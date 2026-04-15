@@ -6,6 +6,7 @@ import { MAX_INPUT_COUNT } from "./BlockEditor";
 interface ToolbarProps {
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onShowNotation: () => void;
   loadInputRef: React.RefObject<HTMLInputElement | null>;
   onRun: () => void;
   onForceRun: () => void;
@@ -26,6 +27,7 @@ interface ToolbarProps {
 export function Toolbar({ 
   onSave, 
   onLoad,
+  onShowNotation,
   loadInputRef, 
   onRun, 
   onForceRun,
@@ -84,6 +86,9 @@ export function Toolbar({
               disabled={isEvaluating}
             >
               {editMode && !isEvaluating ? "Editing" : "Edit"}
+            </button>
+            <button onClick={onShowNotation} className="toolbar-button" title="Show root formal notation">
+              Notation
             </button>
           </div>
         </div>

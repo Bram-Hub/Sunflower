@@ -7,6 +7,7 @@ import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { generateTrace, TraceEvent, TraceEventType, buildPRFrames, PRTraceFrame } from "./Trace";
+import { getFormalNotation } from "./Notation";
 
 export interface EditorSaveState {
   fileType: string;
@@ -44,6 +45,7 @@ export function BlockEditor() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
   const [currentResult, setCurrentResult] = useState<number | null>(null);
+  const [notationPopupText, setNotationPopupText] = useState<string | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
   const [paused, setPaused] = useState(false);
@@ -121,6 +123,19 @@ export function BlockEditor() {
   const handleSave = useCallback(() => {
     createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount > 0 ? inputCount : 0);
   }, [rootBlock, inputs, inputCount]);
+
+  const handleShowNotation = useCallback(() => {
+    if (!rootBlock) {
+      setNotationPopupText("No root block to format.");
+      return;
+    }
+
+    setNotationPopupText(getFormalNotation(rootBlock));
+  }, [rootBlock]);
+
+  const handleCloseNotationPopup = useCallback(() => {
+    setNotationPopupText(null);
+  }, []);
 
   const handleDeleteSelectedBlock = useCallback(() => {
     if (!rootBlock || !selectedBlockId) return;
@@ -502,6 +517,7 @@ export function BlockEditor() {
       <Toolbar 
         onSave={handleSave}
         onLoad={handleLoad}
+        onShowNotation={handleShowNotation}
         loadInputRef={loadInputRef}
 
         onRun={handleRun}
@@ -542,6 +558,20 @@ export function BlockEditor() {
       </div>
 
       <hr className="my-6" />
+
+      {notationPopupText !== null && (
+        <div className="notation-popup-overlay" role="dialog">
+          <div className="notation-popup-panel">
+            <div className="notation-popup-header">
+              <div className="notation-popup-title">Formal Notation</div>
+              <button className="toolbar-button notation-popup-close" onClick={handleCloseNotationPopup}>
+                Close
+              </button>
+            </div>
+            <pre className="notation-popup-body">{notationPopupText}</pre>
+          </div>
+        </div>
+      )}
     </>
   );
 }
