@@ -1,0 +1,110 @@
+.batch-compute-panel {
+  width: min(980px, calc(100vw - 2rem));
+}
+
+.batch-compute-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.batch-compute-toolbar .toolbar-button:disabled,
+.batch-compute-toolbar .toolbar-button:disabled:hover {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.batch-compute-grid-wrap {
+  --visible-rows: 6.1;
+  --header-outer-height: 52px;
+  --row-outer-height: 52px;
+  --batch-cell-height: 1.85rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  background: #f7f7f7;
+  overflow: auto;
+  flex: 0 0 auto;
+  height: calc(var(--header-outer-height) + (var(--visible-rows) * var(--row-outer-height)));
+  max-height: calc(var(--header-outer-height) + (var(--visible-rows) * var(--row-outer-height)));
+}
+
+.batch-compute-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--batch-input-count, 1), 66px) minmax(220px, 1fr) 26px;
+  align-items: center;
+  column-gap: 0.35rem;
+  row-gap: 0.35rem;
+  padding: 0.3rem 0.4rem;
+}
+
+.batch-compute-grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-weight: 700;
+  font-size: 0.88rem;
+  background: #ededed;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  min-height: calc(var(--header-outer-height) - 1.5rem);
+}
+
+.batch-compute-grid-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  min-height: calc(var(--row-outer-height) - 0.6rem);
+}
+
+.batch-compute-grid-row:last-child {
+  border-bottom: none;
+}
+
+.batch-compute-input,
+.batch-compute-result,
+.batch-compute-remove {
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+.batch-compute-input {
+  width: 100%;
+  height: var(--batch-cell-height);
+  line-height: var(--batch-cell-height);
+  padding: 0 0.45rem;
+}
+
+.batch-compute-result {
+  height: var(--batch-cell-height);
+  min-height: var(--batch-cell-height);
+  display: flex;
+  align-items: center;
+  padding: 0 0.45rem;
+  overflow-wrap: anywhere;
+}
+
+.batch-compute-result-error {
+  color: #9f1d1d;
+  border-color: rgba(159, 29, 29, 0.35);
+  background: #fff4f4;
+}
+
+.batch-compute-remove {
+  width: 100%;
+  height: var(--batch-cell-height);
+  cursor: pointer;
+  line-height: 1;
+  justify-self: stretch;
+}
+
+.batch-compute-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+

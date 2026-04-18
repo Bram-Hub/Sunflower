@@ -8,6 +8,7 @@ import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { generateTrace, TraceEvent, TraceEventType, buildPRFrames, PRTraceFrame } from "./Trace";
 import { getFormalNotation } from "./Notation";
+import { BatchComputeModal } from "./BatchComputeModal";
 
 export interface EditorSaveState {
   fileType: string;
@@ -49,6 +50,7 @@ export function BlockEditor() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
   const [paused, setPaused] = useState(false);
+  const [isBatchComputeOpen, setIsBatchComputeOpen] = useState(false);
   const loadInputRef = useRef<HTMLInputElement>(null);
   const isHaltedRef = useRef(false);
   const breakpointsRef = useRef<Set<string>>(new Set());
@@ -518,6 +520,7 @@ export function BlockEditor() {
         onSave={handleSave}
         onLoad={handleLoad}
         onShowNotation={handleShowNotation}
+        onOpenBatchCompute={() => setIsBatchComputeOpen(true)}
         loadInputRef={loadInputRef}
 
         onRun={handleRun}
@@ -535,6 +538,12 @@ export function BlockEditor() {
         speedToText={speedToText}
         currentResult={currentResult}
         isEvaluating={isEvaluating}
+      />
+
+      <BatchComputeModal
+        isOpen={isBatchComputeOpen}
+        onClose={() => setIsBatchComputeOpen(false)}
+        rootBlock={rootBlock}
       />
 
       <div className="flexcont">
