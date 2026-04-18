@@ -795,8 +795,8 @@ label { color: var(--block-text-color); }
   background: rgba(255,255,255,0.25);
 }
 
-/* Notation popup */
-.notation-popup-overlay {
+/* Shared modal style */
+.popup-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
@@ -806,7 +806,7 @@ label { color: var(--block-text-color); }
   background: rgba(0, 0, 0, 0.45);
 }
 
-.notation-popup-panel {
+.popup-panel {
   width: min(680px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   display: flex;
@@ -819,30 +819,32 @@ label { color: var(--block-text-color); }
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
 }
 
-.notation-popup-title {
+.popup-title {
   font-size: 1rem;
   font-weight: 700;
 }
 
-.notation-popup-header {
+.popup-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
-.notation-popup-body {
+.popup-body {
   margin: 0;
   padding: 0.75rem;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 6px;
   background: #f7f7f7;
   overflow: auto;
+  font-family: ui-monospace, monospace;
   font-size: 0.9rem;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.notation-popup-close {
+.popup-close {
   flex-shrink: 0;
 }

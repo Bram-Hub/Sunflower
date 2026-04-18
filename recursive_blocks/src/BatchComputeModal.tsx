@@ -135,15 +135,15 @@ export function BatchComputeModal({ isOpen, onClose, rootBlock }: BatchComputeMo
   };
 
   return (
-    <div className="notation-popup-overlay" onClick={onClose} role="dialog">
-      <div className="notation-popup-panel batch-compute-panel" onClick={(event) => event.stopPropagation()}>
-        <div className="notation-popup-header">
-          <div className="notation-popup-title">Batch Compute</div>
-          <button className="toolbar-button notation-popup-close" onClick={onClose}>Close</button>
+    <div className="popup-overlay" onClick={onClose} role="dialog">
+      <div className="popup-panel batch-compute-panel" onClick={event => event.stopPropagation()}>
+        <div className="popup-header">
+          <div className="popup-title">Batch Compute</div>
+          <button className="toolbar-button popup-close" onClick={onClose}>Close</button>
         </div>
 
         {!rootBlock && (
-          <div className="notation-popup-body">
+          <div className="popup-body">
             No root block to evaluate.
           </div>
         )}
