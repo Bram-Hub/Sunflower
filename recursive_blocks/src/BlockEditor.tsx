@@ -8,6 +8,7 @@ import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { generateTrace, TraceEvent, TraceEventType, buildPRFrames, PRTraceFrame } from "./Trace";
 import { getFormalNotation } from "./Notation";
+import { BatchComputeModal } from "./BatchComputeModal";
 
 export interface EditorSaveState {
   fileType: string;
@@ -49,6 +50,7 @@ export function BlockEditor() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
   const [paused, setPaused] = useState(false);
+  const [isBatchComputeOpen, setIsBatchComputeOpen] = useState(false);
   const loadInputRef = useRef<HTMLInputElement>(null);
   const isHaltedRef = useRef(false);
   const breakpointsRef = useRef<Set<string>>(new Set());
@@ -518,6 +520,7 @@ export function BlockEditor() {
         onSave={handleSave}
         onLoad={handleLoad}
         onShowNotation={handleShowNotation}
+        onOpenBatchCompute={() => setIsBatchComputeOpen(true)}
         loadInputRef={loadInputRef}
 
         onRun={handleRun}
@@ -535,6 +538,12 @@ export function BlockEditor() {
         speedToText={speedToText}
         currentResult={currentResult}
         isEvaluating={isEvaluating}
+      />
+
+      <BatchComputeModal
+        isOpen={isBatchComputeOpen}
+        onClose={() => setIsBatchComputeOpen(false)}
+        rootBlock={rootBlock}
       />
 
       <div className="flexcont">
@@ -560,15 +569,15 @@ export function BlockEditor() {
       <hr className="my-6" />
 
       {notationPopupText !== null && (
-        <div className="notation-popup-overlay" role="dialog">
-          <div className="notation-popup-panel">
-            <div className="notation-popup-header">
-              <div className="notation-popup-title">Formal Notation</div>
-              <button className="toolbar-button notation-popup-close" onClick={handleCloseNotationPopup}>
+        <div className="popup-overlay" role="dialog">
+          <div className="popup-panel">
+            <div className="popup-header">
+              <div className="popup-title">Formal Notation</div>
+              <button className="toolbar-button popup-close" onClick={handleCloseNotationPopup}>
                 Close
               </button>
             </div>
-            <pre className="notation-popup-body">{notationPopupText}</pre>
+            <div className="popup-body">{notationPopupText}</div>
           </div>
         </div>
       )}
