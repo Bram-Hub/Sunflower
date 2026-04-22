@@ -96,11 +96,30 @@
 
 .block-action-buttons {
   display: flex;
-  align-items: center;
-  gap: 0.1rem;
+  align-items: flex-start;
+  gap: 0.5rem;
   flex-shrink: 0;
   margin-left: auto;
 }
+
+/* ===================== IO SPACING FIX START ===================== */
+
+.block-io-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  /* Force consistent spacing */
+  gap: 6px; /* matches Successor visually */
+}
+
+/* Remove any accidental spacing inconsistencies */
+.block-io-in,
+.block-io-out {
+  margin: 0;
+}
+
+/* ====================== IO SPACING FIX END ====================== */
 
 .block-type {
   font-weight: 700;
@@ -111,13 +130,13 @@
 .block-math-notation {
   font-size: 0.72rem;
   font-style: italic;
-  color: rgba(0,0,0,0.5);
+  color: rgba(0,0,0,0.75);
   margin-top: 1px;
   font-family: Georgia, 'Times New Roman', serif;
   letter-spacing: 0.01em;
 }
 
-.block-highlighted .block-math-notation {
+.block-highlighted > .block-header .block-math-notation {
   color: rgba(255,255,255,0.45);
 }
 
@@ -125,43 +144,56 @@
   .block-type { color: rgba(255,255,255,0.92); }
 }
 
-/* IO Display */
-.block-io-in {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: inherit;
-  font-size: 0.75rem;
-  padding-left: 0.2rem;
-}
+/* ===================== IO DISPLAY MINIMAL CLEAN START ===================== */
 
+.block-io-in,
 .block-io-out {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
+  width: max-content;
+
   font-family: inherit;
   font-size: 0.75rem;
-  margin-top: 0.5rem;
-  padding-top: 0.4rem;
-  border-top: 1px solid rgba(0,0,0,0.12);
+
+  padding: 0.2rem 0.6rem;
+
+  background: rgba(255, 255, 255, 0.65);
+
+  /* Uniform border on all sides */
+  border: 1px solid rgba(0, 0, 0, 0.2);
+
+  border-radius: 6px;
+
+  /* No shadow, no effects */
+  box-shadow: none;
 }
+
+/* ====================== IO DISPLAY MINIMAL CLEAN END ====================== */
+
+/* ===================== IO TEXT CLEAN START ===================== */
 
 .block-io-label {
   font-weight: 600;
-  color: rgba(255,255,255,0.95) !important;
+  color: #444;
   font-size: 0.75rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  min-width: 1.5rem;
 }
 
 .block-io-value {
   font-weight: 700;
-  color: rgba(255,255,255,0.95) !important;
+  color: #000;
   min-width: 1.5rem;
   text-align: center;
 }
 
+/* ====================== IO TEXT CLEAN END ====================== */
+
+/* ====================== IO TEXT NEUTRAL UPGRADE END ====================== */
+
 .block-io-separator {
-  color: rgba(255,255,255,0.6) !important;
+  color: rgba(0,0,0,0.6) !important;
   font-weight: 400;
 }
 
@@ -175,7 +207,8 @@
 /* Buttons */
 .collapse-button,
 .info-button,
-.remove-button {
+.remove-button,
+.pr-trace-toggle-button {
   font-size: 0.75rem;
   font-family: inherit;
   font-weight: 600;
@@ -188,14 +221,14 @@
   letter-spacing: 0.03em;
 }
 
-.collapse-button { color: rgba(255,255,255,0.5); }
+.collapse-button { color: rgba(0,0,0,0.4); }
 .collapse-button:hover {
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.85);
 }
 
 .info-button { 
-  color: rgba(255,255,255,0.5);
+  color: rgba(0,0,0,0.4);
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-size: 0.85rem;
@@ -229,6 +262,7 @@
   margin-left: 0.75rem;
   margin-top: 0.375rem;
 }
+
 
 .block-slot {
   border-radius: 1.75rem 0 0 1.75rem;
@@ -282,9 +316,28 @@
   .block-slot.empty { border-color: rgba(255,255,255,0.1); }
 }
 
+@media (prefers-color-scheme: dark) {
+  .block-io-in,
+  .block-io-out {
+    background: #f4f4f4;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+  }
+
+  .block-io-label {
+    color: #333;
+  }
+
+  .block-io-value {
+    color: #000;
+  }
+}
+
+
+
 /* Value Editor */
 .value-editor {
   margin-top: 0.75rem;
+  padding-left: 0.2rem;
   padding-right: 1rem;
 }
 
@@ -302,6 +355,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.625rem;
+  color: rgba(0,0,0,0.95);
 }
 
 .value-label {
@@ -319,7 +373,7 @@
   font-size: 0.8125rem;
   font-family: ui-monospace, monospace;
   width: 100%;
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.65);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -339,12 +393,12 @@
 
 .value-static-name {
   font-weight: 500;
-  color: rgba(255,255,255,0.55);
+  color: rgba(0,0,0,0.6);
 }
 
 .value-static-val {
-  font-weight: 700;
-  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+  color: rgba(0,0,0,0.6);
 }
 
 /* Palette Blocks */
@@ -581,13 +635,63 @@ label { color: var(--block-text-color); }
 
 /* Highlighted Block */
 .block-highlighted {
-  background-color: rgba(0,0,0,0.88) !important;
+  background-color: rgba(128,128,128,0.88) !important;
   animation: pulse 0.8s ease-in-out infinite;
 }
 
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 6px 2px rgba(255,215,0,0.4); }
   50%       { box-shadow: 0 0 20px 6px rgba(255,215,0,0.9); }
+}
+
+/* Visual styles for Custom/Immutable blocks */
+
+/* In the Editor */
+.block-custom-style {
+  opacity: 0.92;
+}
+
+.block-custom-style .block-type {
+  color: #555 !important;
+}
+
+.block-custom-style .block-math-notation {
+  color: rgba(60, 60, 60, 0.78);
+}
+
+/* In the Sidebar Palette */
+.palette-block-custom {
+  background-color: #d1d1d1 !important; 
+  border-left: 4px solid #888 !important;
+  color: #666 !important;
+  filter: grayscale(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .block-custom-style {
+    opacity: 0.9;
+  }
+  
+  .palette-block-custom {
+    background-color: #2d2d2d !important;
+    border-left: 4px solid #555 !important;
+    color: #999 !important;
+  }
+}
+
+/* Highlight for updated IO values */
+.value-changed {
+  color: var(--contrast-col) !important;
+  font-weight: 800;
+  transition: color 0.2s ease; /* Returns to black over 0.2s */
+  display: inline-block;
+  animation: valuePop 0.3s ease-out;
+}
+
+@keyframes valuePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 /* Mobile */
@@ -615,4 +719,130 @@ label { color: var(--block-text-color); }
   .block-io-label  { font-size: 0.68rem; }
   .block-io-value  { min-width: 1rem; }
   .sideP           { padding: 1rem 0.5rem; }
+}
+
+/* PR Trace Toggle Button */
+.pr-trace-toggle-button {
+  color: rgba(0,0,0,0.4);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.pr-trace-toggle-button:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.85);
+}
+.pr-trace-toggle-button.pr-trace-active {
+  color: var(--contrast-col);
+  background: rgba(223,109,38,0.12);
+}
+
+/* Slot labels (primitive recursion, composition, etc) */
+.slot-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.5);
+  margin-top: 0.85rem;
+  margin-bottom: -0.4rem;
+  padding-left: 0.875rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .slot-label { color: rgba(255,255,255,0.4); }
+}
+
+/* PR Trace Panel */
+.pr-trace-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0.875rem 0.75rem 1.5rem;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.15);
+}
+
+.pr-trace-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pr-trace-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pr-trace-label {
+  font-style: italic;
+  font-size: 0.8rem;
+  min-width: 3rem;
+  opacity: 0.7;
+}
+
+.pr-trace-value {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 3px;
+  min-width: 2rem;
+  text-align: center;
+  background: rgba(255,255,255,0.25);
+}
+
+/* Notation popup */
+.notation-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.notation-popup-panel {
+  width: min(680px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #ffffff;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.notation-popup-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.notation-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.notation-popup-body {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  background: #f7f7f7;
+  overflow: auto;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.notation-popup-close {
+  flex-shrink: 0;
 }

@@ -1,16 +1,16 @@
 import { useRef, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { blockConfig, BlockType } from "./BlockConfig";
-import { CURRENT_FILETYPE_VERSION, customBlocks, EditorSaveState } from "./BlockEditor";
+import { CURRENT_FILETYPE_VERSION, customBlocks, EditorSaveState, MAX_CUSTOM_BLOCKS } from "./BlockEditor";
 import { getDefaultChildren } from "./Block";
 import { BlockSave, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 import React from "react";
 
-// JSX element to represent a draggable block type in the block pallete
-// Type is the block type. custom_block_index and onRemove are undefined if type is not Custom. 
-// If type is Custom, custom_block_index is an index in the custom blocks array corresponding to this block,
-// and onRemove is a method to remove this custom block from the custom blocks array.
+function canAddCustomBlock() {
+  return Object.keys(customBlocks).length < MAX_CUSTOM_BLOCKS;
+}
+
 function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType, custom_block_name?: string, onRemove?: (name: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [showInfo, setShowInfo] = React.useState(false);
@@ -32,9 +32,11 @@ function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType
   return (
     <div
       ref={ref}
-      className={`palette-block ${isDragging ? "opacity-50" : "palette-block-appear"}`}
+      className={`palette-block 
+        ${isDragging ? "opacity-50" : "palette-block-appear"} 
+        ${custom_block_name !== undefined ? "palette-block-custom" : ""}`}
     >
-      <div className="palette-block-name">{custom_block_name !== undefined ? custom_block_name : type.toUpperCase()}</div>
+      <div className="palette-block-name">{custom_block_name !== undefined ? custom_block_name : (blockConfig[type]?.displayName ?? type.toUpperCase())}</div>
 
       {showInfo && blockConfig[type].description && (
         <div className="block-description-popup">
@@ -53,15 +55,18 @@ function DraggableBlock({ type, custom_block_name, onRemove }: { type: BlockType
   );
 }
 
-// JSX element that represents the block palette.
-// Contains function to load custom blocks.
 export function BlockPalette() {
-  const { customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
-  const {rootBlock, setRootBlock: _setRootBlock} = useBlockEditor();
+  const { setCustomBlockCount } = useBlockEditor();
+  const {rootBlock} = useBlockEditor();
 
   function turnRootToCustom() {
     if (!rootBlock) {
       alert("No root block to convert to custom block.");
+      return;
+    }
+
+    if (!canAddCustomBlock()) {
+      alert(`Custom block limit reached. You can load up to ${MAX_CUSTOM_BLOCKS} custom blocks at once.`);
       return;
     }
 
@@ -77,8 +82,6 @@ export function BlockPalette() {
       num_values: []
     };
 
-    // If the root block is a custom block, we want to save its first child as the definition of the new custom block.
-    // Otherwise, we save the root block itself as the definition of the new custom block.
     newBlock.children[0].child = serializeBlock(rootBlock.type !== "Custom" ? rootBlock : rootBlock.children[0].block!);
 
     customBlocks[name] = newBlock;
@@ -102,6 +105,11 @@ export function BlockPalette() {
 
       if (!parsed || !parsed.rootBlock) {
         alert("Invalid block definition.");
+        return;
+      }
+
+      if (!canAddCustomBlock()) {
+        alert(`Custom block limit reached. You can load up to ${MAX_CUSTOM_BLOCKS} custom blocks at once.`);
         return;
       }
 

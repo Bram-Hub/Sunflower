@@ -1,13 +1,18 @@
 import React, { } from "react";
 import './Toolbar.css';
+import { useBlockEditor } from "./BlockEditorContext";
+import { MAX_INPUT_COUNT } from "./BlockEditor";
 
 interface ToolbarProps {
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onShowNotation: () => void;
   loadInputRef: React.RefObject<HTMLInputElement | null>;
   onRun: () => void;
-  onHalt: () => void;
+  onForceRun: () => void;
   onStep: () => void;
+  onTrace: () => void;
+  onHalt: () => void;
   inputCount: number;
   onInputCountChange: (count: number) => void;
   inputs: number[];
@@ -16,17 +21,19 @@ interface ToolbarProps {
   onEvaluationSpeedChange: (speed: number) => void;
   speedToText: (speed: number) => string;
   currentResult: number | null;
-  onAddTestData?: () => void;
-  onClearTestData?: () => void;
+  isEvaluating: boolean;
 }
 
 export function Toolbar({ 
   onSave, 
   onLoad,
+  onShowNotation,
   loadInputRef, 
   onRun, 
-  onHalt, 
+  onForceRun,
   onStep,
+  onTrace,
+  onHalt, 
   inputCount,
   onInputCountChange,
   inputs,
@@ -35,9 +42,9 @@ export function Toolbar({
   onEvaluationSpeedChange,
   speedToText,
   currentResult,
-  onAddTestData,
-  onClearTestData
+  isEvaluating
 }: ToolbarProps) {
+  const { editMode, setEditMode } = useBlockEditor();
   
   return (
     <>
@@ -68,36 +75,45 @@ export function Toolbar({
             </button>
           </div>
 
+          {/* Edit mode toggle button */}
           <div className="toolbar-divider"></div>
 
           <div className="toolbar-section">
-            <button 
-              onClick={onAddTestData} 
-              className="toolbar-button"
-              title="Add random test data to all blocks"
+            <button
+              onClick={() => !isEvaluating && setEditMode(prev => !prev)}
+              className={`toolbar-button${editMode && !isEvaluating ? " toolbar-button-active" : ""}${isEvaluating ? " toolbar-button-disabled" : ""}`}
+              title={isEvaluating ? "Cannot edit while executing" : "Toggle edit mode to change block values"}
+              disabled={isEvaluating}
             >
-              Test Data
+              {editMode && !isEvaluating ? "Editing" : "Edit"}
             </button>
-            <button 
-              onClick={onClearTestData} 
-              className="toolbar-button"
-              title="Clear all test data from blocks"
-            >
-              Clear
+            <button onClick={onShowNotation} className="toolbar-button" title="Show root formal notation">
+              Notation
             </button>
           </div>
         </div>
 
         {/* Program execution controls */}
-        <div className="toolbar-center">
+        <div className="toolbar-center">   
+          {/* run buttons lock edit; halt unlocks it - no async race condition */}
           <button onClick={onRun} className="icon-button run-button" title="Run program">
             <svg viewBox="0 0 24 24" className="icon">
               <path d="M8 5v14l11-7z" fill="currentColor"/>
             </svg>
           </button>
-          <button onClick={onStep} className="icon-button step-button" title="Step through program">
+          <button onClick={onForceRun} className="icon-button step-button" title="Run without breakpoints">
             <svg viewBox="0 0 24 24" className="icon">
               <path d="M4 5v14l8-7z M13 5v14l8-7z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button onClick={onStep} className="icon-button step-button" title="Step through program">
+            <svg viewBox="0 0 24 24" className="icon">
+              <path d="M5 8h14l-7 11z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button onClick={onTrace} className="icon-button step-button" title="Trace through program">
+            <svg viewBox="0 0 24 24" className="icon">
+              <path d="M4 5h7a7 7 0 0 1 7 7v3h4l-6 7-6-7h4v-3a3 3 0 0 0-3-3H4z" fill="currentColor"/>
             </svg>
           </button>
           <button onClick={onHalt} className="icon-button halt-button" title="Halt execution">
@@ -114,7 +130,7 @@ export function Toolbar({
             <input
               type="number"
               min="0"
-              max="20"
+              max={MAX_INPUT_COUNT}
               step="1"
               value={inputCount.toString()}
               onChange={(e) => onInputCountChange(parseInt(e.target.value))}

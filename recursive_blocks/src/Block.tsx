@@ -2,9 +2,12 @@ import React from "react";
 import { useDrag } from "react-dnd";
 import { BlockData } from "./BlockUtil";
 import './Block.css';
-import { blockConfig, BlockSlot, BlockType } from "./BlockConfig"; 
+import { blockConfig, BlockSlot, BlockType } from "./BlockConfig";
 import { ValueEditor } from "./ValueEditor";
 import { BlockSlotDisplay } from "./BlockSlot";
+import { useBlockEditor } from "./BlockEditorContext";
+import { PRTracePanel } from "./PRTracePanel";
+import { getHeaderNotation } from "./Notation";
 
 interface Props {
   block: BlockData | null;
@@ -15,55 +18,58 @@ interface Props {
   isRunning?: boolean;
 }
 
-const getDepthColor = (depth: number) => {
-  const colors = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
-  return colors[depth % colors.length];
-};
+const DEPTH_COLORS = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
+const CUSTOM_BLOCK_TINT = '#9a9a9a';
 
-// Generate formal mathematical notation for each block type
-const getMathNotation = (block: BlockData): string => {
-  const n = block.inputCount ?? 0;
+const getDepthColor = (depth: number) => DEPTH_COLORS[depth % DEPTH_COLORS.length];
 
-  // Build argument list like (x1, x2, ..., xn)
-  const args = (count: number, suffix?: string) => {
-    if (count === 0) return suffix ? `(${suffix})` : "()";
-    const vars = Array.from({ length: count }, (_, i) => `x${i + 1}`).join(", ");
-    return suffix ? `(${vars}, ${suffix})` : `(${vars})`;
+const hexToRgb = (hex: string) => {
+  const normalized = hex.replace('#', '');
+  const value = normalized.length === 3
+    ? normalized.split('').map((char) => char + char).join('')
+    : normalized;
+
+  const parsed = Number.parseInt(value, 16);
+
+  return {
+    r: (parsed >> 16) & 255,
+    g: (parsed >> 8) & 255,
+    b: parsed & 255,
   };
-
-  switch (block.type) {
-    case "Zero":
-      return `z${args(n)}`;
-    case "Successor":
-      return `s(x)`;
-    case "Projection": {
-      const i = block.num_values?.find(v => v.name === "i")?.value ?? 1;
-      return `id[${i},${n}]${args(n)}`;
-    }
-    case "Composition": {
-      const m = block.num_values?.find(v => v.name === "m")?.value ?? 1;
-      return `C${n}[${m}]${args(n)}`;
-    }
-    case "Primitive Recursion":
-      return `Pr[f,g]${args(n > 0 ? n - 1 : 0, "y")}`;
-    case "Minimization":
-      return `Mn[f]${args(n)}`;
-    default:
-      return "";
-  }
 };
 
-/* 
-A JSX element that represents a visual block element.
-It is meant to be dragged into block slots.
-Block is the BlockData of this block element.
-onUpdate is a function that gets called when this block is modified
-(meaning it is deleted, a value is modified, or an ancestor is modified)
-and replaces the old block with the new block.
-*/
+const blendHexColors = (base: string, tint: string, tintWeight: number) => {
+  const baseRgb = hexToRgb(base);
+  const tintRgb = hexToRgb(tint);
+  const baseWeight = 1 - tintWeight;
+  const blendChannel = (baseChannel: number, tintChannel: number) =>
+    Math.round(baseChannel * baseWeight + tintChannel * tintWeight);
+
+  return `rgb(${blendChannel(baseRgb.r, tintRgb.r)}, ${blendChannel(baseRgb.g, tintRgb.g)}, ${blendChannel(baseRgb.b, tintRgb.b)})`;
+};
+
+const getCustomBlockColors = (depth: number) => {
+  const baseColor = getDepthColor(depth);
+
+  return {
+    background: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.6),
+    border: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.56),
+  };
+};
+
+const getSlotLabel = (blockType: BlockType, slotName: string): React.ReactNode => {
+  if (blockType === "Composition") {
+    return slotName.startsWith("g")
+      ? <span>g<sub>{slotName.slice(1)}</sub></span>
+      : <span>{slotName}</span>;
+  }
+  return slotName;
+};
+
 export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
-  const [collapsed, setCollapsed] = React.useState(block?.collapsed);
+  const [collapsed, setCollapsed] = React.useState(block?.collapsed ?? false);
   const [showInfo, setShowInfo] = React.useState(false);
+  const { blockExecutionStates, prTraceMode, setPRTraceMode, prTraceFrames, prOriginalInputs, prFinalOutputs } = useBlockEditor();
 
   if (!block) {
     return <span className="empty-text"> Drop block here</span>;
@@ -85,7 +91,26 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
   const dragRef = React.useRef<HTMLDivElement>(null);
   drag(dragRef);
 
-  // Format input/output for display
+  const executionState = blockExecutionStates[block.id];
+  const isMutedCustomBlock = block.type === "Custom" || block.immutable;
+
+  // Link highlight strictly to the active step
+  // This ensures that as soon as the 'Step' moves the highlight elsewhere, the color reverts.
+  const isCurrentlyActive = highlightedBlockId === block.id;
+  const showInputChange = isCurrentlyActive && executionState?.inputs !== undefined;
+  const showOutputChange = isCurrentlyActive && executionState?.output !== undefined;
+
+  const isPRTraceActive = block.type === "Primitive Recursion" && prTraceMode[block.id];
+
+  // When PR trace panel is on, freeze in at original inputs, hide out while running
+  const displayInput = isPRTraceActive && prOriginalInputs[block.id]
+    ? prOriginalInputs[block.id]
+    : executionState?.inputs ?? block.latestInput;
+
+  const displayOutput = isPRTraceActive
+    ? (prFinalOutputs[block.id] !== undefined ? prFinalOutputs[block.id] : undefined)
+    : executionState?.output ?? block.latestOutput;
+
   const formatInput = (input: number[] | undefined) => {
     if (!input || input.length === 0) return '—';
     return `(${input.join(', ')})`;
@@ -95,18 +120,21 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
     return output !== undefined ? output.toString() : '—';
   };
 
+  const depthColor = getDepthColor(block.depth || 0);
+  const customColors = isMutedCustomBlock ? getCustomBlockColors(block.depth || 0) : null;
+
   return (
     <div 
       className={`block-container
         ${highlightedBlockId === block.id ? "block-highlighted" : ""} 
-        ${selectedBlockId === block.id ? "selected-block" : ""}`}
+        ${selectedBlockId === block.id ? "selected-block" : ""}
+        ${isMutedCustomBlock ? "block-custom-style" : ""}`}
       ref={dragRef}
       style={{ 
         opacity: isDragging ? 0.5 : 1, 
-        backgroundColor: getDepthColor(block.depth || 0),
-        borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`,
+        backgroundColor: customColors?.background ?? depthColor,
+        borderLeft: `5px solid ${customColors?.border ?? depthColor}`,
       }}
-
       onClick={(e) => {
         e.stopPropagation();
         if (onSelectBlock && block) {
@@ -128,51 +156,38 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
               {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
             </button>
             <div>
-              <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+              <div className="block-type">{block.name || blockConfig[block.type]?.displayName || block.type.toUpperCase()}</div>
               {block.type !== "Custom" && (
-                <div className="block-math-notation">{getMathNotation(block)}</div>
+                <div className="block-math-notation">{getHeaderNotation(block)}</div>
               )}
             </div>
-          </div>
-          <div className="block-io-in">
-            <span className="block-io-label">In:</span>
-            <span className="block-io-value">{formatInput(block.latestInput)}</span>
           </div>
         </div>
 
         <div className="block-error-list">
           {block.errors.map((error, index) => (
-            <div key={index} className="block-error">
-              {error}
-            </div>
+            <div key={index} className="block-error">{error}</div>
           ))}
         </div>
 
         <div className="block-action-buttons">
           {blockConfig[block.type]?.description && (
+            <button className="info-button" title={"Show description"} onClick={() => setShowInfo(prev => !prev)}>i</button>
+          )}
+          {block.type === "Primitive Recursion" && (
             <button
-              className="info-button"
-              title={"Show description"}
-              onClick={() => setShowInfo(prev => !prev)}
+              className={`pr-trace-toggle-button ${prTraceMode[block.id] ? "pr-trace-active" : ""}`}
+              title="Toggle recursion trace panel"
+              onClick={() => setPRTraceMode(prev => ({ ...prev, [block.id]: !prev[block.id] }))}
             >
-              i
+              T
             </button>
           )}
-          {block.children.length > 0 && (
-            <button
-              className="collapse-button"
-              onClick={toggleCollapse}
-            >
-              {collapsed ? "▼" : "▶"}
-            </button>
+          {(block.children.length > 0 || (block.num_values && block.num_values.length > 0) || block.type === "Zero" || block.type === "Successor") && (
+            <button className="collapse-button" onClick={toggleCollapse}>{collapsed ? "▼" : "▶"}</button>
           )}
           {!block.immutable && (
-            <button
-              className="remove-button"
-              onClick={() => onUpdate(null)}
-            >
-              ✕
-            </button>
+            <button className="remove-button" onClick={() => onUpdate(null)}>✕</button>
           )}
         </div>
       </div>
@@ -183,17 +198,60 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
         </div>
       )}
 
-      <div className="slots-container">
-        {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} selectedBlockId={selectedBlockId} onSelectBlock={onSelectBlock} isRunning={isRunning} /></div>
-        ))}
+      <div className="block-io-in">
+        <span className="block-io-label">In:</span>
+        <span 
+          key={`in-${block.id}-${JSON.stringify(executionState?.inputs)}`}
+          className={`block-io-value ${showInputChange ? 'value-changed' : ''}`}
+        >
+          {formatInput(displayInput)}
+        </span>
       </div>
 
-      <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
+      {!collapsed && (
+        <>
+          <div className="slots-container">
+            {(block.type === "Primitive Recursion" ? [...block.children].reverse() : block.children).map((slot, i) => {
+              const slotDisplay = (
+                <BlockSlotDisplay
+                  parentBlock={block}
+                  slot={slot}
+                  onUpdate={onUpdate}
+                  highlightedBlockId={highlightedBlockId}
+                  selectedBlockId={selectedBlockId}
+                  onSelectBlock={onSelectBlock}
+                  isRunning={isRunning}
+                />
+              );
+
+              return (
+                <React.Fragment key={`${block.id}-${slot.name}`}>
+                  {blockConfig[block.type].showSlotLabels && (
+                    <div className="slot-label">{getSlotLabel(block.type, slot.name)}</div>
+                  )}
+                  <div>{slotDisplay}</div>
+                  {block.type === "Primitive Recursion" && i === 0 && prTraceMode[block.id] && (
+                    <>
+                      <div className="slot-label">Trace Panel</div>
+                      <PRTracePanel frame={prTraceFrames[block.id]} />
+                    </>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+          <ValueEditor block={block} onUpdate={onUpdate} isRunning={isRunning} />
+        </>
+      )}
 
       <div className="block-io-out">
         <span className="block-io-label">Out:</span>
-        <span className="block-io-value">{formatOutput(block.latestOutput)}</span>
+        <span 
+          key={`out-${block.id}-${executionState?.output}`}
+          className={`block-io-value ${showOutputChange ? 'value-changed' : ''}`}
+        >
+          {formatOutput(displayOutput)}
+        </span>
       </div>
     </div>
   );
@@ -203,17 +261,14 @@ export function getDefaultChildren(type: BlockType, depth: number = 0): Array<Bl
   const blockDef = blockConfig[type];
   return blockDef ? blockDef.children.map(child => ({
     ...child,
-    block: child.block ? { 
-      ...child.block, 
-      depth: depth + 1 
-    } : null
+    block: child.block ? { ...child.block, depth: depth + 1 } : null
   })) : [];
 }
 
 export function getDefaultValues(type: BlockType): Array<{ name: string; value: number }> {
   const blockDef = blockConfig[type];
   if (blockDef?.num_values) {
-    return blockDef.num_values.map(v => ({ ...v })); // return a copy
+    return blockDef.num_values.map(v => ({ ...v }));
   }
   return [];
 }
