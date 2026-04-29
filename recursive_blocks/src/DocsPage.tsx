@@ -8,6 +8,34 @@ export default function DocsPage() {
 
         <h1>Documentation</h1>
 
+        <section id="Keybinds">
+          <h2>Keybinds</h2>
+          <p><code>Ctrl/Cmd + Shift + S</code> Save current workspace.</p>
+          <p><code>Ctrl/Cmd + O</code> Load a <code>.bramflower</code> file.</p>
+          <p><code>Backspace</code> / <code>Delete</code> Remove selected block.</p>
+        </section>
+
+        <section id="Primitive-Recursion-Trace-Panel">
+          <h2>Primitive Recursion Trace Panel</h2>
+          <p>
+            This toggleable panel appears for Primitive Recursion blocks and shows one recursion step at a time.
+          </p>
+          <p><code>x,y'</code>: Inputs for the current recursion level.</p>
+          <p><code>x,y</code>: Inputs for the connected lower level (<code>y = y' - 1</code>); at base case it stays at <code>y = 0</code> and does not descend further.</p>
+          <p><code>h(x,y)</code>: Result returned from that lower level (blank until available).</p>
+          <p><code>h(x,y')</code>: Result at the current level (blank until this level exits).</p>
+        </section>
+
+        <section id="Batch-Compute-Modal">
+          <h2>Batch Compute Modal</h2>
+          <p>
+            Use Batch Compute to run the same root function across many input rows at once, instead of testing one input set at a time.
+          </p>
+          <p>
+            Open the modal, enter one input tuple per row, run the batch, and review outputs.
+          </p>
+        </section>
+
         <section id="Zero">
           <h2>Zero</h2>
           <p>
