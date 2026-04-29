@@ -16,31 +16,56 @@ interface Props {
   selectedBlockId?: string | null; 
   onSelectBlock: (id: string) => void;
   isRunning?: boolean;
+  renderDepth?: number;
 }
 
-const DEPTH_COLORS = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
-const CUSTOM_BLOCK_TINT = '#9a9a9a';
+const DEPTH_COLOR_FALLBACKS = ['#8d4f54', '#4e834d', '#4f4d95', '#8a7344', '#8a573b', '#6f4d89'];
+const CUSTOM_BLOCK_TINT_FALLBACK = '#514d64';
 
-const getDepthColor = (depth: number) => DEPTH_COLORS[depth % DEPTH_COLORS.length];
+const getThemeCssVar = (name: string, fallback: string) => {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
 
-const hexToRgb = (hex: string) => {
-  const normalized = hex.replace('#', '');
-  const value = normalized.length === 3
-    ? normalized.split('').map((char) => char + char).join('')
-    : normalized;
+const getDepthColor = (depth: number) => {
+  const index = depth % DEPTH_COLOR_FALLBACKS.length;
+  return getThemeCssVar(`--depth-color-${index + 1}`, DEPTH_COLOR_FALLBACKS[index]);
+};
 
-  const parsed = Number.parseInt(value, 16);
+const colorToRgb = (color: string) => {
+  const normalized = color.trim();
 
-  return {
-    r: (parsed >> 16) & 255,
-    g: (parsed >> 8) & 255,
-    b: parsed & 255,
-  };
+  if (normalized.startsWith('#')) {
+    const hex = normalized.slice(1);
+    const value = hex.length === 3
+      ? hex.split('').map((char) => char + char).join('')
+      : hex;
+    const parsed = Number.parseInt(value, 16);
+
+    return {
+      r: (parsed >> 16) & 255,
+      g: (parsed >> 8) & 255,
+      b: parsed & 255,
+    };
+  }
+
+  const match = normalized.match(/rgba?\(([^)]+)\)/i);
+  if (match) {
+    const [r = 255, g = 255, b = 255] = match[1]
+      .split(',')
+      .slice(0, 3)
+      .map((part) => Number.parseFloat(part.trim()));
+
+    return { r, g, b };
+  }
+
+  return { r: 255, g: 255, b: 255 };
 };
 
 const blendHexColors = (base: string, tint: string, tintWeight: number) => {
-  const baseRgb = hexToRgb(base);
-  const tintRgb = hexToRgb(tint);
+  const baseRgb = colorToRgb(base);
+  const tintRgb = colorToRgb(tint);
   const baseWeight = 1 - tintWeight;
   const blendChannel = (baseChannel: number, tintChannel: number) =>
     Math.round(baseChannel * baseWeight + tintChannel * tintWeight);
@@ -50,11 +75,28 @@ const blendHexColors = (base: string, tint: string, tintWeight: number) => {
 
 const getCustomBlockColors = (depth: number) => {
   const baseColor = getDepthColor(depth);
+  const customTint = getThemeCssVar('--custom-block-tint', CUSTOM_BLOCK_TINT_FALLBACK);
+  const mutedBase = blendHexColors(baseColor, '#000000', 0.14);
 
   return {
-    background: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.6),
-    border: blendHexColors(baseColor, CUSTOM_BLOCK_TINT, 0.56),
+    background: blendHexColors(mutedBase, customTint, 0.48),
+    border: blendHexColors(mutedBase, customTint, 0.42),
   };
+};
+
+const getTranslucentShade = (base: string, darkenWeight: number, alpha: number) => {
+  const baseRgb = colorToRgb(base);
+  const darkenChannel = (channel: number) => Math.round(channel * (1 - darkenWeight));
+
+  return `rgba(${darkenChannel(baseRgb.r)}, ${darkenChannel(baseRgb.g)}, ${darkenChannel(baseRgb.b)}, ${alpha})`;
+};
+
+const getLightenedTranslucentShade = (base: string, lightenWeight: number, alpha: number) => {
+  const baseRgb = colorToRgb(base);
+  const lightenChannel = (channel: number) =>
+    Math.round(channel + (255 - channel) * lightenWeight);
+
+  return `rgba(${lightenChannel(baseRgb.r)}, ${lightenChannel(baseRgb.g)}, ${lightenChannel(baseRgb.b)}, ${alpha})`;
 };
 
 const getSlotLabel = (blockType: BlockType, slotName: string): React.ReactNode => {
@@ -66,7 +108,7 @@ const getSlotLabel = (blockType: BlockType, slotName: string): React.ReactNode =
   return slotName;
 };
 
-export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false }: Props) { 
+export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false, renderDepth }: Props) { 
   const [collapsed, setCollapsed] = React.useState(block?.collapsed ?? false);
   const [showInfo, setShowInfo] = React.useState(false);
   const { blockExecutionStates, prTraceMode, setPRTraceMode, prTraceFrames, prOriginalInputs, prFinalOutputs } = useBlockEditor();
@@ -120,8 +162,32 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
     return output !== undefined ? output.toString() : '—';
   };
 
-  const depthColor = getDepthColor(block.depth || 0);
-  const customColors = isMutedCustomBlock ? getCustomBlockColors(block.depth || 0) : null;
+  const resolvedDepth = renderDepth ?? block.depth ?? 0;
+  const depthColor = getDepthColor(resolvedDepth);
+  const customColors = isMutedCustomBlock ? getCustomBlockColors(resolvedDepth) : null;
+  const blockBackground = customColors?.background ?? depthColor;
+  const blockBorder = customColors?.border ?? depthColor;
+  const ioPillBackgroundLight = getLightenedTranslucentShade(blockBackground, 0.36, 0.8);
+  const ioPillBorderLight = getLightenedTranslucentShade(blockBackground, 0.48, 0.94);
+  const ioPillBackgroundDark = getTranslucentShade(blockBackground, 0.34, 0.62);
+  const ioPillBorderDark = getTranslucentShade(blockBackground, 0.08, 0.78);
+  const emptySlotBackgroundLight = getLightenedTranslucentShade(blockBackground, 0.24, 0.58);
+  const emptySlotBorderLight = getLightenedTranslucentShade(blockBackground, 0.12, 0.76);
+  const valueInputBackgroundDark = getTranslucentShade(blockBackground, 0.18, 0.56);
+  const valueInputFocusBackground = getTranslucentShade(blockBackground, 0.24, 0.66);
+  const blockStyle = {
+    opacity: isDragging ? 0.5 : 1,
+    backgroundColor: blockBackground,
+    borderLeft: `5px solid ${blockBorder}`,
+    '--io-pill-bg-light': ioPillBackgroundLight,
+    '--io-pill-border-light': ioPillBorderLight,
+    '--io-pill-bg-dark': ioPillBackgroundDark,
+    '--io-pill-border-dark': ioPillBorderDark,
+    '--empty-slot-bg-light': emptySlotBackgroundLight,
+    '--empty-slot-border-light': emptySlotBorderLight,
+    '--value-input-bg-dark': valueInputBackgroundDark,
+    '--value-input-focus-bg': valueInputFocusBackground,
+  } as React.CSSProperties;
 
   return (
     <div 
@@ -130,11 +196,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
         ${selectedBlockId === block.id ? "selected-block" : ""}
         ${isMutedCustomBlock ? "block-custom-style" : ""}`}
       ref={dragRef}
-      style={{ 
-        opacity: isDragging ? 0.5 : 1, 
-        backgroundColor: customColors?.background ?? depthColor,
-        borderLeft: `5px solid ${customColors?.border ?? depthColor}`,
-      }}
+      style={blockStyle}
       onClick={(e) => {
         e.stopPropagation();
         if (onSelectBlock && block) {
@@ -221,6 +283,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
                   selectedBlockId={selectedBlockId}
                   onSelectBlock={onSelectBlock}
                   isRunning={isRunning}
+                  renderDepth={resolvedDepth + 1}
                 />
               );
 

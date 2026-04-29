@@ -553,6 +553,7 @@ export function BlockEditor() {
             selectedBlockId={selectedBlockId}
             onSelectBlock={(id) => setSelectedBlockId(id)}
             isRunning={isEvaluating}
+            renderDepth={0}
           />
         </div>
       </div>

@@ -2,10 +2,8 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color: #e8e8e8;
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -14,7 +12,7 @@
 
 a {
   font-weight: 500;
-  color: #DF6D26;
+  color: #df6d26;
   text-decoration: inherit;
   transition: color 0.15s ease;
 }
@@ -41,13 +39,15 @@ button {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: #3b4734;
+    background-color: #f1f1e4;
   }
+
   a:hover {
-    color: #b85a18;
+    color: #5d6941;
   }
+
   button {
-    background-color: #faf7f2;
+    background-color: #f8fcf6;
   }
 }

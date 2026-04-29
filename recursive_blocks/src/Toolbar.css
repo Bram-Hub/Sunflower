@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background-color: var(--alt);
-  border-bottom: 1px solid var(--contrast-col);
+  background: #26201b;
+  border-bottom: none;
   gap: 16px;
   color: var(--block-text-color);
   overflow: visible;
@@ -46,12 +46,76 @@
 .toolbar-divider {
   width: 1px;
   height: 20px;
-  background-color: rgba(255,255,255,0.12);
+  background-color: rgba(255,255,255,0.18);
   margin: 0 4px;
 }
 
 @media (prefers-color-scheme: light) {
-  .toolbar-divider { background-color: rgba(0,0,0,0.12); }
+  .toolbar-divider { background-color: rgba(56, 46, 24, 0.16); }
+  .toolbar-container { background: #9daf88; }
+
+  .toolbar-button, .toolbar-button-label {
+    color: #364131;
+  }
+
+  .toolbar-button:hover, .load-button:hover, .toolbar-button-label:hover {
+    background-color: rgba(251, 251, 242, 0.5);
+    border-color: #7f8d57;
+    color: #5d6941;
+  }
+
+  .toolbar-button-active {
+    color: #5d6941 !important;
+    border-color: #7f8d57 !important;
+    background-color: rgba(251, 251, 242, 0.55) !important;
+  }
+
+  .toolbar-input,
+  .settings-input,
+  .input-item input {
+    border-color: rgba(127, 141, 87, 0.32);
+    background-color: #fbfbf2;
+    color: #364131;
+  }
+
+  .toolbar-input:focus,
+  .input-item input:focus {
+    box-shadow: 0 0 0 3px rgba(127, 141, 87, 0.18);
+  }
+
+  .toolbar-slider,
+  .speed-slider {
+    background: rgba(71, 82, 48, 0.28);
+  }
+
+  .toolbar-slider::-webkit-slider-thumb,
+  .toolbar-slider::-moz-range-thumb,
+  .speed-slider::-webkit-slider-thumb,
+  .speed-slider::-moz-range-thumb {
+    background: #6d7d46;
+  }
+
+  .toolbar-value,
+  .speed-value {
+    color: #314522;
+    font-weight: 700;
+  }
+
+  .result-value,
+  .toolbar-label,
+  .settings-label,
+  .input-item label {
+    color: #364131;
+  }
+
+  .icon-button.run-button  { background-color: #7d9466; color: #f8f8ef; }
+  .icon-button.run-button:hover  { background-color: #6b8156; }
+
+  .icon-button.step-button { background-color: #a3ab6f; color: #4f5631; }
+  .icon-button.step-button:hover { background-color: #90995f; }
+
+  .icon-button.halt-button { background-color: #b19172; color: #fff8f2; }
+  .icon-button.halt-button:hover { background-color: #9e7f63; }
 }
 
 .logo {
@@ -67,7 +131,6 @@
   overflow: hidden;
 }
 
-/* Toolbar Buttons */
 .toolbar-button, .toolbar-button-label {
   font-family: inherit;
   font-size: 0.84rem;
@@ -79,7 +142,7 @@
   box-sizing: border-box;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease, border-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
   flex-shrink: 0;
   box-shadow: none;
@@ -103,7 +166,7 @@
 }
 
 .toolbar-button:hover, .load-button:hover, .toolbar-button-label:hover {
-  background-color: transparent;
+  background-color: rgba(255,255,255,0.08);
   transform: none;
   box-shadow: none;
   border-color: var(--contrast-col);
@@ -115,16 +178,17 @@
   box-shadow: none;
 }
 
-/* disabled state for Edit button during execution */
 .toolbar-button-disabled,
 .toolbar-button-disabled:hover {
   opacity: 0.35;
   cursor: not-allowed;
   border-color: transparent !important;
 }
+
 .toolbar-button-active {
   border-color: var(--contrast-col) !important;
   color: var(--contrast-col) !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
   border-radius: 4px !important;
 }
 
@@ -133,7 +197,6 @@
   border-radius: 4px !important;
 }
 
-/* Icon Buttons */
 .icon-button {
   width: 38px;
   height: 38px;
@@ -160,16 +223,15 @@
 
 .icon-button:active { transform: scale(0.94); }
 
-.icon-button.run-button  { background-color: #4ade80; color: #14532d; }
-.icon-button.run-button:hover  { background-color: #22c55e; }
+.icon-button.run-button  { background-color: #69d67e; color: #164d28; }
+.icon-button.run-button:hover  { background-color: #4dc867; }
 
-.icon-button.step-button { background-color: #60a5fa; color: #1e3a8a; }
-.icon-button.step-button:hover { background-color: #3b82f6; }
+.icon-button.step-button { background-color: #ecc04d; color: #5d4300; }
+.icon-button.step-button:hover { background-color: #dfaf35; }
 
-.icon-button.halt-button { background-color: #f87171; color: #7f1d1d; }
-.icon-button.halt-button:hover { background-color: #ef4444; }
+.icon-button.halt-button { background-color: #dd8460; color: #612717; }
+.icon-button.halt-button:hover { background-color: #cf6e44; }
 
-/* Toolbar Inputs */
 .toolbar-label {
   font-size: 0.875rem;
   font-weight: 500;
@@ -183,7 +245,7 @@
   padding: 5px 8px;
   background-color: var(--block-bg-color);
   color: var(--block-text-color);
-  border: 1px solid var(--contrast-col);
+  border: 1px solid rgba(215, 116, 45, 0.45);
   border-radius: 8px;
   font-size: 0.875rem;
   font-family: inherit;
@@ -195,27 +257,26 @@
   box-shadow: 0 0 0 3px rgba(223,109,38,0.2);
 }
 
-/* Slider */
 .toolbar-slider {
   width: 120px;
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.18);
   border-radius: 2px;
   outline: none;
   border: none;
 }
 
 @media (prefers-color-scheme: light) {
-  .toolbar-slider { background: rgba(0,0,0,0.15); }
+  .toolbar-slider { background: rgba(49, 38, 14, 0.28); }
 }
 
 .toolbar-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px;
   height: 14px;
-  background: var(--contrast-col);
+  background: #9a6a24;
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
@@ -227,7 +288,7 @@
 .toolbar-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: var(--contrast-col);
+  background: #9a6a24;
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -237,12 +298,11 @@
 .toolbar-value {
   font-size: 0.84rem;
   font-weight: 600;
-  color: var(--contrast-col);
+  color: #6e551f;
   min-width: 50px;
   font-family: inherit;
 }
 
-/* Result Value */
 .result-value {
   font-size: 1rem;
   font-weight: 700;
@@ -252,11 +312,10 @@
   text-align: center;
 }
 
-/* Settings Panel */
 .settings-panel {
-  background-color: var(--alt);
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  background: #26201b;
+  border: 1px solid rgba(255, 224, 150, 0.16);
+  box-shadow: 0 8px 32px rgba(62, 50, 18, 0.34), 0 2px 8px rgba(0,0,0,0.22);
   position: fixed;
   bottom: 1.25rem;
   left: 50%;
@@ -266,6 +325,14 @@
   width: fit-content;
   max-width: 90vw;
   transition: all 0.2s ease;
+}
+
+@media (prefers-color-scheme: light) {
+  .settings-panel {
+    background: #eef3e8;
+    border: 1px solid rgba(127, 141, 87, 0.2);
+    box-shadow: 0 10px 28px rgba(88, 102, 69, 0.16), 0 2px 8px rgba(0,0,0,0.08);
+  }
 }
 
 .settings-content {
@@ -295,7 +362,7 @@
   padding: 0.35rem 0.5rem;
   background-color: var(--block-bg-color);
   color: var(--block-text-color);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 224, 150, 0.18);
   border-radius: 8px;
   font-size: 0.875rem;
   font-family: inherit;
@@ -317,7 +384,6 @@
   .settings-divider { background-color: rgba(0,0,0,0.08); }
 }
 
-/* Inputs Grid */
 .inputs-grid {
   display: flex;
   flex-direction: row;
@@ -351,7 +417,7 @@
 .input-item input {
   width: 80px;
   padding: 4px 8px;
-  border: 1px solid var(--contrast-col);
+  border: 1px solid rgba(215, 116, 45, 0.45);
   background-color: var(--block-bg-color);
   color: var(--block-text-color);
   border-radius: 8px;
@@ -364,7 +430,6 @@
   box-shadow: 0 0 0 3px rgba(223,109,38,0.18);
 }
 
-/* Speed Control */
 .speed-control {
   display: flex;
   align-items: center;
@@ -418,7 +483,26 @@
   font-size: 0.875rem;
 }
 
-/* Mobile */
+@media (prefers-color-scheme: dark) {
+  .toolbar-container {
+    background: #26201b;
+  }
+
+  .sideP {
+    background: #211c18;
+  }
+
+  .toolbar-button:hover, .load-button:hover, .toolbar-button-label:hover {
+    background-color: rgba(255, 240, 208, 0.06);
+  }
+
+  .settings-panel {
+    background: #26201b;
+    border-color: rgba(255, 224, 150, 0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.42), 0 2px 8px rgba(0,0,0,0.3);
+  }
+}
+
 @media (max-width: 768px) {
   .toolbar-container  { padding: 6px 8px; gap: 6px; font-size: 0.82rem; }
   .toolbar-button, .load-button, .toolbar-button-label { padding: 4px 10px; font-size: 0.78rem; }
