@@ -11,6 +11,14 @@
   padding: 2rem;
 }
 
+.docs-content section {
+  margin-top: 2rem;
+}
+
+.docs-function {
+  margin-top: 1rem;
+}
+
 .docs-example {
   background-color: rgba(128, 128, 128, 0.1);
   padding: 1rem;
