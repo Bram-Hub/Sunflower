@@ -1,12 +1,11 @@
-import "./Documentation.css";
-import { Link } from "react-router-dom";
+import "./DocsPage.css";
 
-export default function Documentation() {
+export default function DocsPage() {
   return (
     <div className="docs-container">
       <div className="docs-content">
-        <Link to="/">&larr; Back to Editor</Link>
-        
+        <a href="#">&larr; Back to Editor</a>
+
         <h1>Documentation</h1>
 
         <section id="Zero">
@@ -53,7 +52,7 @@ export default function Documentation() {
           </p>
           <p>
             <code>
-              Cn[f, g<sub>1</sub>, …, g<sub>n</sub>](x<sub>1</sub>, …, x<sub>m</sub>) = f(g<sub>1</sub>(x<sub>1</sub>, …, x<sub>m</sub>), …, g<sub>n</sub>(x<sub>1</sub>, …, x<sub>m</sub>))  
+              Cn[f, g<sub>1</sub>, …, g<sub>n</sub>](x<sub>1</sub>, …, x<sub>m</sub>) = f(g<sub>1</sub>(x<sub>1</sub>, …, x<sub>m</sub>), …, g<sub>n</sub>(x<sub>1</sub>, …, x<sub>m</sub>))
             </code>
           </p>
           <div className="docs-example">
