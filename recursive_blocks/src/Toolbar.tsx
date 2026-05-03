@@ -1,4 +1,4 @@
-import React, { } from "react";
+import React from "react";
 import './Toolbar.css';
 import { useBlockEditor } from "./BlockEditorContext";
 import { MAX_INPUT_COUNT } from "./BlockEditor";
@@ -7,6 +7,7 @@ interface ToolbarProps {
   onSave: () => void;
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onShowNotation: () => void;
+  onOpenBatchCompute: () => void;
   loadInputRef: React.RefObject<HTMLInputElement | null>;
   onRun: () => void;
   onForceRun: () => void;
@@ -28,6 +29,7 @@ export function Toolbar({
   onSave, 
   onLoad,
   onShowNotation,
+  onOpenBatchCompute,
   loadInputRef, 
   onRun, 
   onForceRun,
@@ -89,6 +91,9 @@ export function Toolbar({
             </button>
             <button onClick={onShowNotation} className="toolbar-button" title="Show root formal notation">
               Notation
+            </button>
+            <button onClick={onOpenBatchCompute} className="toolbar-button" title="Open batch compute">
+              Compute
             </button>
           </div>
         </div>
@@ -158,8 +163,13 @@ export function Toolbar({
             <label className="toolbar-label">Result:</label>
             <span className="result-value">{currentResult ?? '—'}</span>
           </div>
-        </div>
 
+          <div className="toolbar-divider"></div>
+
+          <a href="#docs" className="toolbar-button docs-button">
+            Documentation
+          </a>
+        </div>
       </div>
 
       {/* Settings panel */}
@@ -187,7 +197,7 @@ export function Toolbar({
               </div>
             </div>
           </div>
-        </div>
+      </div>
     </>
   );
 }

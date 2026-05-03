@@ -106,6 +106,7 @@
   background-color: transparent;
   transform: none;
   box-shadow: none;
+  color: var(--block-text-color);
   border-color: var(--contrast-col);
   border-radius: 4px;
 }
