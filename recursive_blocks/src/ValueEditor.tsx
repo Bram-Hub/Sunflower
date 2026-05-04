@@ -52,7 +52,7 @@ export function ValueEditor({ block, onUpdate, isRunning = false }: ValueEditorP
 
         return (
           <div key={index} className="value-field">
-            {isRunning || !editMode ? (
+            {isRunning || !editMode || block.immutable ? (
               <span className="value-static">
                 <span className="value-static-name">{staticValue.label}</span>
                 <span className="value-static-val">{staticValue.value}</span>
