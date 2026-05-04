@@ -562,6 +562,7 @@ export function BlockEditor() {
             selectedBlockId={selectedBlockId}
             onSelectBlock={(id) => setSelectedBlockId(id)}
             isRunning={isEvaluating}
+            renderDepth={0}
           />
         </div>
       </div>
@@ -569,15 +570,15 @@ export function BlockEditor() {
       <hr className="my-6" />
 
       {notationPopupText !== null && (
-        <div className="popup-overlay" role="dialog">
-          <div className="popup-panel">
-            <div className="popup-header">
-              <div className="popup-title">Formal Notation</div>
-              <button className="toolbar-button popup-close" onClick={handleCloseNotationPopup}>
+        <div className="notation-popup-overlay" role="dialog">
+          <div className="notation-popup-panel">
+            <div className="notation-popup-header">
+              <div className="notation-popup-title">Formal Notation</div>
+              <button className="toolbar-button notation-popup-close" onClick={handleCloseNotationPopup}>
                 Close
               </button>
             </div>
-            <div className="popup-body">{notationPopupText}</div>
+            <pre className="notation-popup-body">{notationPopupText}</pre>
           </div>
         </div>
       )}

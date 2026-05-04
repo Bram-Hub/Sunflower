@@ -9,7 +9,7 @@ import { useDrop } from "react-dnd";
 import { customBlocks } from "./BlockEditor";
 import { deserializeBlock } from "./BlockSave";
 
-export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false}: {
+export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock, isRunning = false, renderDepth}: {
   parentBlock: BlockData | null, 
   slot: BlockSlot, 
   onUpdate: (newBlock: BlockData | null) => void, 
@@ -17,6 +17,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
   selectedBlockId?: string | null,
   onSelectBlock: (id: string) => void,
   isRunning?: boolean,
+  renderDepth?: number,
 }) { 
 	const { name, block: child } = slot;
 
@@ -145,6 +146,7 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 				selectedBlockId={selectedBlockId} 
 				onSelectBlock={onSelectBlock}
 				isRunning={isRunning}
+				renderDepth={renderDepth}
 			/>
 		</div>
   	);
