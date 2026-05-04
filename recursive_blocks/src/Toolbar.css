@@ -1,4 +1,10 @@
 /* Toolbar.css */
+:root {
+  --execution-accent: #ecc04d;
+  --execution-accent-hover: #dfaf35;
+  --execution-accent-text: #5d4300;
+}
+
 .toolbar-container {
   display: flex;
   align-items: center;
@@ -85,19 +91,21 @@
 
   .toolbar-slider,
   .speed-slider {
-    background: rgba(71, 82, 48, 0.28);
+    background: rgba(73, 83, 46, 0.42);
   }
 
   .toolbar-slider::-webkit-slider-thumb,
   .toolbar-slider::-moz-range-thumb,
   .speed-slider::-webkit-slider-thumb,
   .speed-slider::-moz-range-thumb {
-    background: #6d7d46;
+    background: #c08a12;
+    border: 2px solid #f4efd9;
+    box-shadow: 0 0 0 1px rgba(73, 83, 46, 0.32), 0 1px 4px rgba(0,0,0,0.18);
   }
 
   .toolbar-value,
   .speed-value {
-    color: #314522;
+    color: #9b6d08;
     font-weight: 700;
   }
 
@@ -226,8 +234,8 @@
 .icon-button.run-button  { background-color: #69d67e; color: #164d28; }
 .icon-button.run-button:hover  { background-color: #4dc867; }
 
-.icon-button.step-button { background-color: #ecc04d; color: #5d4300; }
-.icon-button.step-button:hover { background-color: #dfaf35; }
+.icon-button.step-button { background-color: var(--execution-accent); color: var(--execution-accent-text); }
+.icon-button.step-button:hover { background-color: var(--execution-accent-hover); }
 
 .icon-button.halt-button { background-color: #dd8460; color: #612717; }
 .icon-button.halt-button:hover { background-color: #cf6e44; }
@@ -262,21 +270,21 @@
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255,255,255,0.18);
+  background: rgba(236, 192, 77, 0.38);
   border-radius: 2px;
   outline: none;
   border: none;
 }
 
 @media (prefers-color-scheme: light) {
-  .toolbar-slider { background: rgba(49, 38, 14, 0.28); }
+  .toolbar-slider { background: rgba(73, 83, 46, 0.42); }
 }
 
 .toolbar-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px;
   height: 14px;
-  background: #9a6a24;
+  background: var(--execution-accent);
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0,0,0,0.3);
@@ -288,7 +296,7 @@
 .toolbar-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: #9a6a24;
+  background: var(--execution-accent);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -298,7 +306,7 @@
 .toolbar-value {
   font-size: 0.84rem;
   font-weight: 600;
-  color: #6e551f;
+  color: var(--execution-accent);
   min-width: 50px;
   font-family: inherit;
 }
