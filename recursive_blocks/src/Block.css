@@ -369,7 +369,7 @@
 .editor-content {
   margin-top: 0.875rem;
   width: fit-content;
-  max-width: calc(100% - 200px);
+  max-width: 100%;
   min-height: 0;
   overflow-y: auto;
   padding: 0.625rem;
@@ -821,10 +821,8 @@ label { color: var(--block-text-color); }
   #root { height: 100vh; overflow: hidden; }
 
   .app-container {
-    transform: scale(0.85);
-    transform-origin: top left;
-    width: 117.65%;
-    height: 117.65%;
+    width: 100%;
+    height: 100%;
   }
 
   .flexcont { flex-direction: row; }
@@ -841,6 +839,12 @@ label { color: var(--block-text-color); }
   .block-io-label  { font-size: 0.68rem; }
   .block-io-value  { min-width: 1rem; }
   .sideP           { padding: 1rem 0.5rem; }
+}
+
+@media (max-width: 1200px) {
+  .editor-content {
+    width: 100%;
+  }
 }
 
 .pr-trace-toggle-button {

@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding: 8px 12px;
   background: #26201b;
   border-bottom: none;
@@ -21,31 +22,35 @@
 .toolbar-left {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 .toolbar-center {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
   gap: 12px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 .toolbar-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 320px;
   justify-content: flex-end;
-  padding-right: 1.25rem;
+  padding-right: 0;
+  min-width: 0;
 }
 
 .toolbar-section {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -512,7 +517,18 @@
 }
 
 @media (max-width: 768px) {
-  .toolbar-container  { padding: 6px 8px; gap: 6px; font-size: 0.82rem; }
+  .toolbar-container  { padding: 6px 8px; gap: 10px; font-size: 0.82rem; }
+  .toolbar-left,
+  .toolbar-center,
+  .toolbar-right {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .toolbar-left,
+  .toolbar-right,
+  .toolbar-section {
+    justify-content: center;
+  }
   .toolbar-button, .load-button, .toolbar-button-label { padding: 4px 10px; font-size: 0.78rem; }
   .icon-button        { width: 34px; height: 34px; }
   .icon-button .icon  { width: 17px; height: 17px; }
@@ -522,4 +538,17 @@
   .toolbar-slider     { width: 80px; }
   .toolbar-label, .toolbar-value { font-size: 0.78rem; }
   .settings-content   { padding: 0.7rem 1rem; }
+}
+
+@media (max-width: 1200px) {
+  .toolbar-left,
+  .toolbar-center,
+  .toolbar-right {
+    flex: 1 1 100%;
+  }
+
+  .toolbar-center,
+  .toolbar-right {
+    justify-content: center;
+  }
 }
