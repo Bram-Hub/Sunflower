@@ -654,56 +654,6 @@ body {
   background-color: #e69142;
 }
 
-.logo {
-  height: 80%;
-  margin-left: 10px;
-}
-
-.toolbar-container {
-  display: flex;
-  justify-content: left;
-  align-items: flex-start;
-  height: auto;
-  min-height: fit-content;
-  flex-shrink: 0;
-  width: 100%;
-  border-bottom: 1px solid rgba(215, 116, 45, 0.52);
-  padding-left: 5px;
-  background-color: var(--alt);
-}
-
-.toolbar-title {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.toolbar-buttons {
-  display: flex;
-  gap: 3rem;
-  padding-left: 15px;
-}
-
-.toolbar-button {
-  font-size: 0.875rem;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-  background-color: transparent;
-  color: var(--block-text-color);
-}
-
-.toolbar-button:hover {
-  border-radius: 0;
-  border-bottom-color: var(--contrast-col);
-}
-
-.evaluate-button {
-  background-color: var(--contrast-col);
-  color: white;
-}
-
-.evaluate-button:hover { color: var(--alt); }
-
 input[type=file] { display: none; }
 label { color: var(--block-text-color); }
 
