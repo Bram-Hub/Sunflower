@@ -2,6 +2,7 @@ import React from "react";
 import './Toolbar.css';
 import { useBlockEditor } from "./BlockEditorContext";
 import { MAX_INPUT_COUNT } from "./BlockEditor";
+import logo from "./assets/logo.svg";
 
 interface ToolbarProps {
   onSave: () => void;
@@ -62,7 +63,7 @@ export function Toolbar({
 
         {/* File operations and testing */}
         <div className="toolbar-left">
-          <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
+          <img src={logo} alt="Sunflower" className="logo"/>
           
           <div className="toolbar-section">
             <button onClick={onSave} className="toolbar-button" title="Save (Ctrl+Shift+S)">
